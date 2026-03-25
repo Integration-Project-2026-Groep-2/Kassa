@@ -1,0 +1,1 @@
+#De "blauwdruk" voor het ontvangen van berichten van andere teams.

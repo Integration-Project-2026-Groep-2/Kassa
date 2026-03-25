@@ -1,0 +1,1 @@
+#De "blauwdruk" voor het verzenden van elk type bericht (Order, Payment, Heartbeat).
