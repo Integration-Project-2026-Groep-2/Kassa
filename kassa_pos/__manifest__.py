@@ -23,7 +23,13 @@
         'data/res_partner_data.xml',
         'data/product_product_data.xml',
         'data/pos_config_data.xml',
+        'views/pos_assets.xml',
     ],
+    'assets': {
+        'point_of_sale._assets_pos': [
+            'kassa_pos/static/src/js/BadgeScanner.js',
+        ],
+    },
     'installable': True,
     'application': True,
     'auto_install': False,
