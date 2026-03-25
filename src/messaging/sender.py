@@ -4,8 +4,8 @@ import logging
 from datetime import datetime
 from typing import Any, Optional
 
-from connection import RabbitMQClient
-from message_builders import (
+from .connection import RabbitMQClient
+from .message_builders import (
     build_heartbeat_xml,
     build_invoice_requested_xml,
     build_payment_confirmed_xml,
@@ -13,7 +13,7 @@ from message_builders import (
     build_status_check_xml,
     build_unpaid_request_xml,
 )
-from xml_validator import XMLValidator
+from .xml_validator import XMLValidator
 
 
 class KassaSender:

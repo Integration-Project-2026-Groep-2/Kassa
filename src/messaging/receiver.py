@@ -6,10 +6,11 @@ from typing import Optional
 
 from aio_pika.abc import AbstractIncomingMessage
 
-from connection import RabbitMQClient
-from message_handlers import dispatch_message
-from odoo_client import OdooClient
-from xml_validator import XMLValidator
+from odoo.client import OdooClient
+from odoo.handlers import dispatch_message
+
+from .connection import RabbitMQClient
+from .xml_validator import XMLValidator
 
 
 INBOUND_QUEUES: dict[str, bool] = {

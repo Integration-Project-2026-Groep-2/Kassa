@@ -5,7 +5,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from sender import KassaSender
+from messaging.sender import KassaSender
 
 
 class HeartbeatService:

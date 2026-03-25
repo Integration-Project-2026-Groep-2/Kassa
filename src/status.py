@@ -8,7 +8,7 @@ from typing import Optional
 
 import psutil
 
-from sender import KassaSender
+from messaging.sender import KassaSender
 
 
 class StatusService:

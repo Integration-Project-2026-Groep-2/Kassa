@@ -6,13 +6,13 @@ import signal
 from typing import Any
 
 from config import Settings
-from connection import RabbitMQClient
 from heartbeat import HeartbeatService
-from odoo_client import OdooClient
-from receiver import KassaReceiver
-from sender import KassaSender
+from messaging.connection import RabbitMQClient
+from messaging.receiver import KassaReceiver
+from messaging.sender import KassaSender
+from messaging.xml_validator import XMLValidator
+from odoo.client import OdooClient
 from status import StatusService
-from xml_validator import XMLValidator
 
 
 def setup_logging(level: str) -> None:

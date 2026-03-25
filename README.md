@@ -27,8 +27,8 @@ python src/main.py
 
 ## Belangrijkste files
 - src/main.py - start de app
-- src/connection.py - RabbitMQ connectie
-- src/sender.py - publiceert berichten
-- src/receiver.py - ontvangt berichten
-- src/odoo_client.py - Odoo integratie
+- src/messaging/connection.py - RabbitMQ connectie
+- src/messaging/sender.py - publiceert berichten
+- src/messaging/receiver.py - ontvangt berichten
+- src/odoo/client.py - Odoo integratie
 - src/schema/kassa-schema-v1.xsd - XSD validatie

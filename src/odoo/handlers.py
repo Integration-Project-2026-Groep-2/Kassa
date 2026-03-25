@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from lxml import etree
 
-from odoo_client import OdooClient
+from .client import OdooClient
 
 
 def _text(element: etree._Element, name: str, default: str | None = None) -> str | None:
