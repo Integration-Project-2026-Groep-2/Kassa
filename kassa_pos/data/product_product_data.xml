@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Product Categories -->
+        <record id="product_category_drinks" model="product.category">
+            <field name="name">Drinks</field>
+        </record>
+
+        <record id="product_category_food" model="product.category">
+            <field name="name">Food</field>
+        </record>
+
+        <!-- Drinks -->
+        <record id="product_beer" model="product.product">
+            <field name="name">Beer</field>
+            <field name="categ_id" ref="product_category_drinks"/>
+            <field name="type">consu</field>
+            <field name="list_price">3.50</field>
+            <field name="available_in_pos">True</field>
+            <field name="sale_ok">True</field>
+            <field name="purchase_ok">False</field>
+        </record>
+
+        <record id="product_soda" model="product.product">
+            <field name="name">Soda</field>
+            <field name="categ_id" ref="product_category_drinks"/>
+            <field name="type">consu</field>
+            <field name="list_price">2.00</field>
+            <field name="available_in_pos">True</field>
+            <field name="sale_ok">True</field>
+            <field name="purchase_ok">False</field>
+        </record>
+
+        <record id="product_water" model="product.product">
+            <field name="name">Water</field>
+            <field name="categ_id" ref="product_category_drinks"/>
+            <field name="type">consu</field>
+            <field name="list_price">1.50</field>
+            <field name="available_in_pos">True</field>
+            <field name="sale_ok">True</field>
+            <field name="purchase_ok">False</field>
+        </record>
+
+        <record id="product_coffee" model="product.product">
+            <field name="name">Coffee</field>
+            <field name="categ_id" ref="product_category_drinks"/>
+            <field name="type">consu</field>
+            <field name="list_price">2.50</field>
+            <field name="available_in_pos">True</field>
+            <field name="sale_ok">True</field>
+            <field name="purchase_ok">False</field>
+        </record>
+
+        <!-- Food -->
+        <record id="product_pizza" model="product.product">
+            <field name="name">Pizza</field>
+            <field name="categ_id" ref="product_category_food"/>
+            <field name="type">consu</field>
+            <field name="list_price">8.00</field>
+            <field name="available_in_pos">True</field>
+            <field name="sale_ok">True</field>
+            <field name="purchase_ok">False</field>
+        </record>
+
+        <record id="product_sandwich" model="product.product">
+            <field name="name">Sandwich</field>
+            <field name="categ_id" ref="product_category_food"/>
+            <field name="type">consu</field>
+            <field name="list_price">5.00</field>
+            <field name="available_in_pos">True</field>
+            <field name="sale_ok">True</field>
+            <field name="purchase_ok">False</field>
+        </record>
+
+        <record id="product_fries" model="product.product">
+            <field name="name">Fries</field>
+            <field name="categ_id" ref="product_category_food"/>
+            <field name="type">consu</field>
+            <field name="list_price">3.00</field>
+            <field name="available_in_pos">True</field>
+            <field name="sale_ok">True</field>
+            <field name="purchase_ok">False</field>
+        </record>
+
+        <record id="product_burger" model="product.product">
+            <field name="name">Burger</field>
+            <field name="categ_id" ref="product_category_food"/>
+            <field name="type">consu</field>
+            <field name="list_price">7.50</field>
+            <field name="available_in_pos">True</field>
+            <field name="sale_ok">True</field>
+            <field name="purchase_ok">False</field>
+        </record>
+
+    </data>
+</odoo>

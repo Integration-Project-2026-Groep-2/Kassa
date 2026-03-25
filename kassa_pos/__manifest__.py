@@ -19,6 +19,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/res_partner_data.xml',
+        'data/product_product_data.xml',
     ],
     'installable': True,
     'application': True,
