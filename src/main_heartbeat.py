@@ -1,32 +1,52 @@
-from connection import RabbitManager
-import datetime
+import logging
+import time
 
-def send_heartbeat():
-    #deze methode maakt een XML-bericht op en stuurt die naar de queue
+from messaging.producer import KassaProducer
+from messaging.message_builders import build_heartbeat_xml
+from config import RABBIT_HOST, HEARTBEAT_QUEUE
 
 
-    #Start de manager en verbind met RabbitMQ
-    rabbit = RabbitManager()
-    rabbit.connect()
-    
-    #maak de XML payload aan met de huidige timestamp
-    xml_payload = f"""<Heartbeat>
-    <serviceName>TeamKassa</serviceName>
-    <status>Alive</status>
-    <timestamp>{datetime.datetime.now().isoformat()}Z</timestamp>
-</Heartbeat>"""
+"""
+Kleine runner die periodiek een Heartbeat-XML opbouwt en naar RabbitMQ publiceert.
 
-    #declareer de queue (zorgt ervoor dat de queue bestaat voordat we er berichten naartoe sturen)
-    rabbit.channel.queue_declare(queue='heartbeat_queue')
-    #verstuur het XML-bericht naar de queue met de naam 'heartbeat_queue'
-    rabbit.channel.basic.publish(exchange='',
-                                 routing_key='heartbeat_queue',
-                                 body=xml_payload
-                                 )
-    print(f" [LOG] Heartbeat verzonden naar RabbitMQ op {datetime.datetime.now().isoformat()}Z")
-    # Sluit de verbinding netjes af
-    rabbit.close()
+Wij gebruiken `KassaProducer` om de verbinding en publicatie te doen;
+`build_heartbeat_xml` leest het XML-template en vult de actuele timestamp.
+
+Start dit bestand direct om een eenvoudige heartbeat-publisher te draaien.
+"""
+
+
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+logger = logging.getLogger(__name__)
+
+
+def run_heartbeat(interval_seconds: int = 10):
+    """Start de producer en verstuur elke `interval_seconds` een heartbeat.
+
+    - Maakt verbinding via `KassaProducer`.
+    - Gebruikt het XML-template uit `templates/Heartbeat.xml`.
+    - Logt succes en fouten.
+    """
+
+    producer = KassaProducer(host=RABBIT_HOST)
+    producer.connect()
+
+    try:
+        while True:
+            # Bouw het XML-bericht (vult timestamp en andere velden)
+            xml = build_heartbeat_xml()
+
+            # Publiceer naar de queue/exchange die in config is ingesteld
+            producer.publish(xml, routing_key=HEARTBEAT_QUEUE)
+            logger.info("Heartbeat verzonden")
+
+            time.sleep(interval_seconds)
+    except KeyboardInterrupt:
+        logger.info("Heartbeat publisher gestopt (KeyboardInterrupt)")
+    finally:
+        producer.close()
+
 
 if __name__ == "__main__":
-    send_heartbeat()
+    run_heartbeat()
     

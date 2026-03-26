@@ -2,9 +2,11 @@ import pika
 
 
 class RabbitManager:
-    """Kleine helperklasse om een RabbitMQ-verbinding en kanaal te beheren.
+    """Helperklasse om een RabbitMQ-verbinding en kanaal te beheren.
 
-    De klasse houdt de host, de open `connection` en het `channel` bij.
+    Gebruik deze klasse om één verbinding en kanaal te openen die
+    gebruikt kan worden door producers en consumers. Dit is een
+    minimale wrapper rond `pika.BlockingConnection`.
     """
 
     def __init__(self, host='localhost'):
@@ -16,15 +18,14 @@ class RabbitManager:
         self.channel = None
 
     def connect(self):
-        # Maakt een blocking verbinding met RabbitMQ aan op de opgegeven host
-        # en opent daarna een kanaal dat gebruikt kan worden voor publish/consume acties.
+        """Maak een blocking verbinding met RabbitMQ en open een kanaal."""
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
         self.channel = self.connection.channel()
 
     def close(self):
-        # Sluit de actieve verbinding veilig af als er een bestaat.
-        # Controle is nodig omdat `close` anders op None zou proberen te worden aangeroepen.
+        """Sluit de verbinding als die bestaat."""
         if self.connection:
             self.connection.close()
+
 
 

@@ -1,37 +1,40 @@
-from connection import RabbitManager
+import logging
 
-def callback(ch, method, properties, body):
-
-    """
-    Deze methode wordt uitgevoerd ELKE KEER als er een bericht binnenkomt.
-    Het body-argument bevat de XML-string.
-    """
-    print(f" [LOG] nieuw bericht ontvangen!:")
-    print(f" [LOG]inhoud:\n {body.decode()}")
-    print("-" * 30)
-
-    def start_receiving():
-
-        
-    #Stelt de consumer in om continu te luisteren naar een specifieke queue.
-
-        rabbit = RabbitManager()
-        rabbit.connect()
-        
-
-        queue_name = 'user_updates'
-        rabbit.channel.queue_declare(queue=queue_name)
-        #koppel de callback functie aan de queue 
-        print(f" [LOG] Wachten op berichten in de queue '{queue_name}'to exit press CTRL+C ...")
+from messaging.consumer import KassaConsumer
+from config import RABBIT_HOST, HEARTBEAT_QUEUE
 
 
-        rabbit.channel.basic_consume(queue=queue_name,
-                                     on_message_callback=callback,
-                                        auto_ack=True)
-#start de luisterprocessen, deze zal blijven draaien totdat het programma wordt gestopt (bijv. met CTRL+C)
-        rabbit.channel.start_consuming()
-        if __name__ == "__main__":
-            start_receiving()
+"""
+Receiver die berichten logt van de heartbeat-queue.
+
+Start deze in een terminal; start daarna `main_heartbeat.py` in een andere
+terminal om te zien binnenkomende heartbeats.
+"""
+
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+logger = logging.getLogger(__name__)
 
 
-       
+def on_message(body: bytes):
+    try:
+        payload = body.decode('utf-8')
+    except Exception:
+        payload = str(body)
+    logger.info("Nieuw bericht ontvangen:\n%s", payload)
+
+
+def run_receiver():
+    consumer = KassaConsumer(host=RABBIT_HOST)
+    consumer.connect()
+    try:
+        consumer.start_listening(queue_name=HEARTBEAT_QUEUE, callback=on_message)
+    except KeyboardInterrupt:
+        logger.info("Receiver gestopt (KeyboardInterrupt)")
+    finally:
+        consumer.close()
+
+
+if __name__ == "__main__":
+    run_receiver()
+
+
