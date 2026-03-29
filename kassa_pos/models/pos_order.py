@@ -2,6 +2,7 @@
 
 import uuid
 from odoo import models, fields, api
+from ..utils import rabbitmq_sender
 
 
 class PosOrder(models.Model):
@@ -123,3 +124,32 @@ class PosOrder(models.Model):
         }
 
         return payment_data
+
+    @api.model
+    def create_from_ui(self, orders, draft=False):
+        """
+        Override van de POS frontend call.
+        Na het verwerken van de order → stuur berichten naar RabbitMQ.
+        """
+        order_ids = super().create_from_ui(orders, draft=draft)
+
+        for order_info in order_ids:
+            order = self.browse(order_info['id'])
+
+            # Alleen versturen als de order betaald/afgerond is (niet bij drafts)
+            if order.state in ('paid', 'done', 'invoiced'):
+                self._trigger_rabbitmq_messages(order)
+
+        return order_ids
+
+    def _trigger_rabbitmq_messages(self, order):
+        """
+        Stuur ConsumptionOrder en PaymentCompleted berichten naar RabbitMQ.
+        """
+        consumption_data = order._export_for_rabbitmq()
+        if consumption_data:
+            rabbitmq_sender.send_consumption_order(consumption_data)
+
+        payment_data = order._export_payment_for_rabbitmq()
+        if payment_data:
+            rabbitmq_sender.send_payment_completed(payment_data)
