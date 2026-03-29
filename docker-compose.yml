@@ -7,7 +7,6 @@ services:
     environment:
       POSTGRES_USER: odoo
       POSTGRES_PASSWORD: odoo
-      POSTGRES_DB: odoo
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

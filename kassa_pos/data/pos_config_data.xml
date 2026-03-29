@@ -39,31 +39,9 @@
         <record id="pos_config_kassa_main" model="pos.config">
             <field name="name">Kassa Main</field>
             <field name="company_id" ref="base.main_company"/>
-
-            <!-- Payment methods -->
             <field name="payment_method_ids" eval="[(6, 0, [ref('payment_method_cash'), ref('payment_method_card'), ref('payment_method_invoice')])]"/>
-
-            <!-- Product and customer settings -->
             <field name="module_pos_restaurant">False</field>
-            <field name="iface_start_categ_id" ref="product_category_drinks"/>
-
-            <!-- Barcode/Scanner settings -->
-            <field name="barcode_scanner">True</field>
-            <field name="iface_scan_via_proxy">False</field>
-
-            <!-- Customer/Partner settings -->
-            <field name="crm_team_id" ref="sales_team.salesteam_website_sales"/>
-
-            <!-- Invoice settings -->
-            <field name="module_pos_restaurant">False</field>
-
-            <!-- Session settings -->
             <field name="cash_control">True</field>
-
-            <!-- Interface settings -->
-            <field name="iface_tipproduct">False</field>
-            <field name="iface_print_auto">False</field>
-            <field name="iface_print_skip_screen">False</field>
         </record>
 
     </data>
