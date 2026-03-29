@@ -27,7 +27,9 @@ class KassaConsumer:
         voor eenvoud; in real-world code wil je mogelijk manuele acknowledgements.
         """
         channel = self._manager.channel
-        channel.queue_declare(queue=queue_name)
+        # durable=True zodat de queue een RabbitMQ-herstart overleeft
+        # én overeenkomt met hoe Odoo de queue declareert (anders: PRECONDITION_FAILED)
+        channel.queue_declare(queue=queue_name, durable=True)
 
         def _on_message(ch, method, properties, body):
             try:

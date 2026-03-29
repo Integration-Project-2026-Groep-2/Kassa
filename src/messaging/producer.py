@@ -34,8 +34,9 @@ class KassaProducer:
         De payload wordt als bytes naar RabbitMQ gestuurd.
         """
         channel = self._manager.channel
-        # Declareren is idempotent: het maakt de queue alleen als die nog niet bestaat
-        channel.queue_declare(queue=routing_key)
+        # durable=True zodat de queue een RabbitMQ-herstart overleeft
+        # én overeenkomt met hoe Odoo de queue declareert (anders: PRECONDITION_FAILED)
+        channel.queue_declare(queue=routing_key, durable=True)
         channel.basic_publish(exchange=exchange, routing_key=routing_key, body=payload.encode('utf-8'))
         logger.debug("Bericht gepubliceerd naar %s", routing_key)
 
