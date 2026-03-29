@@ -10,4 +10,6 @@ RABBIT_HOST = 'localhost'
 # Queue names
 HEARTBEAT_QUEUE = 'heartbeat_queue'
 USER_UPDATES_QUEUE = 'user_updates'
+CONSUMPTION_ORDER_QUEUE = 'ConsumptionOrder'
+PAYMENT_COMPLETED_QUEUE = 'PaymentCompleted'
 #Een centraal bestand voor instellingen zoals het IP-adres van de RabbitMQ server, gebruikersnamen en wachtwoorden.
