@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   db:
@@ -12,9 +10,14 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
-      - "5672:5672"
-      - "15672:15672"   # Management UI: http://localhost:15672 (guest/guest)
+      - "0.0.0.0:5672:5672"
+      - "0.0.0.0:15672:15672"   # Management UI: http://<VM-IP>:15672 (guest/guest)
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -25,7 +28,7 @@ services:
       - db
       - rabbitmq
     ports:
-      - "8069:8069"
+      - "0.0.0.0:8069:8069"
     volumes:
       - ./kassa_pos:/mnt/extra-addons/kassa_pos
       - odoo_data:/var/lib/odoo
@@ -44,6 +47,34 @@ services:
       --db_user=odoo
       --db_password=odoo
       --addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
+
+  pos_receiver:
+    build: .
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    working_dir: /app/src
+    command: python3 main_pos_receiver.py
+    environment:
+      RABBIT_HOST: rabbitmq
+    volumes:
+      - ./src:/app/src
+      - ./templates:/app/templates
+    restart: unless-stopped
+
+  heartbeat:
+    build: .
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    working_dir: /app/src
+    command: python3 main_heartbeat.py
+    environment:
+      RABBIT_HOST: rabbitmq
+    volumes:
+      - ./src:/app/src
+      - ./templates:/app/templates
+    restart: unless-stopped
 
 volumes:
   postgres_data:

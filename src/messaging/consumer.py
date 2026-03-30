@@ -1,5 +1,6 @@
 import logging
 from connection import RabbitManager
+from config import RABBIT_HOST
 
 """Consumer helper die berichten van een queue leest en een callback aanroept.
 
@@ -13,7 +14,7 @@ class KassaConsumer:
     """Eenvoudige consumer die een callback aanroept voor elk bericht."""
 
     def __init__(self, host: str = 'localhost'):
-        self.host = host
+        self.host = host or RABBIT_HOST
         self._manager = RabbitManager(host=self.host)
 
     def connect(self):

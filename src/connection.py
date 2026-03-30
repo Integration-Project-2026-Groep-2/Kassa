@@ -1,4 +1,9 @@
 import pika
+import time
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class RabbitManager:
@@ -19,8 +24,18 @@ class RabbitManager:
 
     def connect(self):
         """Maak een blocking verbinding met RabbitMQ en open een kanaal."""
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
-        self.channel = self.connection.channel()
+        # Use 127.0.0.1 to explicitly bind to IPv4 local interface
+        resolved_host = '127.0.0.1' if self.host == 'localhost' else self.host
+
+        # Retry loop: RabbitMQ container kan al "healthy" zijn terwijl AMQP nog opstart.
+        while True:
+            try:
+                self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=resolved_host))
+                self.channel = self.connection.channel()
+                return
+            except pika.exceptions.AMQPConnectionError:
+                logger.warning("RabbitMQ nog niet bereikbaar op host '%s', opnieuw proberen in 2s...", resolved_host)
+                time.sleep(2)
 
     def close(self):
         """Sluit de verbinding als die bestaat."""
