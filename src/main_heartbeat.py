@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
 
-def run_heartbeat(interval_seconds: int = 10):
+def run_heartbeat(interval_seconds: int = 1):
     """Start de producer en verstuur elke `interval_seconds` een heartbeat.
 
     - Maakt verbinding via `KassaProducer`.
