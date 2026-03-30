@@ -7,8 +7,8 @@ Plaats hier eenvoudige constants zoals hostnamen en queue-namen.
 # RabbitMQ host (pas aan naar uw omgeving)
 RABBIT_HOST = 'localhost'
 
-# Queue names
-HEARTBEAT_QUEUE = 'heartbeat_queue'
+# Queue names / Routing keys
+HEARTBEAT_QUEUE = 'heartbeat.direct'
 USER_UPDATES_QUEUE = 'user_updates'
 CONSUMPTION_ORDER_QUEUE = 'ConsumptionOrder'
 PAYMENT_COMPLETED_QUEUE = 'PaymentCompleted'
