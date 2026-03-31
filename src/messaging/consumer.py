@@ -1,6 +1,6 @@
 import logging
 from connection import RabbitManager
-from config import RABBIT_HOST
+from config import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
 
 """Consumer helper die berichten van een queue leest en een callback aanroept.
 
@@ -15,7 +15,13 @@ class KassaConsumer:
 
     def __init__(self, host: str = 'localhost'):
         self.host = host or RABBIT_HOST
-        self._manager = RabbitManager(host=self.host)
+        self._manager = RabbitManager(
+            host=self.host,
+            port=RABBIT_PORT,
+            user=RABBIT_USER,
+            password=RABBIT_PASSWORD,
+            vhost=RABBIT_VHOST,
+        )
 
     def connect(self):
         """Open de verbinding en het kanaal."""

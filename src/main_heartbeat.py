@@ -3,7 +3,7 @@ import time
 
 from messaging.producer import KassaProducer
 from messaging.message_builders import build_heartbeat_xml
-from config import RABBIT_HOST, HEARTBEAT_QUEUE
+from config import RABBIT_HOST, HEARTBEAT_QUEUE, HEARTBEAT_INTERVAL_SECONDS
 
 
 """
@@ -48,5 +48,5 @@ def run_heartbeat(interval_seconds: int = 1):
 
 
 if __name__ == "__main__":
-    run_heartbeat()
+    run_heartbeat(interval_seconds=HEARTBEAT_INTERVAL_SECONDS)
     

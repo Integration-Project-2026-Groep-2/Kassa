@@ -3,8 +3,8 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_USER: odoo
-      POSTGRES_PASSWORD: odoo
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -16,11 +16,12 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      - "0.0.0.0:5672:5672"
-      - "0.0.0.0:15672:15672"   # Management UI: http://<VM-IP>:15672 (guest/guest)
+      - "0.0.0.0:${RABBIT_PORT:-5672}:5672"
+      - "0.0.0.0:${RABBIT_MANAGEMENT_PORT:-15672}:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:-guest}
+      RABBITMQ_DEFAULT_VHOST: ${RABBIT_VHOST:-/}
 
   odoo:
     build: .
@@ -28,19 +29,19 @@ services:
       - db
       - rabbitmq
     ports:
-      - "0.0.0.0:8069:8069"
+      - "0.0.0.0:${ODOO_PORT:-8069}:8069"
     volumes:
       - ./kassa_pos:/mnt/extra-addons/kassa_pos
       - odoo_data:/var/lib/odoo
     environment:
       HOST: db
-      USER: odoo
-      PASSWORD: odoo
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USER: guest
-      RABBITMQ_PASS: guest
-      RABBITMQ_VHOST: /
+      USER: ${POSTGRES_USER:-odoo}
+      PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      RABBITMQ_HOST: ${RABBIT_HOST:-rabbitmq}
+      RABBITMQ_PORT: ${RABBIT_PORT:-5672}
+      RABBITMQ_USER: ${RABBIT_USER:-guest}
+      RABBITMQ_PASS: ${RABBIT_PASSWORD:-guest}
+      RABBITMQ_VHOST: ${RABBIT_VHOST:-/}
     command: >
       odoo
       --db_host=db
@@ -56,7 +57,11 @@ services:
     working_dir: /app/src
     command: python3 main_pos_receiver.py
     environment:
-      RABBIT_HOST: rabbitmq
+      RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
+      RABBIT_PORT: ${RABBIT_PORT:-5672}
+      RABBIT_USER: ${RABBIT_USER:-guest}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
+      RABBIT_VHOST: ${RABBIT_VHOST:-/}
     volumes:
       - ./src:/app/src
       - ./templates:/app/templates
@@ -70,7 +75,12 @@ services:
     working_dir: /app/src
     command: python3 main_heartbeat.py
     environment:
-      RABBIT_HOST: rabbitmq
+      RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
+      RABBIT_PORT: ${RABBIT_PORT:-5672}
+      RABBIT_USER: ${RABBIT_USER:-guest}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
+      RABBIT_VHOST: ${RABBIT_VHOST:-/}
+      HEARTBEAT_INTERVAL_SECONDS: ${HEARTBEAT_INTERVAL_SECONDS:-1}
     volumes:
       - ./src:/app/src
       - ./templates:/app/templates
