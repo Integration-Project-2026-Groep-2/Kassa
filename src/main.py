@@ -12,7 +12,7 @@ Opstarten:
 
 Vereisten:
     - RabbitMQ draait (lokaal: docker compose up rabbitmq, of VM-adres in .env)
-    - .env correct ingevuld met RABBITMQ_URL
+    - .env correct ingevuld (RABBIT_HOST, RABBIT_USER, RABBIT_PASSWORD, ...)
 """
 
 import asyncio
@@ -31,12 +31,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-RABBITMQ_URL = os.environ.get('RABBITMQ_URL', 'amqp://guest:guest@localhost/')
+_host     = os.environ.get('RABBIT_HOST', 'localhost')
+_port     = os.environ.get('RABBIT_PORT', '5672')
+_user     = os.environ.get('RABBIT_USER', 'guest')
+_password = os.environ.get('RABBIT_PASSWORD', 'guest')
+_vhost    = os.environ.get('RABBIT_VHOST', '/')
+
+RABBITMQ_URL = f"amqp://{_user}:{_password}@{_host}:{_port}/{_vhost.lstrip('/')}"
 
 
 async def main() -> None:
     logger.info("Kassa integratieservice opgestart")
-    logger.info("Verbinding maken met RabbitMQ op %s ...", RABBITMQ_URL)
+    logger.info("Verbinding maken met RabbitMQ op %s:%s ...", _host, _port)
 
     # connect_robust herverbindt automatisch bij een RabbitMQ-herstart
     connection = await aio_pika.connect_robust(RABBITMQ_URL)

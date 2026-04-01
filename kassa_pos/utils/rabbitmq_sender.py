@@ -8,11 +8,11 @@ import xml.etree.ElementTree as ET
 _logger = logging.getLogger(__name__)
 
 # RabbitMQ-verbindingsinstellingen komen uit omgevingsvariabelen (zie docker-compose.yml)
-RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST', 'localhost')
-RABBITMQ_PORT = int(os.environ.get('RABBITMQ_PORT', 5672))
-RABBITMQ_USER = os.environ.get('RABBITMQ_USER', 'guest')
-RABBITMQ_PASS = os.environ.get('RABBITMQ_PASS', 'guest')
-RABBITMQ_VHOST = os.environ.get('RABBITMQ_VHOST', '/')
+RABBITMQ_HOST = os.environ.get('RABBIT_HOST', 'localhost')
+RABBITMQ_PORT = int(os.environ.get('RABBIT_PORT', 5672))
+RABBITMQ_USER = os.environ.get('RABBIT_USER', 'guest')
+RABBITMQ_PASS = os.environ.get('RABBIT_PASSWORD', 'guest')
+RABBITMQ_VHOST = os.environ.get('RABBIT_VHOST', '/')
 
 # Queue namen conform Team Kassa contractoverzicht
 QUEUE_PAYMENT_CONFIRMED = 'kassa.payment.confirmed'   # Contract 16 → CRM
