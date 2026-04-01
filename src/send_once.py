@@ -5,6 +5,6 @@ from config import RABBIT_HOST, HEARTBEAT_QUEUE
 if __name__ == '__main__':
     p = KassaProducer(host=RABBIT_HOST)
     p.connect()
-    p.publish(build_heartbeat_xml(), routing_key=HEARTBEAT_QUEUE)
+    p.publish(build_heartbeat_xml(), routing_key=HEARTBEAT_QUEUE, durable=False)
     p.close()
     print('Sent one heartbeat')
