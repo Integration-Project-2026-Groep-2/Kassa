@@ -20,26 +20,19 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
 
-def run_heartbeat(interval_seconds: int = 10):
-    """Start de producer en verstuur elke `interval_seconds` een heartbeat.
-
-    - Maakt verbinding via `KassaProducer`.
-    - Gebruikt het XML-template uit `templates/Heartbeat.xml`.
-    - Logt succes en fouten.
+def run_heartbeat(interval_seconds: int = 1):
     """
-
+    Start de producer en verstuur elke seconde een heartbeat.
+    Contract 7: kassa.heartbeat | durable: false | interval: 1s
+    """
     producer = KassaProducer(host=RABBIT_HOST)
     producer.connect()
 
     try:
         while True:
-            # Bouw het XML-bericht (vult timestamp en andere velden)
             xml = build_heartbeat_xml()
-
-            # Publiceer naar de queue/exchange die in config is ingesteld
-            producer.publish(xml, routing_key=HEARTBEAT_QUEUE)
+            producer.publish(xml, routing_key=HEARTBEAT_QUEUE, durable=False)
             logger.info("Heartbeat verzonden")
-
             time.sleep(interval_seconds)
     except KeyboardInterrupt:
         logger.info("Heartbeat publisher gestopt (KeyboardInterrupt)")
