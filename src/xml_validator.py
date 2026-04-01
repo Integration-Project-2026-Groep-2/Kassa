@@ -42,7 +42,7 @@ def validate_xml(xml_string: str) -> tuple[bool, str | None]:
     Valideer een XML-string tegen het Kassa master schema.
 
     Returns:
-        (True, None)          als het bericht geldig is
+        (True, None)           als het bericht geldig is
         (False, error_message) als het bericht ongeldig is
     """
     if _schema is None:
@@ -56,3 +56,24 @@ def validate_xml(xml_string: str) -> tuple[bool, str | None]:
         return False, str(e)
     except etree.XMLSyntaxError as e:
         return False, f"XML syntax fout: {e}"
+
+
+def validate(xml_bytes: bytes) -> None:
+    """
+    Valideer XML-bytes tegen het Kassa master schema.
+    Zelfde contract als de andere teams (CRM, Facturatie, ...):
+    raises ValueError bij een ongeldig bericht.
+
+    Gebruik dit in async code (heartbeat, status, sender).
+    Gebruik validate_xml() als je een (bool, str) tuple nodig hebt.
+    """
+    if _schema is None:
+        return
+
+    try:
+        doc = etree.fromstring(xml_bytes)
+        _schema.assertValid(doc)
+    except etree.DocumentInvalid as e:
+        raise ValueError(f"Ongeldig XML-bericht: {e}") from e
+    except etree.XMLSyntaxError as e:
+        raise ValueError(f"XML syntax fout: {e}") from e
