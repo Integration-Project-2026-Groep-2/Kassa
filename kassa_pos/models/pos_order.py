@@ -25,19 +25,16 @@ class PosOrder(models.Model):
     def _compute_payment_type(self):
         """
         Bepaal payment type op basis van payment methods:
-        - Cash of Card = Direct
+        - Cash of Bancontact = Direct
         - Invoice = Invoice
         """
         for order in self:
             payment_type = 'Direct'  # Default
 
             if order.payment_ids:
-                # Check alle payment methods van deze order
                 for payment in order.payment_ids:
                     if payment.payment_method_id:
                         payment_name = payment.payment_method_id.name.lower()
-
-                        # Als één van de payments "invoice" is, dan is hele order Invoice type
                         if 'invoice' in payment_name:
                             payment_type = 'Invoice'
                             break
@@ -46,84 +43,64 @@ class PosOrder(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """
-        Override create om UUID te genereren voor order_id_custom
-        """
+        """Override create om UUID te genereren voor order_id_custom."""
         for vals in vals_list:
             if not vals.get('order_id_custom'):
                 vals['order_id_custom'] = str(uuid.uuid4())
 
         return super(PosOrder, self).create(vals_list)
 
-    def _export_for_rabbitmq(self):
+    def _build_payment_confirmed_data(self):
         """
-        Helper method om order data te exporteren in formaat voor RabbitMQ
-        Deze methode kan door Developer 2 worden gebruikt
+        Bouw het data-dict voor Contract 16 (PaymentConfirmed → CRM).
 
-        Returns dict met structuur zoals in ConsumptionOrder.xml
+        Verplichte velden: email, amount, currency, paidAt
+        Optionele velden: userId
         """
         self.ensure_one()
 
-        # Get user/customer data
         partner = self.partner_id
-        user_id = partner.user_id_custom if partner else None
 
-        # Get order items
+        return {
+            'userId': partner.user_id_custom if partner else None,
+            'email': partner.email if partner else '',
+            'amount': self.amount_total,
+            'currency': 'EUR',
+            'paidAt': self.date_order.strftime('%Y-%m-%dT%H:%M:%SZ') if self.date_order else None,
+        }
+
+    def _build_invoice_requested_data(self):
+        """
+        Bouw het data-dict voor Contract K-01 (InvoiceRequested → Facturatie).
+        Alleen aanroepen als paymentType=Invoice en klant gelinkt aan een bedrijf.
+
+        Verplichte velden: orderId, userId, companyId, amount, currency, orderedAt, items
+        """
+        self.ensure_one()
+
+        partner = self.partner_id
+
         items = []
         for line in self.lines:
             items.append({
                 'productName': line.product_id.name,
-                'quantity': line.qty,
-                'price': line.price_unit,
+                'quantity': int(line.qty),
+                'unitPrice': line.price_unit,
             })
 
-        # Build order data structure
-        order_data = {
+        company = partner.parent_id if (partner and partner.parent_id) else None
+
+        return {
             'orderId': self.order_id_custom,
-            'userId': user_id,
-            'items': items,
-            'totalAmount': self.amount_total,
-            'paymentType': self.payment_type,
-            'timestamp': self.date_order.isoformat() if self.date_order else None,
-        }
-
-        return order_data
-
-    def _export_payment_for_rabbitmq(self):
-        """
-        Helper method om payment data te exporteren voor RabbitMQ
-        Deze methode kan door Developer 2 worden gebruikt
-
-        Returns dict met structuur zoals in PaymentCompleted.xml
-        """
-        self.ensure_one()
-
-        # Get primary payment (kan meerdere zijn, neem eerste)
-        payment = self.payment_ids[0] if self.payment_ids else None
-
-        if not payment:
-            return None
-
-        partner = self.partner_id
-        user_id = partner.user_id_custom if partner else None
-
-        # Determine payment method name
-        payment_method_name = payment.payment_method_id.name if payment.payment_method_id else 'Unknown'
-
-        # Clean up payment method name (remove "(Direct)" suffix etc)
-        if '(' in payment_method_name:
-            payment_method_name = payment_method_name.split('(')[0].strip()
-
-        payment_data = {
-            'paymentId': str(uuid.uuid4()),  # Generate payment UUID
-            'orderId': self.order_id_custom,
-            'userId': user_id,
-            'paymentMethod': payment_method_name,
+            'userId': partner.user_id_custom if partner else '',
+            'companyId': partner.company_id_custom if partner else '',
             'amount': self.amount_total,
-            'timestamp': self.date_order.isoformat() if self.date_order else None,
+            'currency': 'EUR',
+            'orderedAt': self.date_order.strftime('%Y-%m-%dT%H:%M:%SZ') if self.date_order else None,
+            'items': items,
+            'email': partner.email if partner else None,
+            'companyName': company.name if company else None,
         }
-
-        return payment_data
 
     @api.model
     def create_from_ui(self, orders, draft=False):
@@ -136,7 +113,6 @@ class PosOrder(models.Model):
         for order_info in order_ids:
             order = self.browse(order_info['id'])
 
-            # Alleen versturen als de order betaald/afgerond is (niet bij drafts)
             if order.state in ('paid', 'done', 'invoiced'):
                 self._trigger_rabbitmq_messages(order)
 
@@ -144,12 +120,18 @@ class PosOrder(models.Model):
 
     def _trigger_rabbitmq_messages(self, order):
         """
-        Stuur ConsumptionOrder en PaymentCompleted berichten naar RabbitMQ.
-        """
-        consumption_data = order._export_for_rabbitmq()
-        if consumption_data:
-            rabbitmq_sender.send_consumption_order(consumption_data)
+        Stuur de correcte berichten naar RabbitMQ op basis van paymentType:
 
-        payment_data = order._export_payment_for_rabbitmq()
-        if payment_data:
-            rabbitmq_sender.send_payment_completed(payment_data)
+        - Altijd: PaymentConfirmed → kassa.payment.confirmed (Contract 16, naar CRM)
+        - Alleen bij Invoice + bedrijfskoppeling:
+          InvoiceRequested → kassa.invoice.requested (Contract K-01, naar Facturatie)
+        """
+        # Contract 16 — altijd versturen bij betaalde order
+        payment_data = order._build_payment_confirmed_data()
+        if payment_data.get('email'):
+            rabbitmq_sender.send_payment_confirmed(payment_data)
+
+        # Contract K-01 — alleen bij Invoice-betaling gelinkt aan een bedrijf
+        if order.payment_type == 'Invoice' and order.partner_id and order.partner_id.company_id_custom:
+            invoice_data = order._build_invoice_requested_data()
+            rabbitmq_sender.send_invoice_requested(invoice_data)
