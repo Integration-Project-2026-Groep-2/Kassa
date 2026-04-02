@@ -47,6 +47,8 @@ async def run_app() -> None:
         rabbitmq=rabbitmq,
         validator=validator,
         system_name=settings.system_name,
+        heartbeat_exchange=settings.heartbeat_exchange,
+        heartbeat_routing_key=settings.heartbeat_routing_key,
         logger=logger,
     )
 
