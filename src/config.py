@@ -17,6 +17,8 @@ class Settings:
     odoo_username: str
     odoo_password: str
     heartbeat_interval_seconds: int
+    heartbeat_exchange: str
+    heartbeat_routing_key: str
     status_check_interval_seconds: int
     system_name: str
     log_level: str
@@ -31,6 +33,8 @@ class Settings:
             odoo_username=os.getenv("ODOO_USERNAME", "admin"),
             odoo_password=os.getenv("ODOO_PASSWORD", "changeme"),
             heartbeat_interval_seconds=int(os.getenv("HEARTBEAT_INTERVAL_SECONDS", "1")),
+            heartbeat_exchange=os.getenv("HEARTBEAT_EXCHANGE", "heartbeat.direct"),
+            heartbeat_routing_key=os.getenv("HEARTBEAT_ROUTING_KEY", "heartbeat.direct"),
             status_check_interval_seconds=int(os.getenv("STATUS_CHECK_INTERVAL_SECONDS", "30")),
             system_name=os.getenv("SYSTEM_NAME", "KASSA"),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
