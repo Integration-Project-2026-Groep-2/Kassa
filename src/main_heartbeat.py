@@ -3,7 +3,13 @@ import time
 
 from messaging.producer import KassaProducer
 from messaging.message_builders import build_heartbeat_xml
-from config import RABBIT_HOST, HEARTBEAT_QUEUE, HEARTBEAT_INTERVAL_SECONDS
+from config import (
+    RABBIT_HOST,
+    HEARTBEAT_QUEUE,
+    HEARTBEAT_INTERVAL_SECONDS,
+    HEARTBEAT_EXCHANGE,
+    HEARTBEAT_ROUTING_KEY,
+)
 
 
 """
@@ -36,8 +42,13 @@ def run_heartbeat(interval_seconds: int = 1):
             # Bouw het XML-bericht (vult timestamp en andere velden)
             xml = build_heartbeat_xml()
 
-            # Publiceer naar de queue/exchange die in config is ingesteld
-            producer.publish(xml, routing_key=HEARTBEAT_QUEUE)
+            # Publiceer expliciet naar de heartbeat exchange.
+            producer.publish(
+                xml,
+                routing_key=HEARTBEAT_ROUTING_KEY,
+                exchange=HEARTBEAT_EXCHANGE,
+                queue_name=HEARTBEAT_QUEUE,
+            )
             logger.info("Heartbeat verzonden")
 
             time.sleep(interval_seconds)
