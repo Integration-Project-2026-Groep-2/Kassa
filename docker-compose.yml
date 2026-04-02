@@ -3,8 +3,9 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-odoo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      POSTGRES_DB: ${POSTGRES_DB:-kassa_db}
+      POSTGRES_USER: ${POSTGRES_USER:-kassa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kassa}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -34,9 +35,9 @@ services:
       - ./kassa_pos:/mnt/extra-addons/kassa_pos
       - odoo_data:/var/lib/odoo
     environment:
-      HOST: db
-      USER: ${POSTGRES_USER:-odoo}
-      PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      HOST: ${DB_HOST:-db}
+      USER: ${POSTGRES_USER:-kassa}
+      PASSWORD: ${POSTGRES_PASSWORD:-kassa}
       RABBITMQ_HOST: ${RABBIT_HOST:-rabbitmq}
       RABBITMQ_PORT: ${RABBIT_PORT:-5672}
       RABBITMQ_USER: ${RABBIT_USER:-guest}
@@ -44,10 +45,12 @@ services:
       RABBITMQ_VHOST: ${RABBIT_VHOST:-/}
     command: >
       odoo
-      --db_host=db
-      --db_user=odoo
-      --db_password=odoo
+      --db_host=${DB_HOST:-db}
+      --db_port=${DB_PORT:-5432}
+      --db_user=${POSTGRES_USER:-kassa}
+      --db_password=${POSTGRES_PASSWORD:-kassa}
       --addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
+      --db-filter=^${POSTGRES_DB:-kassa_db}$
 
   pos_receiver:
     build: .
@@ -62,9 +65,6 @@ services:
       RABBIT_USER: ${RABBIT_USER:-guest}
       RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
       RABBIT_VHOST: ${RABBIT_VHOST:-/}
-    volumes:
-      - ./src:/app/src
-      - ./templates:/app/templates
     restart: unless-stopped
 
   heartbeat:
@@ -84,9 +84,6 @@ services:
       HEARTBEAT_EXCHANGE: ${HEARTBEAT_EXCHANGE:-heartbeat.direct}
       HEARTBEAT_ROUTING_KEY: ${HEARTBEAT_ROUTING_KEY:-routing.heartbeat}
       HEARTBEAT_QUEUE: ${HEARTBEAT_QUEUE:-heartbeat_queue}
-    volumes:
-      - ./src:/app/src
-      - ./templates:/app/templates
     restart: unless-stopped
 
 volumes:
