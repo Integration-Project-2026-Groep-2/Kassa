@@ -4,6 +4,7 @@ import logging
 from typing import Awaitable, Callable, Optional
 
 import aio_pika
+from aio_pika import ExchangeType
 from aio_pika.abc import AbstractIncomingMessage
 
 
@@ -34,7 +35,13 @@ class RabbitMQClient:
             raise RuntimeError("RabbitMQ channel is not connected.")
         return await self.channel.declare_queue(queue_name, durable=durable)
 
-    async def publish(self, routing_key: str, body: bytes, durable: bool = True) -> None:
+    async def publish(
+        self,
+        routing_key: str,
+        body: bytes,
+        durable: bool = True,
+        exchange_name: str = "",
+    ) -> None:
         if self.channel is None:
             raise RuntimeError("RabbitMQ channel is not connected.")
 
@@ -50,8 +57,25 @@ class RabbitMQClient:
             delivery_mode=delivery_mode,
         )
 
-        await self.channel.default_exchange.publish(message, routing_key=routing_key)
-        self.logger.info("Published message to '%s'.", routing_key)
+        if exchange_name:
+            exchange = await self.channel.declare_exchange(
+                exchange_name,
+                ExchangeType.DIRECT,
+                durable=True,
+            )
+        else:
+            exchange = self.channel.default_exchange
+
+        await exchange.publish(message, routing_key=routing_key)
+
+        if exchange_name:
+            self.logger.info(
+                "Published message to exchange '%s' with routing key '%s'.",
+                exchange_name,
+                routing_key,
+            )
+        else:
+            self.logger.info("Published message to '%s'.", routing_key)
 
     async def consume(
         self,

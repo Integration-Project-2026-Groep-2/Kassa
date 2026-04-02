@@ -22,20 +22,40 @@ class KassaSender:
         rabbitmq: RabbitMQClient,
         validator: XMLValidator,
         system_name: str,
+        heartbeat_exchange: str,
+        heartbeat_routing_key: str,
         logger: Optional[logging.Logger] = None,
     ) -> None:
         self.rabbitmq = rabbitmq
         self.validator = validator
         self.system_name = system_name
+        self.heartbeat_exchange = heartbeat_exchange
+        self.heartbeat_routing_key = heartbeat_routing_key
         self.logger = logger or logging.getLogger(__name__)
 
-    async def _publish(self, queue_name: str, xml_bytes: bytes, durable: bool) -> None:
+    async def _publish(
+        self,
+        routing_key: str,
+        xml_bytes: bytes,
+        durable: bool,
+        exchange_name: str = "",
+    ) -> None:
         self.validator.validate(xml_bytes)
-        await self.rabbitmq.publish(queue_name, xml_bytes, durable=durable)
+        await self.rabbitmq.publish(
+            routing_key=routing_key,
+            body=xml_bytes,
+            durable=durable,
+            exchange_name=exchange_name,
+        )
 
     async def publish_heartbeat(self, timestamp: datetime) -> None:
         xml_bytes = build_heartbeat_xml(self.system_name, timestamp)
-        await self._publish("kassa.heartbeat", xml_bytes, durable=False)
+        await self._publish(
+            routing_key=self.heartbeat_routing_key,
+            xml_bytes=xml_bytes,
+            durable=False,
+            exchange_name=self.heartbeat_exchange,
+        )
 
     async def publish_status_check(
         self,
