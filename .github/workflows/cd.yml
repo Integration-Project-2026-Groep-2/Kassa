@@ -5,7 +5,6 @@ on:
     branches: [dev]
 
 env:
-  SERVICE_NAME: kassa
   IMAGE: ghcr.io/integration-project-2026-groep-2/kassa
 
 jobs:
@@ -46,4 +45,21 @@ jobs:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
-          script: ${{ env.SERVICE_NAME }}
+          script: |
+            set -euo pipefail
+
+            DEPLOY_DIR="${{ secrets.DEV_DEPLOY_DIR }}"
+            if [ -z "${DEPLOY_DIR}" ]; then
+              DEPLOY_DIR="$HOME/Infra"
+            fi
+
+            cd "$DEPLOY_DIR"
+
+            # Forceer exacte sync met remote zodat lokale wijzigingen deploy niet blokkeren.
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+
+            docker compose pull || true
+            docker compose up -d --build
+            docker compose ps
