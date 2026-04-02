@@ -24,15 +24,19 @@ def _now_iso() -> str:
 
 # -- Heartbeat ------------------------------------------------------------------
 
-def build_heartbeat_xml(service_name: str = 'TeamKassa') -> str:
+def build_heartbeat_xml(service_id: str = 'TeamKassa') -> str:
     """Bouw een Heartbeat XML-bericht met de actuele timestamp."""
     raw = _read_template_text(TEMPLATE_PATH)
     root = ET.fromstring(raw)
 
-    sn = root.find('serviceName')
-    if sn is None:
-        sn = ET.SubElement(root, 'serviceName')
-    sn.text = service_name
+    sid = root.find('serviceId')
+    if sid is None:
+        sid = ET.SubElement(root, 'serviceId')
+    sid.text = service_id
+
+    legacy = root.find('serviceName')
+    if legacy is not None:
+        root.remove(legacy)
 
     ts = root.find('timestamp')
     if ts is None:
