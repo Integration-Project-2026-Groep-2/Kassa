@@ -27,7 +27,7 @@ RABBIT_VHOST = os.getenv('RABBIT_VHOST', '/')
 # Heartbeat instellingen
 HEARTBEAT_INTERVAL_SECONDS = _get_int_env('HEARTBEAT_INTERVAL_SECONDS', 1)
 HEARTBEAT_EXCHANGE = os.getenv('HEARTBEAT_EXCHANGE', 'heartbeat.direct')
-HEARTBEAT_ROUTING_KEY = os.getenv('HEARTBEAT_ROUTING_KEY', 'heartbeat.direct')
+HEARTBEAT_ROUTING_KEY = os.getenv('HEARTBEAT_ROUTING_KEY', 'routing.heartbeat')
 
 # Queue names / Routing keys
 HEARTBEAT_QUEUE = os.getenv('HEARTBEAT_QUEUE', 'heartbeat.direct')
