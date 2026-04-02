@@ -36,6 +36,12 @@ def run_heartbeat(interval_seconds: int = 1):
 
     producer = KassaProducer(host=RABBIT_HOST)
     producer.connect()
+    logger.info(
+        "Heartbeat route: exchange='%s', routing_key='%s', queue='%s'",
+        HEARTBEAT_EXCHANGE,
+        HEARTBEAT_ROUTING_KEY,
+        HEARTBEAT_QUEUE,
+    )
 
     try:
         while True:
