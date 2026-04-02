@@ -6,6 +6,10 @@ Regels (conform documentatie):
 - Foutieve berichten worden gelogd als error, veroorzaken nooit een crash
 - Ontvangst blokkeert de POS-flow nooit
 - Volledige replace bij user/company updates (geen partial merge)
+
+Integreert ook:
+- User CRUD operations (Integration Service)
+- Ontvangst van user creates/updates vanaf CRM
 """
 
 import asyncio
@@ -16,8 +20,14 @@ from aio_pika.abc import AbstractRobustConnection
 from lxml import etree
 
 from xml_validator import validate_xml
+from models.user import UserStore
+from messaging.user_consumer import UserConsumer
 
 logger = logging.getLogger(__name__)
+
+# Global user store and consumer (initialized in run_receiver)
+_user_store: UserStore | None = None
+_user_consumer: UserConsumer | None = None
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -161,6 +171,56 @@ async def on_company_deactivated(message: aio_pika.IncomingMessage) -> None:
         )
 
 
+# ── User CRUD handlers ──────────────────────────────────────────────────────
+
+async def on_user_message(message: aio_pika.IncomingMessage) -> None:
+    """
+    Handle User, UserCreated, UserUpdated, or UserDeleted messages.
+    Uses the global UserConsumer to process and store user data.
+    """
+    async with message.process():
+        if _user_consumer is None:
+            logger.error("UserConsumer not initialized")
+            return
+        
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("Integration User: could not decode message as UTF-8")
+            return
+        
+        success = _user_consumer.process_user_message(xml_string)
+        if not success:
+            logger.error("Failed to process user message")
+            return
+        
+        logger.info("User message processed successfully")
+
+
+async def on_user_confirmed_integration(message: aio_pika.IncomingMessage) -> None:
+    """
+    Handle UserConfirmed messages from CRM for integration service.
+    Updates or creates user in the local store.
+    """
+    async with message.process():
+        if _user_consumer is None:
+            logger.error("UserConsumer not initialized")
+            return
+        
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("Integration UserConfirmed: could not decode message as UTF-8")
+            return
+        
+        success = _user_consumer.process_user_message(xml_string)
+        if not success:
+            logger.error("Failed to process UserConfirmed message")
+            return
+        
+        logger.info("UserConfirmed message processed for integration store")
+
+
 # ── Queue configuratie ─────────────────────────────────────────────────────────
 
 # (queue_name, durable, handler)
@@ -174,6 +234,11 @@ QUEUE_HANDLERS = [
     ("crm.company.updated",             True,  on_company_updated),
     ("crm.user.deactivated",            True,  on_user_deactivated),
     ("crm.company.deactivated",         True,  on_company_deactivated),
+    # Integration Service User CRUD queues
+    ("integration.user.created",        True,  on_user_message),
+    ("integration.user.updated",        True,  on_user_message),
+    ("integration.user.deleted",        True,  on_user_message),
+    ("crm.user.confirmed",              True,  on_user_confirmed_integration),
 ]
 
 
@@ -181,9 +246,20 @@ QUEUE_HANDLERS = [
 
 async def run_receiver(connection: AbstractRobustConnection) -> None:
     """
-    Start de async receiver voor alle inkomende queues (R1–R3).
+    Start de async receiver voor alle inkomende queues (R1–R3) en integratie service.
     Elke queue krijgt zijn eigen consumer. Draait voor altijd.
+    
+    Initialiseert ook het UserStore en UserConsumer voor CRUD operations.
     """
+    global _user_store, _user_consumer
+    
+    # Initialize user store and consumer
+    _user_store = UserStore()
+    _user_consumer = UserConsumer(
+        _user_store,
+        on_error=lambda msg_type, error: logger.error(f"User {msg_type} error: {error}")
+    )
+    logger.info("UserStore and UserConsumer initialized")
     logger.info("Receiver task gestart — luistert op %d queues", len(QUEUE_HANDLERS))
 
     channel = await connection.channel()

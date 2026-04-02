@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+User Contact Data for Kassa Integration Service
+This data file provides sample users that can be imported into the Odoo POS system
+for testing and demonstration of the user CRUD functionality.
+
+Fields:
+- user_id_custom: UUID for user identification in the integration system
+- badge_code: Badge/barcode code for scanner functionality
+- name: Contact name (firstName + lastName)
+- email: Contact email address
+- role: User role (Customer, Cashier, Admin, etc.)
+- company_id: Link to a company (optional)
+
+This file is loaded via the Odoo manifest and provides initial test data.
+-->
+<odoo>
+    <data noupdate="0">
+
+        <!-- Sample User 1: Regular Customer -->
+        <record id="contact_shemsedine_boughaleb" model="res.partner">
+            <field name="name">Shemsedine Boughaleb</field>
+            <field name="email">shems@example.com</field>
+            <field name="user_id_custom">550e8400-e29b-41d4-a716-446655440000</field>
+            <field name="badge_code">QR784512</field>
+            <field name="role">Customer</field>
+            <field name="is_company" eval="False"/>
+            <field name="customer" eval="True"/>
+        </record>
+
+        <!-- Sample User 2: Cashier -->
+        <record id="contact_john_cashier" model="res.partner">
+            <field name="name">John Smith</field>
+            <field name="email">john.smith@kassa.com</field>
+            <field name="user_id_custom">660e8400-e29b-41d4-a716-446655440001</field>
+            <field name="badge_code">QR123456</field>
+            <field name="role">Cashier</field>
+            <field name="is_company" eval="False"/>
+            <field name="customer" eval="False"/>
+        </record>
+
+        <!-- Sample User 3: Admin -->
+        <record id="contact_admin_user" model="res.partner">
+            <field name="name">Alice Admin</field>
+            <field name="email">admin@kassa.com</field>
+            <field name="user_id_custom">770e8400-e29b-41d4-a716-446655440002</field>
+            <field name="badge_code">QR999999</field>
+            <field name="role">Admin</field>
+            <field name="is_company" eval="False"/>
+            <field name="customer" eval="False"/>
+        </record>
+
+        <!-- Sample User 4: Company Contact -->
+        <record id="contact_company_representative" model="res.partner">
+            <field name="name">Bob Company</field>
+            <field name="email">bob@company.com</field>
+            <field name="user_id_custom">880e8400-e29b-41d4-a716-446655440003</field>
+            <field name="badge_code">QR555555</field>
+            <field name="role">Customer</field>
+            <field name="company_id_custom">9c21f4e1-8b2e-4d71-a7a2-6f8cbbf81c10</field>
+            <field name="is_company" eval="False"/>
+            <field name="customer" eval="True"/>
+        </record>
+
+        <!-- Sample User 5: Event Speaker -->
+        <record id="contact_speaker_event" model="res.partner">
+            <field name="name">Carol Speaker</field>
+            <field name="email">carol@speaker.com</field>
+            <field name="user_id_custom">990e8400-e29b-41d4-a716-446655440004</field>
+            <field name="badge_code">QR777777</field>
+            <field name="role">Customer</field>
+            <field name="is_company" eval="False"/>
+            <field name="customer" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

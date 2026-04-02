@@ -1,11 +1,12 @@
 import datetime
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import Dict, Optional, Tuple
 
 """
 Helpers om XML-berichten te bouwen voor RabbitMQ.
 Bevat builders voor: Heartbeat (Contract 7), PaymentConfirmed (Contract 16),
-InvoiceRequested (Contract K-01).
+InvoiceRequested (Contract K-01), User (CRUD operations).
 """
 
 TEMPLATE_PATH = Path(__file__).resolve().parents[2] / 'templates' / 'Heartbeat.xml'
@@ -107,4 +108,130 @@ def build_invoice_requested_xml(invoice_data: dict) -> str:
     if invoice_data.get('paymentReference'):
         ET.SubElement(root, 'paymentReference').text = str(invoice_data['paymentReference'])
 
+    return ET.tostring(root, encoding='unicode')
+
+
+# ── User CRUD Operations ──────────────────────────────────────────────────────
+
+def build_user_xml(user_data: Dict) -> str:
+    """
+    Bouw een User XML-bericht conform het schema.
+    
+    Verplichte velden: userId, firstName, lastName, email, badgeCode, role
+    Optionele velden: companyId, createdAt, updatedAt
+    
+    Args:
+        user_data: Dictionary with user information (lowerCamelCase)
+    
+    Returns:
+        XML string representation of the user
+    """
+    root = ET.Element('User')
+
+    ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
+    ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
+    ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
+    ET.SubElement(root, 'email').text = str(user_data.get('email', ''))
+    
+    if user_data.get('companyId'):
+        ET.SubElement(root, 'companyId').text = str(user_data['companyId'])
+    
+    ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
+    ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+    
+    if user_data.get('createdAt'):
+        ET.SubElement(root, 'createdAt').text = str(user_data['createdAt'])
+    if user_data.get('updatedAt'):
+        ET.SubElement(root, 'updatedAt').text = str(user_data['updatedAt'])
+
+    return ET.tostring(root, encoding='unicode')
+
+
+def parse_user_xml(xml_string: str) -> Tuple[bool, Optional[str], Optional[Dict]]:
+    """
+    Parse a User XML string into a dictionary.
+    
+    Args:
+        xml_string: XML string containing user data
+    
+    Returns:
+        (True, None, user_dict) on success
+        (False, error_message, None) on failure
+    """
+    try:
+        root = ET.fromstring(xml_string)
+        
+        # Extract required fields
+        user_data = {
+            'userId': root.findtext('userId', '').strip(),
+            'firstName': root.findtext('firstName', '').strip(),
+            'lastName': root.findtext('lastName', '').strip(),
+            'email': root.findtext('email', '').strip(),
+            'badgeCode': root.findtext('badgeCode', '').strip(),
+            'role': root.findtext('role', '').strip(),
+        }
+        
+        # Extract optional fields
+        companyId = root.findtext('companyId', '').strip()
+        if companyId:
+            user_data['companyId'] = companyId
+        
+        createdAt = root.findtext('createdAt', '').strip()
+        if createdAt:
+            user_data['createdAt'] = createdAt
+        
+        updatedAt = root.findtext('updatedAt', '').strip()
+        if updatedAt:
+            user_data['updatedAt'] = updatedAt
+        
+        return True, None, user_data
+    
+    except ET.ParseError as e:
+        error = f"Failed to parse User XML: {str(e)}"
+        return False, error, None
+    except Exception as e:
+        error = f"Unexpected error parsing User XML: {str(e)}"
+        return False, error, None
+
+
+def build_user_created_message(user_data: Dict) -> str:
+    """
+    Build a UserCreated event message for RabbitMQ.
+    
+    Args:
+        user_data: Dict with user information
+    
+    Returns:
+        XML string for UserCreated message
+    """
+    return build_user_xml(user_data)
+
+
+def build_user_updated_message(user_data: Dict) -> str:
+    """
+    Build a UserUpdated event message for RabbitMQ.
+    
+    Args:
+        user_data: Dict with updated user information
+    
+    Returns:
+        XML string for UserUpdated message
+    """
+    return build_user_xml(user_data)
+
+
+def build_user_deleted_message(user_id: str) -> str:
+    """
+    Build a UserDeleted event message for RabbitMQ.
+    
+    Args:
+        user_id: UUID of the deleted user
+    
+    Returns:
+        XML string for UserDeleted message
+    """
+    root = ET.Element('UserDeleted')
+    ET.SubElement(root, 'userId').text = str(user_id)
+    ET.SubElement(root, 'deletedAt').text = _now_iso()
+    
     return ET.tostring(root, encoding='unicode')

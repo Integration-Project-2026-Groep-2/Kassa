@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Templates for User Registration Modal Component -->
+    
+    <!-- Main modal template -->
+    <template id="kassa_pos.UserRegistrationModal" xml:space="preserve">
+        <dialog class="user-registration-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Register New User</h2>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Error message display -->
+                    <t t-if="uiState.hasError" class="alert alert-danger">
+                        <div class="alert-message">
+                            <t t-esc="uiState.errorMessage"/>
+                        </div>
+                    </t>
+
+                    <!-- Registration form -->
+                    <form class="user-registration-form">
+                        <!-- First Name (Required) -->
+                        <div class="form-group">
+                            <label for="firstName" class="form-label required">
+                                First Name
+                            </label>
+                            <input 
+                                id="firstName"
+                                type="text"
+                                class="form-control"
+                                placeholder="Enter first name"
+                                t-model="formData.firstName"
+                                maxlength="80"
+                                required="required"
+                            />
+                        </div>
+
+                        <!-- Last Name (Required) -->
+                        <div class="form-group">
+                            <label for="lastName" class="form-label required">
+                                Last Name
+                            </label>
+                            <input 
+                                id="lastName"
+                                type="text"
+                                class="form-control"
+                                placeholder="Enter last name"
+                                t-model="formData.lastName"
+                                maxlength="80"
+                                required="required"
+                            />
+                        </div>
+
+                        <!-- Email (Required) -->
+                        <div class="form-group">
+                            <label for="email" class="form-label required">
+                                Email Address
+                            </label>
+                            <input 
+                                id="email"
+                                type="email"
+                                class="form-control"
+                                placeholder="user@example.com"
+                                t-model="formData.email"
+                                maxlength="254"
+                                required="required"
+                            />
+                        </div>
+
+                        <!-- Phone (Optional) -->
+                        <div class="form-group">
+                            <label for="phone" class="form-label">
+                                Phone Number
+                            </label>
+                            <input 
+                                id="phone"
+                                type="tel"
+                                class="form-control"
+                                placeholder="Enter phone number (optional)"
+                                t-model="formData.phone"
+                            />
+                        </div>
+
+                        <!-- Role (Required) -->
+                        <div class="form-group">
+                            <label for="role" class="form-label required">
+                                Role
+                            </label>
+                            <select 
+                                id="role"
+                                class="form-control"
+                                t-model="formData.role"
+                                required="required"
+                            >
+                                <option value="">Select a role</option>
+                                <t t-foreach="roles" t-as="role">
+                                    <option t-key="role.value" t-att-value="role.value">
+                                        <t t-esc="role.label"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+
+                        <!-- Company ID (Optional) -->
+                        <div class="form-group">
+                            <label for="companyId" class="form-label">
+                                Company ID
+                            </label>
+                            <input 
+                                id="companyId"
+                                type="text"
+                                class="form-control"
+                                placeholder="Company UUID (optional)"
+                                t-model="formData.companyId"
+                            />
+                        </div>
+
+                        <!-- Badge Code (Optional) -->
+                        <div class="form-group">
+                            <label for="badgeCode" class="form-label">
+                                Badge Code
+                            </label>
+                            <input 
+                                id="badgeCode"
+                                type="text"
+                                class="form-control"
+                                placeholder="QR code or badge ID (optional)"
+                                t-model="formData.badgeCode"
+                            />
+                        </div>
+
+                        <!-- GDPR Consent (Required) -->
+                        <div class="form-group form-check">
+                            <input 
+                                id="gdprConsent"
+                                type="checkbox"
+                                class="form-check-input"
+                                t-model="formData.gdprConsent"
+                                required="required"
+                            />
+                            <label for="gdprConsent" class="form-check-label required">
+                                I consent to GDPR data processing
+                            </label>
+                        </div>
+
+                        <!-- Is Active (Toggle) -->
+                        <div class="form-group form-check">
+                            <input 
+                                id="isActive"
+                                type="checkbox"
+                                class="form-check-input"
+                                t-model="formData.isActive"
+                                checked="checked"
+                            />
+                            <label for="isActive" class="form-check-label">
+                                User is active
+                            </label>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Modal footer with action buttons -->
+                <div class="modal-footer">
+                    <button 
+                        type="button" 
+                        class="btn btn-secondary"
+                        t-on-click="onCancel"
+                        t-att-disabled="uiState.isLoading"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        type="button" 
+                        class="btn btn-primary"
+                        t-on-click="onSubmit"
+                        t-att-disabled="uiState.isLoading"
+                    >
+                        <t t-if="uiState.isLoading">
+                            <span class="spinner-border spinner-border-sm mr-2"/>
+                            Creating...
+                        </t>
+                        <t t-else="uiState.isLoading">
+                            Create User
+                        </t>
+                    </button>
+                </div>
+            </div>
+        </dialog>
+    </template>
+
+    <!-- Add User Button Template -->
+    <template id="kassa_pos.AddUserButton" xml:space="preserve">
+        <button 
+            class="btn btn-primary btn-add-user"
+            t-on-click="openUserRegistration"
+            title="Register a new user manually"
+        >
+            <i class="fa fa-plus-circle"/>
+            Add User (Nieuwe Klant)
+        </button>
+    </template>
+
+    <!-- Styles for User Registration Modal -->
+    <template id="kassa_pos.UserRegistrationStyles" xml:space="preserve">
+        <style>
+            .user-registration-modal {
+                min-width: 500px;
+                max-width: 600px;
+            }
+
+            .user-registration-modal .modal-header {
+                border-bottom: 1px solid #dee2e6;
+                padding: 1.5rem;
+            }
+
+            .user-registration-modal .modal-body {
+                padding: 1.5rem;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+
+            .user-registration-modal .modal-footer {
+                border-top: 1px solid #dee2e6;
+                padding: 1rem;
+                display: flex;
+                justify-content: flex-end;
+                gap: 0.5rem;
+            }
+
+            .user-registration-modal .form-group {
+                margin-bottom: 1.25rem;
+            }
+
+            .user-registration-modal .form-label.required::after {
+                content: " *";
+                color: #dc3545;
+                font-weight: bold;
+            }
+
+            .user-registration-modal .form-control,
+            .user-registration-modal .form-check-input {
+                border: 1px solid #ced4da;
+                border-radius: 0.25rem;
+                padding: 0.5rem 0.75rem;
+                font-size: 0.95rem;
+            }
+
+            .user-registration-modal .form-control:focus,
+            .user-registration-modal .form-check-input:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            }
+
+            .user-registration-modal .alert {
+                padding: 0.75rem 1rem;
+                margin-bottom: 1rem;
+                border-radius: 0.25rem;
+            }
+
+            .user-registration-modal .alert-danger {
+                color: #721c24;
+                background-color: #f8d7da;
+                border: 1px solid #f5c6cb;
+            }
+
+            .user-registration-modal .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.95rem;
+                border-radius: 0.25rem;
+            }
+
+            .user-registration-modal .btn:disabled {
+                opacity: 0.65;
+                cursor: not-allowed;
+            }
+
+            .btn-add-user {
+                margin: 0.5rem;
+            }
+
+            .btn-add-user i {
+                margin-right: 0.5rem;
+            }
+        </style>
+    </template>
+
+</odoo>
