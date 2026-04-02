@@ -5,6 +5,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-odoo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      POSTGRES_DB: ${POSTGRES_DB:-odoo}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -45,8 +46,10 @@ services:
     command: >
       odoo
       --db_host=db
-      --db_user=odoo
-      --db_password=odoo
+      --db_user=${POSTGRES_USER:-odoo}
+      --db_password=${POSTGRES_PASSWORD:-odoo}
+      --database=${POSTGRES_DB:-odoo}
+      --init=base
       --addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
 
   pos_receiver:
