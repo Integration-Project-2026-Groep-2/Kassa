@@ -2,7 +2,7 @@ name: Build & Deploy Image to Dev
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
 
 env:
   SERVICE_NAME: kassa
