@@ -20,7 +20,6 @@
     ],
     'data': [
         'security/ir.model.access.csv',
-        'views/product_management_views.xml',
         'data/res_partner_data.xml',
         'data/product_product_data.xml',
         'data/pos_config_data.xml',
