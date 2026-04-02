@@ -1,0 +1,91 @@
+services:
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "0.0.0.0:${RABBIT_PORT:-5672}:5672"
+      - "0.0.0.0:${RABBIT_MANAGEMENT_PORT:-15672}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:-guest}
+      RABBITMQ_DEFAULT_VHOST: ${RABBIT_VHOST:-/}
+
+  odoo:
+    build: .
+    depends_on:
+      - db
+      - rabbitmq
+    ports:
+      - "0.0.0.0:${ODOO_PORT:-8069}:8069"
+    volumes:
+      - ./kassa_pos:/mnt/extra-addons/kassa_pos
+      - odoo_data:/var/lib/odoo
+    environment:
+      HOST: db
+      USER: ${POSTGRES_USER:-odoo}
+      PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      RABBITMQ_HOST: ${RABBIT_HOST:-rabbitmq}
+      RABBITMQ_PORT: ${RABBIT_PORT:-5672}
+      RABBITMQ_USER: ${RABBIT_USER:-guest}
+      RABBITMQ_PASS: ${RABBIT_PASSWORD:-guest}
+      RABBITMQ_VHOST: ${RABBIT_VHOST:-/}
+    command: >
+      odoo
+      --db_host=db
+      --db_user=odoo
+      --db_password=odoo
+      --addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
+
+  pos_receiver:
+    build: .
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    working_dir: /app/src
+    command: python3 main_pos_receiver.py
+    environment:
+      RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
+      RABBIT_PORT: ${RABBIT_PORT:-5672}
+      RABBIT_USER: ${RABBIT_USER:-guest}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
+      RABBIT_VHOST: ${RABBIT_VHOST:-/}
+    volumes:
+      - ./src:/app/src
+      - ./templates:/app/templates
+    restart: unless-stopped
+
+  heartbeat:
+    build: .
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    working_dir: /app/src
+    command: python3 main_heartbeat.py
+    environment:
+      RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
+      RABBIT_PORT: ${RABBIT_PORT:-5672}
+      RABBIT_USER: ${RABBIT_USER:-guest}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
+      RABBIT_VHOST: ${RABBIT_VHOST:-/}
+      HEARTBEAT_INTERVAL_SECONDS: ${HEARTBEAT_INTERVAL_SECONDS:-1}
+    volumes:
+      - ./src:/app/src
+      - ./templates:/app/templates
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  odoo_data:

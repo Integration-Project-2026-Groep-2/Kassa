@@ -1,34 +1,34 @@
-# Team Kassa
+# Kassa
 
-Starter project voor Team Kassa van het Integration Project.
+## RabbitMQ credentials via .env
 
-## Wat dit project bevat
-- RabbitMQ sender
-- RabbitMQ receiver
-- heartbeat
-- statuscheck
-- XML-validatie via XSD
-- Odoo client starter code
+Gebruik geen hardcoded `guest/guest` in code. Dit project leest RabbitMQ-instellingen via environment variables.
 
-## Quick start
+1. Maak een lokale env file:
+- Kopieer `.env.example` naar `.env`
+2. Pas credentials aan in `.env`:
+- `RABBIT_USER`
+- `RABBIT_PASSWORD`
+- `RABBIT_VHOST`
+3. Start de stack opnieuw:
+- `docker compose down`
+- `docker compose up -d --build`
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-python src/main.py
-```
+## Welke credentials gebruiken andere teams?
 
-## Belangrijk
-- Gebruik XML voor alle berichten
-- Valideer inkomende en uitgaande berichten tegen het XSD-schema
-- Commit nooit credentials of .env
+Dat bepaalt elk team zelf in hun eigen `.env` file.
 
-## Belangrijkste files
-- src/main.py - start de app
-- src/messaging/connection.py - RabbitMQ connectie
-- src/messaging/sender.py - publiceert berichten
-- src/messaging/receiver.py - ontvangt berichten
-- src/odoo/client.py - Odoo integratie
-- src/schema/kassa-schema-v1.xsd - XSD validatie
+Voorbeeld:
+- Team A gebruikt `RABBIT_USER=team_a`
+- Team B gebruikt `RABBIT_USER=team_b`
+
+Zolang de waarden in `.env` kloppen, gebruiken `odoo`, `pos_receiver` en `heartbeat` automatisch diezelfde credentials.
+
+## Belangrijkste env variabelen
+
+- `RABBIT_HOST` (in Docker meestal `rabbitmq`)
+- `RABBIT_PORT` (standaard `5672`)
+- `RABBIT_USER`
+- `RABBIT_PASSWORD`
+- `RABBIT_VHOST`
+- `HEARTBEAT_INTERVAL_SECONDS`

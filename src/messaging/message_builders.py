@@ -1,122 +1,88 @@
-from __future__ import annotations
+import datetime
+import xml.etree.ElementTree as ET
+from pathlib import Path
 
-from datetime import datetime
-from typing import Any
+"""
+Helpers om XML-berichten te bouwen voor RabbitMQ.
+Bevat builders voor: Heartbeat, ConsumptionOrder en PaymentCompleted.
+"""
 
-from lxml import etree
-
-
-def _iso(value: datetime) -> str:
-    return value.replace(microsecond=0).isoformat()
-
-
-def _to_xml_bytes(root: etree._Element) -> bytes:
-    return etree.tostring(root, encoding="utf-8", xml_declaration=True)
+TEMPLATE_PATH = Path(__file__).resolve().parents[2] / 'templates' / 'Heartbeat.xml'
 
 
-def build_heartbeat_xml(service_id: str, timestamp: datetime) -> bytes:
-    root = etree.Element("Heartbeat")
-    etree.SubElement(root, "serviceId").text = service_id
-    etree.SubElement(root, "timestamp").text = _iso(timestamp)
-    return _to_xml_bytes(root)
+def _read_template_text(path: Path) -> str:
+    text = path.read_text(encoding='utf-8')
+    # Verwijder commentaarregels zodat de XML-parser niet faalt
+    lines = [l for l in text.splitlines() if not l.lstrip().startswith('#')]
+    return '\n'.join(lines)
 
 
-def build_status_check_xml(
-    service_id: str,
-    timestamp: datetime,
-    status: str,
-    uptime: int,
-    cpu: float,
-    memory: float,
-    disk: float,
-) -> bytes:
-    root = etree.Element("StatusCheck")
-    etree.SubElement(root, "serviceId").text = service_id
-    etree.SubElement(root, "timestamp").text = _iso(timestamp)
-    etree.SubElement(root, "status").text = status
-    etree.SubElement(root, "uptime").text = str(uptime)
-
-    system_load = etree.SubElement(root, "systemLoad")
-    etree.SubElement(system_load, "cpu").text = f"{cpu:.4f}"
-    etree.SubElement(system_load, "memory").text = f"{memory:.4f}"
-    etree.SubElement(system_load, "disk").text = f"{disk:.4f}"
-
-    return _to_xml_bytes(root)
+def _now_iso() -> str:
+    """Geeft de huidige UTC-tijd terug in ISO 8601 formaat (2026-03-29T12:00:00Z)."""
+    return datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
-def build_person_lookup_request_xml(request_id: str, email: str) -> bytes:
-    root = etree.Element("PersonLookupRequest")
-    etree.SubElement(root, "requestId").text = request_id
-    etree.SubElement(root, "email").text = email
-    return _to_xml_bytes(root)
+# -- Heartbeat ------------------------------------------------------------------
+
+def build_heartbeat_xml(service_name: str = 'TeamKassa') -> str:
+    """Bouw een Heartbeat XML-bericht met de actuele timestamp."""
+    raw = _read_template_text(TEMPLATE_PATH)
+    root = ET.fromstring(raw)
+
+    sn = root.find('serviceName')
+    if sn is None:
+        sn = ET.SubElement(root, 'serviceName')
+    sn.text = service_name
+
+    ts = root.find('timestamp')
+    if ts is None:
+        ts = ET.SubElement(root, 'timestamp')
+    ts.text = _now_iso()  # Was buggy: timestamp werd nooit ingevuld
+
+    return ET.tostring(root, encoding='unicode')
 
 
-def build_payment_confirmed_xml(
-    email: str,
-    amount: float,
-    paid_at: datetime,
-    user_id: str | None = None,
-    registration_id: str | None = None,
-    currency: str = "EUR",
-) -> bytes:
-    root = etree.Element("PaymentConfirmed")
+# -- ConsumptionOrder -----------------------------------------------------------
 
-    if user_id:
-        etree.SubElement(root, "userId").text = user_id
+def build_consumption_order_xml(order_data: dict) -> str:
+    """
+    Bouw een ConsumptionOrder XML-bericht vanuit een order_data dict.
+    Verwachte sleutels: orderId, userId, items[], totalAmount, paymentType, timestamp.
+    """
+    root = ET.Element('ConsumptionOrder')
 
-    etree.SubElement(root, "email").text = email
+    ET.SubElement(root, 'orderId').text = str(order_data.get('orderId', ''))
+    ET.SubElement(root, 'userId').text = str(order_data.get('userId', ''))
 
-    if registration_id:
-        etree.SubElement(root, "registrationId").text = registration_id
+    items_el = ET.SubElement(root, 'items')
+    for item in order_data.get('items', []):
+        item_el = ET.SubElement(items_el, 'item')
+        ET.SubElement(item_el, 'productName').text = str(item.get('productName', ''))
+        ET.SubElement(item_el, 'quantity').text = str(item.get('quantity', ''))
+        ET.SubElement(item_el, 'price').text = str(item.get('price', ''))
 
-    etree.SubElement(root, "amount").text = f"{amount:.2f}"
-    etree.SubElement(root, "currency").text = currency
-    etree.SubElement(root, "paidAt").text = _iso(paid_at)
+    ET.SubElement(root, 'totalAmount').text = str(order_data.get('totalAmount', ''))
+    ET.SubElement(root, 'paymentType').text = str(order_data.get('paymentType', ''))
+    # Gebruik de timestamp van de order, of val terug op huidige tijd
+    ET.SubElement(root, 'timestamp').text = str(order_data.get('timestamp') or _now_iso())
 
-    return _to_xml_bytes(root)
-
-
-def build_unpaid_request_xml(request_id: str) -> bytes:
-    root = etree.Element("UnpaidRequest")
-    etree.SubElement(root, "requestId").text = request_id
-    return _to_xml_bytes(root)
+    return ET.tostring(root, encoding='unicode')
 
 
-def build_invoice_requested_xml(
-    order_id: str,
-    user_id: str,
-    company_id: str,
-    amount: float,
-    ordered_at: datetime,
-    items: list[dict[str, Any]],
-    email: str | None = None,
-    company_name: str | None = None,
-    event_id: str | None = None,
-    payment_reference: str | None = None,
-    currency: str = "EUR",
-) -> bytes:
-    root = etree.Element("InvoiceRequested")
-    etree.SubElement(root, "orderId").text = order_id
-    etree.SubElement(root, "userId").text = user_id
-    etree.SubElement(root, "companyId").text = company_id
-    etree.SubElement(root, "amount").text = f"{amount:.2f}"
-    etree.SubElement(root, "currency").text = currency
-    etree.SubElement(root, "orderedAt").text = _iso(ordered_at)
+# -- PaymentCompleted -----------------------------------------------------------
 
-    items_el = etree.SubElement(root, "items")
-    for item in items:
-        item_el = etree.SubElement(items_el, "item")
-        etree.SubElement(item_el, "productName").text = str(item["productName"])
-        etree.SubElement(item_el, "quantity").text = str(item["quantity"])
-        etree.SubElement(item_el, "unitPrice").text = f'{float(item["unitPrice"]):.2f}'
+def build_payment_completed_xml(payment_data: dict) -> str:
+    """
+    Bouw een PaymentCompleted XML-bericht vanuit een payment_data dict.
+    Verwachte sleutels: paymentId, orderId, userId, paymentMethod, amount, timestamp.
+    """
+    root = ET.Element('PaymentCompleted')
 
-    if email:
-        etree.SubElement(root, "email").text = email
-    if company_name:
-        etree.SubElement(root, "companyName").text = company_name
-    if event_id:
-        etree.SubElement(root, "eventId").text = event_id
-    if payment_reference:
-        etree.SubElement(root, "paymentReference").text = payment_reference
+    ET.SubElement(root, 'paymentId').text = str(payment_data.get('paymentId', ''))
+    ET.SubElement(root, 'orderId').text = str(payment_data.get('orderId', ''))
+    ET.SubElement(root, 'userId').text = str(payment_data.get('userId', ''))
+    ET.SubElement(root, 'paymentMethod').text = str(payment_data.get('paymentMethod', ''))
+    ET.SubElement(root, 'amount').text = str(payment_data.get('amount', ''))
+    ET.SubElement(root, 'timestamp').text = str(payment_data.get('timestamp') or _now_iso())
 
-    return _to_xml_bytes(root)
+    return ET.tostring(root, encoding='unicode')

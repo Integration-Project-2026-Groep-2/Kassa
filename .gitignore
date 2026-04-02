@@ -1,9 +1,8 @@
-.venv/
 .env
+.env.*
+!.env.example
+
+# Python cache
 __pycache__/
-.pytest_cache/
 *.pyc
 *.pyo
-*.pyd
-.vscode/
-.idea/
