@@ -1,3 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_res_partner_pos_user,res.partner pos user,base.model_res_partner,point_of_sale.group_pos_user,1,1,1,0
 access_res_partner_pos_manager,res.partner pos manager,base.model_res_partner,point_of_sale.group_pos_manager,1,1,1,1
+access_product_template_pos_user,product.template pos user,product.model_product_template,point_of_sale.group_pos_user,1,0,0,0
+access_product_template_pos_manager,product.template pos manager,product.model_product_template,point_of_sale.group_pos_manager,1,1,1,1
+access_product_product_pos_user,product.product pos user,product.model_product_product,point_of_sale.group_pos_user,1,0,0,0
+access_product_product_pos_manager,product.product pos manager,product.model_product_product,point_of_sale.group_pos_manager,1,1,1,1
+access_product_category_pos_user,product.category pos user,product.model_product_category,point_of_sale.group_pos_user,1,0,0,0
+access_product_category_pos_manager,product.category pos manager,product.model_product_category,point_of_sale.group_pos_manager,1,1,1,1
