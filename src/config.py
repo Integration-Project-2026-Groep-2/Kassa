@@ -30,7 +30,7 @@ HEARTBEAT_EXCHANGE = os.getenv('HEARTBEAT_EXCHANGE', 'heartbeat.direct')
 HEARTBEAT_ROUTING_KEY = os.getenv('HEARTBEAT_ROUTING_KEY', 'routing.heartbeat')
 
 # Queue names / Routing keys
-HEARTBEAT_QUEUE = os.getenv('HEARTBEAT_QUEUE', 'heartbeat.direct')
+HEARTBEAT_QUEUE = os.getenv('HEARTBEAT_QUEUE', 'heartbeat_queue')
 USER_UPDATES_QUEUE = 'user_updates'
 CONSUMPTION_ORDER_QUEUE = 'ConsumptionOrder'
 PAYMENT_COMPLETED_QUEUE = 'PaymentCompleted'
