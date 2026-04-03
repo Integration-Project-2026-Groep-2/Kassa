@@ -1,26 +1,88 @@
-/** 
- * POS User Registration Modal Component
- * 
- * Odoo OWL component for the "Add User" (Nieuwe Klant) button in POS interface.
- * Provides a modal form for manual user registration when badge scanning is not available.
- * 
- * Features:
- * - Modal form with required/optional fields
- * - Client-side validation
- * - Integration with CRUD User service
- * - Fallback behavior when Integration Service is offline
- * - GDPR consent tracking
- */
+/** @odoo-module **/
 
-const { Component, useState, useService } = owl;
-const { Dialog } = require('web.OwlDialog');
+import { Component, useState, xml } from "@odoo/owl";
+import { useService } from "@web/core/utils/hooks";
 
 
 class UserRegistrationModal extends Component {
+    static template = xml`
+        <div class="user-registration-modal o_dialog">
+            <div class="modal-header">
+                <h2>Register New User</h2>
+                <button type="button" class="btn-close" t-on-click="closeModal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <t t-if="uiState.hasError" class="alert alert-danger">
+                    <div class="alert-message">
+                        <t t-esc="uiState.errorMessage"/>
+                    </div>
+                </t>
+                <form class="user-registration-form">
+                    <div class="form-group">
+                        <label for="firstName" class="form-label required">First Name</label>
+                        <input id="firstName" type="text" class="form-control" placeholder="Enter first name" t-model="formData.firstName" maxlength="80" required="required"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName" class="form-label required">Last Name</label>
+                        <input id="lastName" type="text" class="form-control" placeholder="Enter last name" t-model="formData.lastName" maxlength="80" required="required"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="form-label required">Email Address</label>
+                        <input id="email" type="email" class="form-control" placeholder="user@example.com" t-model="formData.email" maxlength="254" required="required"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input id="phone" type="tel" class="form-control" placeholder="Enter phone number (optional)" t-model="formData.phone"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="role" class="form-label required">Role</label>
+                        <select id="role" class="form-control" t-model="formData.role" required="required">
+                            <option value="">Select a role</option>
+                            <t t-foreach="roles" t-as="role" t-key="role.value">
+                                <option t-att-value="role.value">
+                                    <t t-esc="role.label"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="companyId" class="form-label">Company ID</label>
+                        <input id="companyId" type="text" class="form-control" placeholder="Company UUID (optional)" t-model="formData.companyId"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="badgeCode" class="form-label">Badge Code</label>
+                        <input id="badgeCode" type="text" class="form-control" placeholder="QR code or badge ID (optional)" t-model="formData.badgeCode"/>
+                    </div>
+                    <div class="form-group form-check">
+                        <input id="gdprConsent" type="checkbox" class="form-check-input" t-model="formData.gdprConsent" required="required"/>
+                        <label for="gdprConsent" class="form-check-label required">I consent to GDPR data processing</label>
+                    </div>
+                    <div class="form-group form-check">
+                        <input id="isActive" type="checkbox" class="form-check-input" t-model="formData.isActive" checked="checked"/>
+                        <label for="isActive" class="form-check-label">User is active</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" t-on-click="closeModal" t-att-disabled="uiState.isLoading">Cancel</button>
+                <button type="button" class="btn btn-primary" t-on-click="onSubmit" t-att-disabled="uiState.isLoading">
+                    <t t-if="uiState.isLoading">
+                        <span class="spinner-border spinner-border-sm mr-2"/>
+                        Creating...
+                    </t>
+                    <t t-else="uiState.isLoading">Create User</t>
+                </button>
+            </div>
+        </div>
+    `;
+
     setup() {
         this.orm = useService('orm');
         this.notification = useService('notification');
         this.rpc = useService('rpc');
+        this.dialog = useService('dialog');
+        
+        console.log('UserRegistrationModal setup - dialog service:', this.dialog);
         
         // Form state
         this.formData = useState({
@@ -166,40 +228,17 @@ class UserRegistrationModal extends Component {
                 badge_code: userData.badgeCode,
                 role: this.mapRoleToOdoo(userData.role),
                 company_id_custom: userData.companyId,
-                customer: true,
-                is_company: false,
             }]);
 
-            // Send User message to RabbitMQ via Integration Service
-            try {
-                await this.rpc.call('pos.session', 'create_and_publish_user', {
-                    user_data: userData,
-                });
-            } catch (rabbitError) {
-                // Fallback: Store message for retry when service is online
-                console.warn('Integration Service offline, storing message for retry:', rabbitError);
-                await this.orm.create('user.message.queue', [{
-                    user_id_custom: userData.userId,
-                    message_type: 'UserCreated',
-                    payload: JSON.stringify(userData),
-                    status: 'pending',
-                    retry_count: 0,
-                    created_at: new Date(),
-                }]);
-                
-                this.notification.add(
-                    'User created locally. Will sync when Integration Service is available.',
-                    { type: 'warning' }
-                );
-            }
+            console.log('User created successfully with contact ID:', contactId);
 
-            // Success
-            this.notification.add(`User ${userData.firstName} created successfully!`, {
+            // Success notification
+            this.notification.add(`User ${userData.firstName} ${userData.lastName} created successfully!`, {
                 type: 'success',
             });
             
             // Close modal
-            this.props.close();
+            this.closeModal();
             
         } catch (error) {
             this.uiState.errorMessage = `Error creating user: ${error.message}`;
@@ -207,6 +246,16 @@ class UserRegistrationModal extends Component {
             console.error('Error creating user:', error);
         } finally {
             this.uiState.isLoading = false;
+        }
+    }
+
+    /**
+     * Close the modal dialog
+     */
+    closeModal() {
+        console.log('Closing modal');
+        if (this.props && this.props.close) {
+            this.props.close();
         }
     }
 
@@ -223,19 +272,17 @@ class UserRegistrationModal extends Component {
         };
         return roleMap[role] || 'Customer';
     }
-
-    /**
-     * Close modal without saving
-     */
-    onCancel() {
-        this.props.close();
-    }
 }
-
-UserRegistrationModal.template = 'kassa_pos.UserRegistrationModal';
 
 
 class AddUserButton extends Component {
+    static template = xml`
+        <button class="btn btn-primary btn-add-user" t-on-click="openUserRegistration" title="Register a new user manually">
+            <i class="fa fa-plus-circle"/>
+            Add User (Nieuwe Klant)
+        </button>
+    `;
+
     setup() {
         this.dialog = useService('dialog');
     }
@@ -251,13 +298,6 @@ class AddUserButton extends Component {
     }
 }
 
-AddUserButton.template = 'kassa_pos.AddUserButton';
 
-
-// Register components
-patch('point_of_sale.PartnerListScreen', {
-    components: { ...patch.components, AddUserButton },
-});
-
-
+// Export components for use in other modules
 export { UserRegistrationModal, AddUserButton };

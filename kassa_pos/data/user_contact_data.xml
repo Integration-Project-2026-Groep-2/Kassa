@@ -25,7 +25,6 @@ This file is loaded via the Odoo manifest and provides initial test data.
             <field name="badge_code">QR784512</field>
             <field name="role">Customer</field>
             <field name="is_company" eval="False"/>
-            <field name="customer" eval="True"/>
         </record>
 
         <!-- Sample User 2: Cashier -->
@@ -36,7 +35,6 @@ This file is loaded via the Odoo manifest and provides initial test data.
             <field name="badge_code">QR123456</field>
             <field name="role">Cashier</field>
             <field name="is_company" eval="False"/>
-            <field name="customer" eval="False"/>
         </record>
 
         <!-- Sample User 3: Admin -->
@@ -47,7 +45,6 @@ This file is loaded via the Odoo manifest and provides initial test data.
             <field name="badge_code">QR999999</field>
             <field name="role">Admin</field>
             <field name="is_company" eval="False"/>
-            <field name="customer" eval="False"/>
         </record>
 
         <!-- Sample User 4: Company Contact -->
@@ -59,7 +56,6 @@ This file is loaded via the Odoo manifest and provides initial test data.
             <field name="role">Customer</field>
             <field name="company_id_custom">9c21f4e1-8b2e-4d71-a7a2-6f8cbbf81c10</field>
             <field name="is_company" eval="False"/>
-            <field name="customer" eval="True"/>
         </record>
 
         <!-- Sample User 5: Event Speaker -->
@@ -70,7 +66,6 @@ This file is loaded via the Odoo manifest and provides initial test data.
             <field name="badge_code">QR777777</field>
             <field name="role">Customer</field>
             <field name="is_company" eval="False"/>
-            <field name="customer" eval="True"/>
         </record>
 
     </data>
