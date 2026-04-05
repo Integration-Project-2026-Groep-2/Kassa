@@ -29,32 +29,39 @@ class RabbitManager:
 
     def connect(self):
         """Maak een blocking verbinding met RabbitMQ en open een kanaal."""
-        # Use 127.0.0.1 to explicitly bind to IPv4 local interface
-        resolved_host = '127.0.0.1' if self.host == 'localhost' else self.host
         credentials = pika.PlainCredentials(self.user, self.password)
+        candidate_hosts = [self.host]
+        if self.host in {'localhost', 'rabbitmq'}:
+            candidate_hosts.append('127.0.0.1')
 
         # Retry loop: RabbitMQ container kan al "healthy" zijn terwijl AMQP nog opstart.
         while True:
-            try:
-                self.connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(
-                        host=resolved_host,
-                        port=self.port,
-                        virtual_host=self.vhost,
-                        credentials=credentials,
+            last_error = None
+            for resolved_host in candidate_hosts:
+                try:
+                    self.connection = pika.BlockingConnection(
+                        pika.ConnectionParameters(
+                            host=resolved_host,
+                            port=self.port,
+                            virtual_host=self.vhost,
+                            credentials=credentials,
+                        )
                     )
-                )
-                self.channel = self.connection.channel()
-                return
-            except pika.exceptions.AMQPConnectionError:
-                logger.warning(
-                    "RabbitMQ connectie mislukt (host=%s, port=%s, user=%s, vhost=%s). Opnieuw proberen in 2s...",
-                    resolved_host,
-                    self.port,
-                    self.user,
-                    self.vhost,
-                )
-                time.sleep(2)
+                    self.channel = self.connection.channel()
+                    return
+                except Exception as exc:
+                    last_error = exc
+
+            logger.warning(
+                "RabbitMQ connectie mislukt (hosts=%s, port=%s, user=%s, vhost=%s). Opnieuw proberen in 2s...",
+                candidate_hosts,
+                self.port,
+                self.user,
+                self.vhost,
+            )
+            if last_error is not None:
+                logger.debug("Laatste RabbitMQ-fout: %s", last_error)
+            time.sleep(2)
 
     def close(self):
         """Sluit de verbinding als die bestaat."""

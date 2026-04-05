@@ -5,6 +5,25 @@ Plaats hier eenvoudige constants zoals hostnamen en queue-namen.
 """
 
 import os
+from pathlib import Path
+
+
+def _load_local_env() -> None:
+	root_env = Path(__file__).resolve().parents[1] / '.env'
+	if not root_env.exists():
+		return
+
+	for raw_line in root_env.read_text(encoding='utf-8').splitlines():
+		line = raw_line.strip()
+		if not line or line.startswith('#') or '=' not in line:
+			continue
+		key, value = line.split('=', 1)
+		key = key.strip()
+		value = value.strip().strip('"').strip("'")
+		os.environ.setdefault(key, value)
+
+
+_load_local_env()
 
 
 def _get_int_env(name: str, default: int) -> int:
