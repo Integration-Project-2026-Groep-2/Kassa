@@ -427,4 +427,3 @@ docker compose logs rabbitmq
 ## License
 
 Proprietary — School Project 2025/2026, Group 2
->>>>>>> feature/CRUD-user

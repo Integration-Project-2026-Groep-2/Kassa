@@ -1,0 +1,320 @@
+# docker-compose.yml - Production Configuration for Kassa Odoo
+# 
+# This configuration deploys the Kassa custom Odoo module with RabbitMQ messaging
+# and PostgreSQL database for Team Kassa on Azure infrastructure with Nginx reverse proxy.
+#
+# Infrastructure Details:
+# - Reverse Proxy: Nginx (external-facing via kassa.integration-project-2026-groep-2.my.be)
+# - Internal Odoo Port: 8069
+# - RabbitMQ AMQP: 5672
+# - RabbitMQ Management UI: 15671 (HTTPS)
+# - Database: PostgreSQL (internal service name: db)
+#
+# Usage:
+#   docker-compose up -d
+#   docker-compose logs -f odoo
+#   docker-compose down
+
+services:
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15
+    container_name: kassa-db
+    restart: unless-stopped
+    environment:
+      # These variables are passed from .env file or docker-compose command line
+      POSTGRES_DB: ${POSTGRES_DB:-kassa_db}
+      POSTGRES_USER: ${POSTGRES_USER:-kassa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}  # Override via .env
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Optional: Initialize database with schema
+      # - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kassa}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kassa-network
+    # DO NOT expose port to host in production; keep internal only
+    # production deployments should access via application layer
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: kassa-rabbitmq
+    restart: unless-stopped
+    environment:
+      # RabbitMQ credentials from environment variables
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:-guest}  # Override via .env
+      RABBITMQ_DEFAULT_VHOST: ${RABBIT_VHOST:-/}
+      # Additional RabbitMQ tuning
+      RABBITMQ_ERLANG_COOKIE: ${RABBIT_ERLANG_COOKIE:-changeme}
+    ports:
+      # AMQP Protocol - for POS receiver and Heartbeat services
+      - "0.0.0.0:${RABBIT_PORT:-5672}:5672"
+      # Management UI - accessed via reverse proxy on port 15671 (HTTPS)
+      - "127.0.0.1:15672:15672"  # Local access only (Nginx handles external HTTPS)
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_logs:/var/log/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kassa-network
+    # Optional: Add RabbitMQ configuration
+    # config:
+    #   rabbitmq.conf: |
+    #     vm_memory_high_watermark.relative = 0.6
+    #     management.tcp.port = 15672
+
+  # Odoo POS Application
+  odoo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kassa-odoo
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      # Internal port 8069 - accessed via Nginx reverse proxy
+      - "127.0.0.1:8069:8069"  # Localhost only (Nginx handles external access)
+    volumes:
+      # Mount custom Kassa module
+      - ./kassa_pos:/mnt/extra-addons/kassa_pos
+      # Persist Odoo data (filestore, sessions, etc.)
+      - odoo_data:/var/lib/odoo
+      # Optional: Mount custom entrypoint script for startup logic
+      # - ./entrypoint.sh:/entrypoint.sh
+    environment:
+      # ========== DATABASE CONFIGURATION ==========
+      # PostgreSQL connection parameters
+      HOST: ${DB_HOST:-db}                           # Service name (internal) or Azure hostname
+      DB_PORT: ${DB_PORT:-5432}                      # PostgreSQL port
+      USER: ${POSTGRES_USER:-kassa}                  # PostgreSQL user
+      PASSWORD: ${POSTGRES_PASSWORD:-changeme}      # PostgreSQL password (override via .env)
+      POSTGRES_DB: ${POSTGRES_DB:-kassa_db}         # Database name
+      
+      # Odoo command-line arguments (passed via compose)
+      # DB_FILTER: "^${POSTGRES_DB:-kassa_db}$"
+      
+      # ========== RABBITMQ CONFIGURATION ==========
+      # RabbitMQ connection for POS user registration and messaging
+      RABBITMQ_HOST: ${RABBIT_HOST:-rabbitmq}       # Service name (internal) or FQDN
+      RABBITMQ_PORT: ${RABBIT_PORT:-5672}           # AMQP port (NOT management port 15671)
+      RABBITMQ_USER: ${RABBIT_USER:-guest}          # RabbitMQ username
+      RABBITMQ_PASS: ${RABBIT_PASSWORD:-guest}      # RabbitMQ password (override via .env)
+      RABBITMQ_VHOST: ${RABBIT_VHOST:-/}            # RabbitMQ virtual host
+      
+      # ========== ODOO WEB CONFIGURATION ==========
+      # Public domain accessible via Nginx reverse proxy
+      ODOO_DOMAIN: ${ODOO_DOMAIN:-kassa.integration-project-2026-groep-2.my.be}
+      
+      # ========== LOGGING & DEBUGGING ==========
+      LOG_LEVEL: ${LOG_LEVEL:-info}                 # Odoo log level (debug|info|warning|error)
+    
+    # Odoo startup command with database configuration
+    # The environment variables above are available to the container,
+    # but Odoo also expects command-line arguments for DB connection
+    command: >
+      odoo
+      --db_host=${DB_HOST:-db}
+      --db_port=${DB_PORT:-5432}
+      --db_user=${POSTGRES_USER:-kassa}
+      --db_password=${POSTGRES_PASSWORD:-changeme}
+      --db_name=${POSTGRES_DB:-kassa_db}
+      --addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
+      --db-filter=^${POSTGRES_DB:-kassa_db}$
+      --http-port=8069
+      --log-level=${LOG_LEVEL:-info}
+    
+    networks:
+      - kassa-network
+    
+    # Healthcheck to monitor Odoo availability
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8069/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # POS Message Receiver Service
+  pos_receiver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kassa-pos-receiver
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    working_dir: /app/src
+    
+    # Service definition for Python receiver script
+    command: python3 main_pos_receiver.py
+    
+    environment:
+      # ========== RABBITMQ CONFIGURATION ==========
+      # Connect to RabbitMQ for consuming POS messages
+      RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
+      RABBIT_PORT: ${RABBIT_PORT:-5672}
+      RABBIT_USER: ${RABBIT_USER:-guest}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}        # Override via .env
+      RABBIT_VHOST: ${RABBIT_VHOST:-/}
+      
+      # Message queue configuration (override in .env if needed)
+      POS_EXCHANGE: ${POS_EXCHANGE:-pos.events}         # RabbitMQ exchange
+      POS_ROUTING_KEY: ${POS_ROUTING_KEY:-pos.#}        # Routing key pattern
+      POS_QUEUE: ${POS_QUEUE:-pos_messages}             # Queue name
+      
+      # ========== LOGGING ==========
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    
+    networks:
+      - kassa-network
+    
+    # Auto-restart service if it crashes
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+
+  # Heartbeat Service - Monitors service health
+  heartbeat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kassa-heartbeat
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    working_dir: /app/src
+    
+    # Service definition for Python heartbeat script
+    command: python3 main_heartbeat.py
+    
+    environment:
+      # ========== RABBITMQ CONFIGURATION ==========
+      RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
+      RABBIT_PORT: ${RABBIT_PORT:-5672}
+      RABBIT_USER: ${RABBIT_USER:-guest}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}     # Override via .env
+      RABBIT_VHOST: ${RABBIT_VHOST:-/}
+      
+      # ========== HEARTBEAT CONFIGURATION ==========
+      HEARTBEAT_INTERVAL_SECONDS: ${HEARTBEAT_INTERVAL_SECONDS:-1}      # Pulse interval
+      HEARTBEAT_EXCHANGE: ${HEARTBEAT_EXCHANGE:-heartbeat.direct}       # RabbitMQ exchange
+      HEARTBEAT_ROUTING_KEY: ${HEARTBEAT_ROUTING_KEY:-routing.heartbeat}# Routing key
+      HEARTBEAT_QUEUE: ${HEARTBEAT_QUEUE:-heartbeat_queue}             # Queue name
+      
+      # ========== LOGGING ==========
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    
+    networks:
+      - kassa-network
+    
+    # Auto-restart service if it crashes
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+
+# ============================================================
+# VOLUMES - Persistent Data Storage
+# ============================================================
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${POSTGRES_DATA_PATH:-./data/postgres}  # Optional: customize volume location
+
+  odoo_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ODOO_DATA_PATH:-./data/odoo}
+
+  rabbitmq_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${RABBITMQ_DATA_PATH:-./data/rabbitmq}
+
+  rabbitmq_logs:
+    driver: local
+
+# ============================================================
+# NETWORKS - Internal Service Communication
+# ============================================================
+networks:
+  kassa-network:
+    driver: bridge
+    # Custom network for internal service communication
+    # Services access each other by service name (e.g., rabbitmq:5672)
+    # This isolates Kassa services from other containers on the host
+
+# ============================================================
+# REVERSE PROXY (NGINX) - Configuration Reference
+# ============================================================
+# 
+# The Kassa Odoo application is accessed via Nginx reverse proxy.
+# Nginx maps the external subdomain to the internal Odoo container.
+#
+# Nginx Configuration (reference - configure outside of Docker Compose):
+# 
+# upstream kassa_backend {
+#     server odoo:8069;
+# }
+# 
+# server {
+#     listen 443 ssl http2;
+#     server_name kassa.integration-project-2026-groep-2.my.be;
+#     
+#     ssl_certificate /etc/nginx/certs/kassa.crt;
+#     ssl_certificate_key /etc/nginx/certs/kassa.key;
+#     
+#     location / {
+#         proxy_pass http://kassa_backend;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#     }
+# }
+#
+# Nginx will internally resolve 'odoo' to the container's IP address
+# when both are on the same Docker network.
+#
+# RabbitMQ Management UI (reference - access at https://kassa.integration-project-2026-groep-2.my.be:15671):
+#
+# server {
+#     listen 15671 ssl http2;
+#     server_name kassa.integration-project-2026-groep-2.my.be;
+#     
+#     ssl_certificate /etc/nginx/certs/kassa.crt;
+#     ssl_certificate_key /etc/nginx/certs/kassa.key;
+#     
+#     location / {
+#         proxy_pass http://rabbitmq:15672;
+#         proxy_set_header Host $host;
+#     }
+# }
