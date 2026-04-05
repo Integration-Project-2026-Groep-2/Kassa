@@ -1,0 +1,196 @@
+/* User Registration Modal Styles */
+
+.user-registration-modal {
+    min-width: 500px;
+    max-width: 600px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-registration-modal.o_dialog {
+    background: white;
+    border-radius: 4px;
+}
+
+.user-registration-modal .modal-header {
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-registration-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.user-registration-modal .btn-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+}
+
+.user-registration-modal .modal-body {
+    padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.user-registration-modal .modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    background-color: #f8f9fa;
+}
+
+.user-registration-modal .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.user-registration-modal .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.user-registration-modal .form-label.required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.user-registration-modal .form-control,
+.user-registration-modal .form-check-input {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.user-registration-modal .form-control:focus,
+.user-registration-modal .form-check-input:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.user-registration-modal .form-check-input {
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+.user-registration-modal .form-check-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.user-registration-modal .alert {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid transparent;
+}
+
+.user-registration-modal .alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.user-registration-modal .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 0.25rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.user-registration-modal .btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.user-registration-modal .btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.user-registration-modal .btn-primary:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.user-registration-modal .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.user-registration-modal .btn-secondary:hover:not(:disabled) {
+    background-color: #545b62;
+}
+
+.user-registration-modal .spinner-border {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    vertical-align: text-bottom;
+    border: 0.25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+.user-registration-modal .spinner-border-sm {
+    width: 0.8rem;
+    height: 0.8rem;
+    border-width: 0.2em;
+}
+
+.user-registration-modal .mr-2 {
+    margin-right: 0.5rem;
+}
+
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Add User Button Styling */
+.kassa-add-user-btn {
+    position: absolute;
+    top: 15px;
+    right: 250px;
+    z-index: 10;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.kassa-add-user-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.kassa-add-user-btn i {
+    margin-right: 6px;
+}

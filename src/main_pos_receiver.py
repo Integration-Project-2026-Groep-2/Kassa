@@ -2,12 +2,10 @@ import logging
 import threading
 
 from messaging.consumer import KassaConsumer
-from config import RABBIT_HOST, CONSUMPTION_ORDER_QUEUE, PAYMENT_COMPLETED_QUEUE
+from config import RABBIT_HOST, PAYMENT_CONFIRMED_QUEUE, INVOICE_REQUESTED_QUEUE
 
 """
-Receiver die berichten logt van de ConsumptionOrder- en PaymentCompleted-queues.
-Deze queues worden gevuld door Odoo POS zodra een order afgerond is.
-
+Test-receiver die berichten logt van de queues die Kassa publiceert.
 Start RabbitMQ via Docker, start daarna dit script.
 Doe een verkoop in Odoo POS → je ziet de XML-berichten verschijnen.
 """
@@ -16,12 +14,12 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
 
-def on_consumption_order(body: bytes):
-    logger.info("=== ConsumptionOrder ontvangen ===\n%s", body.decode('utf-8'))
+def on_payment_confirmed(body: bytes):
+    logger.info("=== PaymentConfirmed ontvangen (Contract 16) ===\n%s", body.decode('utf-8'))
 
 
-def on_payment_completed(body: bytes):
-    logger.info("=== PaymentCompleted ontvangen ===\n%s", body.decode('utf-8'))
+def on_invoice_requested(body: bytes):
+    logger.info("=== InvoiceRequested ontvangen (Contract K-01) ===\n%s", body.decode('utf-8'))
 
 
 def listen_queue(queue_name: str, callback):
@@ -38,17 +36,16 @@ def listen_queue(queue_name: str, callback):
 
 if __name__ == "__main__":
     logger.info("POS receiver gestart. Luistert op '%s' en '%s'...",
-                CONSUMPTION_ORDER_QUEUE, PAYMENT_COMPLETED_QUEUE)
+                PAYMENT_CONFIRMED_QUEUE, INVOICE_REQUESTED_QUEUE)
 
-    # Elke queue krijgt een eigen thread zodat beide tegelijk luisteren
     t1 = threading.Thread(
         target=listen_queue,
-        args=(CONSUMPTION_ORDER_QUEUE, on_consumption_order),
+        args=(PAYMENT_CONFIRMED_QUEUE, on_payment_confirmed),
         daemon=True,
     )
     t2 = threading.Thread(
         target=listen_queue,
-        args=(PAYMENT_COMPLETED_QUEUE, on_payment_completed),
+        args=(INVOICE_REQUESTED_QUEUE, on_invoice_requested),
         daemon=True,
     )
 

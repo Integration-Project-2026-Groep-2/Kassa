@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Kassa Master Schema — Alle Kassa-contracten
+  Integration Project 2025/2026 | Groep 2
+  Versie 1.1 — Maart 2026
+
+  Bron: Team Kassa contractoverzicht (R1–R3)
+
+  Gebruik: runtime-validatie via lxml in Python (xml_validator.py).
+
+  Geen targetNamespace — XML-berichten op de queue bevatten
+  geen namespace-declaraties.
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="unqualified"
            version="1.1">
+
+  <!-- ============================================================
+       GEDEELDE SIMPLE TYPES
+  ============================================================ -->
 
   <xs:simpleType name="UUIDType">
     <xs:restriction base="xs:string">
@@ -11,6 +27,12 @@
 
   <xs:simpleType name="ISO8601DateTimeType">
     <xs:restriction base="xs:dateTime"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="CountryCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2}"/>
+    </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="EmailType">
@@ -85,6 +107,10 @@
     </xs:restriction>
   </xs:simpleType>
 
+  <!-- ============================================================
+       GEDEELDE COMPLEX TYPES
+  ============================================================ -->
+
   <xs:complexType name="SystemLoadType">
     <xs:sequence>
       <xs:element name="cpu">
@@ -133,6 +159,10 @@
     </xs:sequence>
   </xs:complexType>
 
+  <!-- ============================================================
+       CONTRACT 7 — Kassa → Controlroom: heartbeat
+       Queue: kassa.heartbeat | durable: false
+  ============================================================ -->
   <xs:element name="Heartbeat">
     <xs:complexType>
       <xs:sequence>
@@ -142,6 +172,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 8 — Kassa → Controlroom: statuscheck
+       Queue: kassa.status.checked | durable: false
+  ============================================================ -->
   <xs:element name="StatusCheck">
     <xs:complexType>
       <xs:sequence>
@@ -154,6 +188,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 9 — Controlroom → Kassa: systeemwaarschuwing
+       Queue: controlroom.warning.issued | durable: false
+  ============================================================ -->
   <xs:element name="Warning">
     <xs:complexType>
       <xs:sequence>
@@ -164,6 +202,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 10a — Kassa → CRM: persoonscheck request
+       Queue: kassa.person.lookup.requested | durable: true
+  ============================================================ -->
   <xs:element name="PersonLookupRequest">
     <xs:complexType>
       <xs:sequence>
@@ -173,6 +215,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 10b — CRM → Kassa: persoonscheck response
+       Queue: crm.person.lookup.responded | durable: false
+  ============================================================ -->
   <xs:element name="PersonLookupResponse">
     <xs:complexType>
       <xs:sequence>
@@ -186,6 +232,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 13 — CRM → Kassa: user confirmed
+       Queue: crm.user.confirmed | durable: true
+  ============================================================ -->
   <xs:element name="UserConfirmed">
     <xs:complexType>
       <xs:sequence>
@@ -204,6 +254,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 14 — CRM → Kassa: company confirmed
+       Queue: crm.company.confirmed | durable: true
+  ============================================================ -->
   <xs:element name="CompanyConfirmed">
     <xs:complexType>
       <xs:sequence>
@@ -217,6 +271,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 16 — Kassa → CRM: betaling bevestigd
+       Queue: kassa.payment.confirmed | durable: true
+  ============================================================ -->
   <xs:element name="PaymentConfirmed">
     <xs:complexType>
       <xs:sequence>
@@ -230,6 +288,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 17a — Kassa → CRM: lijst niet-betaalden request
+       Queue: kassa.unpaid.requested | durable: true
+  ============================================================ -->
   <xs:element name="UnpaidRequest">
     <xs:complexType>
       <xs:sequence>
@@ -238,6 +300,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 17b — CRM → Kassa: lijst niet-betaalden response
+       Queue: crm.unpaid.responded | durable: false
+  ============================================================ -->
   <xs:element name="UnpaidResponse">
     <xs:complexType>
       <xs:sequence>
@@ -253,6 +319,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT K-01 — Kassa → Facturatie: factuurverzoek bedrijfstransactie
+       Queue: kassa.invoice.requested | durable: true
+  ============================================================ -->
   <xs:element name="InvoiceRequested">
     <xs:complexType>
       <xs:sequence>
@@ -277,6 +347,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 18 — CRM → Kassa: user updated
+       Queue: crm.user.updated | durable: true
+  ============================================================ -->
   <xs:element name="UserUpdated">
     <xs:complexType>
       <xs:sequence>
@@ -300,6 +374,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 19 — CRM → Kassa: company updated
+       Queue: crm.company.updated | durable: true
+  ============================================================ -->
   <xs:element name="CompanyUpdated">
     <xs:complexType>
       <xs:sequence>
@@ -319,6 +397,10 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 22 — CRM → Kassa: user deactivated (GDPR)
+       Queue: crm.user.deactivated | durable: true
+  ============================================================ -->
   <xs:element name="UserDeactivated">
     <xs:complexType>
       <xs:sequence>
@@ -329,12 +411,96 @@
     </xs:complexType>
   </xs:element>
 
+  <!-- ============================================================
+       CONTRACT 23 — CRM → Kassa: company deactivated
+       Queue: crm.company.deactivated | durable: true
+  ============================================================ -->
   <xs:element name="CompanyDeactivated">
     <xs:complexType>
       <xs:sequence>
         <xs:element name="id" type="UUIDType"/>
         <xs:element name="vatNumber" type="BelgianVatNumberType"/>
         <xs:element name="deactivatedAt" type="ISO8601DateTimeType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================================
+       INTEGRATION SERVICE: User CRUD Operations
+       
+       Supports CREATE, READ, UPDATE, DELETE operations for users
+       within the Integration Service (VM 2).
+       
+       Queue: integration.user.* | durable: true
+  ============================================================ -->
+
+  <!-- ============================================================
+       User Element — Core user data structure
+       Used in UserCreated, UserUpdated messages
+  ============================================================ -->
+  <xs:element name="User">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="userId" type="UUIDType"/>
+        <xs:element name="firstName" type="NameType"/>
+        <xs:element name="lastName" type="NameType"/>
+        <xs:element name="email" type="EmailType"/>
+        <xs:element name="companyId" type="UUIDType" minOccurs="0"/>
+        <xs:element name="badgeCode" type="xs:string"/>
+        <xs:element name="role" type="UserRoleType"/>
+        <xs:element name="createdAt" type="ISO8601DateTimeType" minOccurs="0"/>
+        <xs:element name="updatedAt" type="ISO8601DateTimeType" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================================
+       UserCreated Event — Emitted when a new user is created
+       Queue: integration.user.created | durable: true
+  ============================================================ -->
+  <xs:element name="UserCreated">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="userId" type="UUIDType"/>
+        <xs:element name="firstName" type="NameType"/>
+        <xs:element name="lastName" type="NameType"/>
+        <xs:element name="email" type="EmailType"/>
+        <xs:element name="companyId" type="UUIDType" minOccurs="0"/>
+        <xs:element name="badgeCode" type="xs:string"/>
+        <xs:element name="role" type="UserRoleType"/>
+        <xs:element name="createdAt" type="ISO8601DateTimeType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================================
+       UserUpdatedIntegration Event — Emitted when a user is updated
+       Queue: integration.user.updated | durable: true
+  ============================================================ -->
+  <xs:element name="UserUpdatedIntegration">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="userId" type="UUIDType"/>
+        <xs:element name="firstName" type="NameType"/>
+        <xs:element name="lastName" type="NameType"/>
+        <xs:element name="email" type="EmailType"/>
+        <xs:element name="companyId" type="UUIDType" minOccurs="0"/>
+        <xs:element name="badgeCode" type="xs:string"/>
+        <xs:element name="role" type="UserRoleType"/>
+        <xs:element name="updatedAt" type="ISO8601DateTimeType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================================
+       UserDeleted Event — Emitted when a user is deleted/deactivated
+       Queue: integration.user.deleted | durable: true
+  ============================================================ -->
+  <xs:element name="UserDeleted">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="userId" type="UUIDType"/>
+        <xs:element name="deletedAt" type="ISO8601DateTimeType"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

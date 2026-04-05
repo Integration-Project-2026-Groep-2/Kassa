@@ -33,7 +33,6 @@ def run_heartbeat(interval_seconds: int = 1):
     - Gebruikt het XML-template uit `templates/Heartbeat.xml`.
     - Logt succes en fouten.
     """
-
     producer = KassaProducer(host=RABBIT_HOST)
     producer.connect()
     logger.info(
@@ -45,7 +44,6 @@ def run_heartbeat(interval_seconds: int = 1):
 
     try:
         while True:
-            # Bouw het XML-bericht (vult timestamp en andere velden)
             xml = build_heartbeat_xml()
 
             # Publiceer expliciet naar de heartbeat exchange.
@@ -56,7 +54,6 @@ def run_heartbeat(interval_seconds: int = 1):
                 queue_name=HEARTBEAT_QUEUE,
             )
             logger.info("Heartbeat verzonden")
-
             time.sleep(interval_seconds)
     except KeyboardInterrupt:
         logger.info("Heartbeat publisher gestopt (KeyboardInterrupt)")

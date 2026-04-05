@@ -37,14 +37,16 @@ class KassaProducer:
     def publish(
         self,
         payload: str,
-        routing_key: str = 'heartbeat_queue',
+        routing_key: str = 'kassa.heartbeat',
         exchange: str = '',
         queue_name: str | None = None,
+        durable: bool = True,
     ):
         """Publiceer een string-payload naar de opgegeven `routing_key`.
 
-        We declareren de queue eerst om er zeker van te zijn dat deze bestaat.
-        De payload wordt als bytes naar RabbitMQ gestuurd.
+        durable=False voor queues zoals kassa.heartbeat en kassa.status.checked
+        (conform de contracten). durable=True voor queues die berichten moeten
+        bewaren bij een RabbitMQ-herstart.
         """
         channel = self._manager.channel
 
@@ -54,13 +56,10 @@ class KassaProducer:
             channel.exchange_declare(exchange=exchange, exchange_type='direct', durable=True)
 
         target_queue = queue_name or routing_key
-        # durable=True zodat de queue een RabbitMQ-herstart overleeft
-        # én overeenkomt met hoe Odoo de queue declareert (anders: PRECONDITION_FAILED)
-        channel.queue_declare(queue=target_queue, durable=True)
+        channel.queue_declare(queue=target_queue, durable=durable)
 
         if exchange:
             channel.queue_bind(queue=target_queue, exchange=exchange, routing_key=routing_key)
-
         channel.basic_publish(exchange=exchange, routing_key=routing_key, body=payload.encode('utf-8'))
         logger.debug("Bericht gepubliceerd naar %s", routing_key)
 

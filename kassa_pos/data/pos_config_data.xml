@@ -17,13 +17,13 @@
 
         <!-- Payment Methods -->
         <record id="payment_method_cash" model="pos.payment.method">
-            <field name="name">Cash (Direct)</field>
+            <field name="name">Cash</field>
             <field name="journal_id" ref="account_journal_cash_kassa"/>
             <field name="company_id" ref="base.main_company"/>
         </record>
 
         <record id="payment_method_card" model="pos.payment.method">
-            <field name="name">Card (Direct)</field>
+            <field name="name">Bancontact</field>
             <field name="journal_id" ref="account_journal_bank_kassa"/>
             <field name="company_id" ref="base.main_company"/>
         </record>

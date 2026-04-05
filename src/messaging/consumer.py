@@ -27,16 +27,14 @@ class KassaConsumer:
         """Open de verbinding en het kanaal."""
         self._manager.connect()
 
-    def start_listening(self, queue_name: str, callback):
+    def start_listening(self, queue_name: str, callback, durable: bool = True):
         """Bind aan `queue_name` en roep `callback(body)` aan voor elk bericht.
 
-        De callback krijgt de ruwe body (bytes). We gebruiken `auto_ack=True`
-        voor eenvoud; in real-world code wil je mogelijk manuele acknowledgements.
+        durable=False voor tijdelijke queues (bv. kassa.heartbeat, controlroom.warning.issued).
+        durable=True voor queues die berichten bewaren bij een RabbitMQ-herstart.
         """
         channel = self._manager.channel
-        # durable=True zodat de queue een RabbitMQ-herstart overleeft
-        # én overeenkomt met hoe Odoo de queue declareert (anders: PRECONDITION_FAILED)
-        channel.queue_declare(queue=queue_name, durable=True)
+        channel.queue_declare(queue=queue_name, durable=durable)
 
         def _on_message(ch, method, properties, body):
             try:
