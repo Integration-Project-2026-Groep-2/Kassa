@@ -13,6 +13,11 @@ RABBITMQ_PORT = int(os.environ.get('RABBIT_PORT') or os.environ.get('RABBITMQ_PO
 RABBITMQ_USER = os.environ.get('RABBIT_USER') or os.environ.get('RABBITMQ_USER', 'guest')
 RABBITMQ_PASS = os.environ.get('RABBIT_PASSWORD') or os.environ.get('RABBITMQ_PASS', 'guest')
 RABBITMQ_VHOST = os.environ.get('RABBIT_VHOST') or os.environ.get('RABBITMQ_VHOST', '/')
+USER_EVENTS_EXCHANGE = os.environ.get('USER_EVENTS_EXCHANGE', 'user.direct')
+USER_EVENTS_EXCHANGE_TYPE = os.environ.get('USER_EVENTS_EXCHANGE_TYPE', 'direct')
+USER_EVENTS_DLX_EXCHANGE = os.environ.get('USER_EVENTS_DLX_EXCHANGE', 'user.dlx')
+USER_EVENTS_RETRY_EXCHANGE = os.environ.get('USER_EVENTS_RETRY_EXCHANGE', 'user.retry')
+USER_EVENTS_RETRY_TTL_MS = int(os.environ.get('USER_EVENTS_RETRY_TTL_MS', '15000'))
 
 # Queue namen conform Team Kassa contractoverzicht
 QUEUE_PAYMENT_CONFIRMED = 'kassa.payment.confirmed'   # Contract 16 → CRM
@@ -119,6 +124,41 @@ def _build_user_deleted_xml(user_id: str) -> str:
     return ET.tostring(root, encoding='unicode')
 
 
+def _declare_user_topology(channel, queue_name: str, routing_key: str) -> None:
+    """Declare user CRUD exchange, retry and DLQ topology idempotently."""
+    retry_queue = f"{queue_name}.retry"
+    dlq_queue = f"{queue_name}.dlq"
+    retry_routing_key = f"{routing_key}.retry"
+    dlq_routing_key = f"{routing_key}.dlq"
+
+    channel.exchange_declare(
+        exchange=USER_EVENTS_EXCHANGE,
+        exchange_type=USER_EVENTS_EXCHANGE_TYPE,
+        durable=True,
+    )
+    channel.exchange_declare(exchange=USER_EVENTS_DLX_EXCHANGE, exchange_type='direct', durable=True)
+    channel.exchange_declare(exchange=USER_EVENTS_RETRY_EXCHANGE, exchange_type='direct', durable=True)
+
+    # Keep primary queue declaration argument-free for compatibility with
+    # already-existing queues that were created without x-dead-letter-* args.
+    channel.queue_declare(queue=queue_name, durable=True)
+    channel.queue_bind(queue=queue_name, exchange=USER_EVENTS_EXCHANGE, routing_key=routing_key)
+
+    channel.queue_declare(
+        queue=retry_queue,
+        durable=True,
+        arguments={
+            'x-message-ttl': USER_EVENTS_RETRY_TTL_MS,
+            'x-dead-letter-exchange': USER_EVENTS_EXCHANGE,
+            'x-dead-letter-routing-key': routing_key,
+        },
+    )
+    channel.queue_bind(queue=retry_queue, exchange=USER_EVENTS_RETRY_EXCHANGE, routing_key=retry_routing_key)
+
+    channel.queue_declare(queue=dlq_queue, durable=True)
+    channel.queue_bind(queue=dlq_queue, exchange=USER_EVENTS_DLX_EXCHANGE, routing_key=dlq_routing_key)
+
+
 def _get_connection_params():
     try:
         import pika
@@ -136,7 +176,13 @@ def _get_connection_params():
         raise RuntimeError("pika library not installed. Run: pip install pika")
 
 
-def _send_xml(queue_name: str, xml_body: str) -> bool:
+def _send_xml(
+    queue_name: str,
+    xml_body: str,
+    exchange: str = '',
+    routing_key: str | None = None,
+    exchange_type: str = 'direct',
+) -> bool:
     """
     Stuur een XML-string naar een RabbitMQ queue.
     Geeft True terug bij succes, False bij fout.
@@ -149,9 +195,17 @@ def _send_xml(queue_name: str, xml_body: str) -> bool:
 
         channel.queue_declare(queue=queue_name, durable=True)
 
+        publish_routing_key = routing_key or queue_name
+        if exchange:
+            channel.exchange_declare(exchange=exchange, exchange_type=exchange_type, durable=True)
+            channel.queue_bind(queue=queue_name, exchange=exchange, routing_key=publish_routing_key)
+
+            if exchange == USER_EVENTS_EXCHANGE:
+                _declare_user_topology(channel, queue_name, publish_routing_key)
+
         channel.basic_publish(
-            exchange='',
-            routing_key=queue_name,
+            exchange=exchange,
+            routing_key=publish_routing_key,
             body=xml_body.encode('utf-8'),
             properties=pika.BasicProperties(
                 delivery_mode=2,        # persistent: bericht overleeft RabbitMQ herstart
@@ -188,14 +242,32 @@ def send_invoice_requested(invoice_data: dict) -> bool:
 
 def send_user_created(user_data: dict) -> bool:
     xml = _build_user_xml(user_data)
-    return _send_xml(QUEUE_USER_CREATED, xml)
+    return _send_xml(
+        QUEUE_USER_CREATED,
+        xml,
+        exchange=USER_EVENTS_EXCHANGE,
+        routing_key='integration.user.created',
+        exchange_type=USER_EVENTS_EXCHANGE_TYPE,
+    )
 
 
 def send_user_updated(user_data: dict) -> bool:
     xml = _build_user_xml(user_data)
-    return _send_xml(QUEUE_USER_UPDATED, xml)
+    return _send_xml(
+        QUEUE_USER_UPDATED,
+        xml,
+        exchange=USER_EVENTS_EXCHANGE,
+        routing_key='integration.user.updated',
+        exchange_type=USER_EVENTS_EXCHANGE_TYPE,
+    )
 
 
 def send_user_deleted(user_id: str) -> bool:
     xml = _build_user_deleted_xml(user_id)
-    return _send_xml(QUEUE_USER_DELETED, xml)
+    return _send_xml(
+        QUEUE_USER_DELETED,
+        xml,
+        exchange=USER_EVENTS_EXCHANGE,
+        routing_key='integration.user.deleted',
+        exchange_type=USER_EVENTS_EXCHANGE_TYPE,
+    )

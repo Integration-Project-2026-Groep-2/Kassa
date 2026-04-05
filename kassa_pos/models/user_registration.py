@@ -72,16 +72,21 @@ class UserMessageQueue(models.Model):
     def action_send(self):
         """Send message to RabbitMQ."""
         try:
-            from src.messaging.producer import KassaProducer
+            from ..utils.rabbitmq_sender import send_user_created, send_user_updated, send_user_deleted
             
             for message in self:
-                producer = KassaProducer(host='localhost')
-                producer.connect()
-                
                 try:
-                    # Send based on message type
-                    routing_key = f'integration.user.{message.message_type.lower()}'
-                    producer.publish(message.payload, routing_key=routing_key)
+                    if message.message_type == 'UserCreated':
+                        sent = send_user_created(_parse_user_payload(message.payload))
+                    elif message.message_type == 'UserUpdated':
+                        sent = send_user_updated(_parse_user_payload(message.payload))
+                    elif message.message_type == 'UserDeleted':
+                        sent = send_user_deleted(message.user_id_custom)
+                    else:
+                        raise ValueError(f"Unsupported message type: {message.message_type}")
+
+                    if not sent:
+                        raise RuntimeError('RabbitMQ sender returned False')
                     
                     message.write({
                         'status': 'sent',
@@ -101,11 +106,38 @@ class UserMessageQueue(models.Model):
                         "Failed to send user message [user_id=%s retry=%d error=%s]",
                         message.user_id_custom, message.retry_count, str(e)
                     )
-                finally:
-                    producer.close()
         
         except ImportError:
             logger.warning("RabbitMQ producer not available - message queued locally")
+
+
+def _parse_user_payload(xml_payload):
+    """Parse a User XML payload into dict expected by sender helpers."""
+    try:
+        root = ET.fromstring(xml_payload)
+        return {
+            'userId': root.findtext('userId', '').strip(),
+            'firstName': root.findtext('firstName', '').strip(),
+            'lastName': root.findtext('lastName', '').strip(),
+            'email': root.findtext('email', '').strip(),
+            'companyId': root.findtext('companyId', '').strip() or None,
+            'badgeCode': root.findtext('badgeCode', '').strip(),
+            'role': root.findtext('role', '').strip(),
+            'createdAt': root.findtext('createdAt', '').strip() or None,
+            'updatedAt': root.findtext('updatedAt', '').strip() or None,
+        }
+    except Exception:
+        return {
+            'userId': '',
+            'firstName': '',
+            'lastName': '',
+            'email': '',
+            'companyId': None,
+            'badgeCode': '',
+            'role': '',
+            'createdAt': None,
+            'updatedAt': None,
+        }
 
 
 class PosSession(models.Model):
