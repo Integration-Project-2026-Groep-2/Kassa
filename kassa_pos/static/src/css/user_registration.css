@@ -174,23 +174,9 @@
 
 /* Add User Button Styling */
 .kassa-add-user-btn {
-    position: absolute;
-    top: 15px;
-    right: 250px;
-    z-index: 10;
-    padding: 10px 14px;
-    font-size: 13px;
-    font-weight: 500;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease-in-out;
-}
-
-.kassa-add-user-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    margin: 0;
 }
 
 .kassa-add-user-btn i {
-    margin-right: 6px;
+    margin-right: 4px;
 }

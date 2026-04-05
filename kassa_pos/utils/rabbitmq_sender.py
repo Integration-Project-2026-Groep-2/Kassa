@@ -8,15 +8,18 @@ import xml.etree.ElementTree as ET
 _logger = logging.getLogger(__name__)
 
 # RabbitMQ-verbindingsinstellingen komen uit omgevingsvariabelen (zie docker-compose.yml)
-RABBITMQ_HOST = os.environ.get('RABBIT_HOST', 'localhost')
-RABBITMQ_PORT = int(os.environ.get('RABBIT_PORT', 5672))
-RABBITMQ_USER = os.environ.get('RABBIT_USER', 'guest')
-RABBITMQ_PASS = os.environ.get('RABBIT_PASSWORD', 'guest')
-RABBITMQ_VHOST = os.environ.get('RABBIT_VHOST', '/')
+RABBITMQ_HOST = os.environ.get('RABBIT_HOST') or os.environ.get('RABBITMQ_HOST', 'localhost')
+RABBITMQ_PORT = int(os.environ.get('RABBIT_PORT') or os.environ.get('RABBITMQ_PORT', 5672))
+RABBITMQ_USER = os.environ.get('RABBIT_USER') or os.environ.get('RABBITMQ_USER', 'guest')
+RABBITMQ_PASS = os.environ.get('RABBIT_PASSWORD') or os.environ.get('RABBITMQ_PASS', 'guest')
+RABBITMQ_VHOST = os.environ.get('RABBIT_VHOST') or os.environ.get('RABBITMQ_VHOST', '/')
 
 # Queue namen conform Team Kassa contractoverzicht
 QUEUE_PAYMENT_CONFIRMED = 'kassa.payment.confirmed'   # Contract 16 → CRM
 QUEUE_INVOICE_REQUESTED = 'kassa.invoice.requested'   # Contract K-01 → Facturatie
+QUEUE_USER_CREATED = 'integration.user.created'
+QUEUE_USER_UPDATED = 'integration.user.updated'
+QUEUE_USER_DELETED = 'integration.user.deleted'
 
 
 def _now_iso() -> str:
@@ -80,6 +83,39 @@ def _build_invoice_requested_xml(invoice_data: dict) -> str:
     if invoice_data.get('paymentReference'):
         ET.SubElement(root, 'paymentReference').text = str(invoice_data['paymentReference'])
 
+    return ET.tostring(root, encoding='unicode')
+
+
+def _build_user_xml(user_data: dict) -> str:
+    root = ET.Element('User')
+
+    ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
+    ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
+    ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
+    ET.SubElement(root, 'email').text = str(user_data.get('email', ''))
+
+    company_id = user_data.get('companyId')
+    if company_id:
+        ET.SubElement(root, 'companyId').text = str(company_id)
+
+    ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
+    ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+
+    created_at = user_data.get('createdAt')
+    if created_at:
+        ET.SubElement(root, 'createdAt').text = str(created_at)
+
+    updated_at = user_data.get('updatedAt')
+    if updated_at:
+        ET.SubElement(root, 'updatedAt').text = str(updated_at)
+
+    return ET.tostring(root, encoding='unicode')
+
+
+def _build_user_deleted_xml(user_id: str) -> str:
+    root = ET.Element('UserDeleted')
+    ET.SubElement(root, 'userId').text = str(user_id)
+    ET.SubElement(root, 'deletedAt').text = _now_iso()
     return ET.tostring(root, encoding='unicode')
 
 
@@ -148,3 +184,18 @@ def send_invoice_requested(invoice_data: dict) -> bool:
     """
     xml = _build_invoice_requested_xml(invoice_data)
     return _send_xml(QUEUE_INVOICE_REQUESTED, xml)
+
+
+def send_user_created(user_data: dict) -> bool:
+    xml = _build_user_xml(user_data)
+    return _send_xml(QUEUE_USER_CREATED, xml)
+
+
+def send_user_updated(user_data: dict) -> bool:
+    xml = _build_user_xml(user_data)
+    return _send_xml(QUEUE_USER_UPDATED, xml)
+
+
+def send_user_deleted(user_id: str) -> bool:
+    xml = _build_user_deleted_xml(user_id)
+    return _send_xml(QUEUE_USER_DELETED, xml)

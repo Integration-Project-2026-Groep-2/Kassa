@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <!-- POS User Registration Module Views -->
-        
-        <!-- Include the user registration assets -->
-        <template id="kassa_pos_user_registration_assets" name="Kassa POS User Registration Assets" inherit_id="point_of_sale.assets">
-            <xpath expr="." position="inside">
-                <script type="text/javascript" src="/kassa_pos/static/src/js/UserRegistration.js"/>
-                <script type="text/javascript" src="/kassa_pos/static/src/js/ProductScreenUserButton.js"/>
-                <script type="text/javascript" src="/kassa_pos/static/src/js/BadgeScanner.js"/>
-                <link rel="stylesheet" href="/kassa_pos/static/src/css/user_registration.css"/>
-            </xpath>
-        </template>
+        <!-- Assets are loaded via __manifest__.py (point_of_sale._assets_pos). -->
     </data>
 </odoo>

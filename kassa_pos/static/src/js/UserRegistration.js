@@ -2,21 +2,20 @@
 
 import { Component, useState, xml } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
+import { Dialog } from "@web/core/dialog/dialog";
 
 
 class UserRegistrationModal extends Component {
+    static components = { Dialog };
+
     static template = xml`
-        <div class="user-registration-modal o_dialog">
-            <div class="modal-header">
-                <h2>Register New User</h2>
-                <button type="button" class="btn-close" t-on-click="closeModal" aria-label="Close"></button>
-            </div>
+        <Dialog title="'Register New User'" class="user-registration-modal-dialog">
             <div class="modal-body">
-                <t t-if="uiState.hasError" class="alert alert-danger">
+                <div t-if="uiState.hasError" class="alert alert-danger">
                     <div class="alert-message">
                         <t t-esc="uiState.errorMessage"/>
                     </div>
-                </t>
+                </div>
                 <form class="user-registration-form">
                     <div class="form-group">
                         <label for="firstName" class="form-label required">First Name</label>
@@ -63,7 +62,7 @@ class UserRegistrationModal extends Component {
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
+            <t t-set-slot="footer">
                 <button type="button" class="btn btn-secondary" t-on-click="closeModal" t-att-disabled="uiState.isLoading">Cancel</button>
                 <button type="button" class="btn btn-primary" t-on-click="onSubmit" t-att-disabled="uiState.isLoading">
                     <t t-if="uiState.isLoading">
@@ -72,8 +71,8 @@ class UserRegistrationModal extends Component {
                     </t>
                     <t t-else="uiState.isLoading">Create User</t>
                 </button>
-            </div>
-        </div>
+            </t>
+        </Dialog>
     `;
 
     setup() {
@@ -273,31 +272,4 @@ class UserRegistrationModal extends Component {
         return roleMap[role] || 'Customer';
     }
 }
-
-
-class AddUserButton extends Component {
-    static template = xml`
-        <button class="btn btn-primary btn-add-user" t-on-click="openUserRegistration" title="Register a new user manually">
-            <i class="fa fa-plus-circle"/>
-            Add User (Nieuwe Klant)
-        </button>
-    `;
-
-    setup() {
-        this.dialog = useService('dialog');
-    }
-
-    /**
-     * Open user registration modal
-     */
-    openUserRegistration() {
-        this.dialog.add(UserRegistrationModal, {
-            title: 'Register New User',
-            close: () => {}, // Called when modal is closed
-        });
-    }
-}
-
-
-// Export components for use in other modules
-export { UserRegistrationModal, AddUserButton };
+export { UserRegistrationModal };
