@@ -124,8 +124,12 @@ def _build_user_deleted_xml(user_id: str) -> str:
     return ET.tostring(root, encoding='unicode')
 
 
-def _declare_user_topology(channel, queue_name: str, routing_key: str) -> None:
-    """Declare user CRUD exchange, retry and DLQ topology idempotently."""
+def _declare_user_topology(channel, queue_name: str, routing_key: str):
+    """Declare user CRUD exchange, retry and DLQ topology idempotently.
+
+    Primary queue declaration is kept argument-free for compatibility with
+    legacy queues. Dead-letter behavior is provided via broker policy.
+    """
     retry_queue = f"{queue_name}.retry"
     dlq_queue = f"{queue_name}.dlq"
     retry_routing_key = f"{routing_key}.retry"
@@ -139,9 +143,8 @@ def _declare_user_topology(channel, queue_name: str, routing_key: str) -> None:
     channel.exchange_declare(exchange=USER_EVENTS_DLX_EXCHANGE, exchange_type='direct', durable=True)
     channel.exchange_declare(exchange=USER_EVENTS_RETRY_EXCHANGE, exchange_type='direct', durable=True)
 
-    # Keep primary queue declaration argument-free for compatibility with
-    # already-existing queues that were created without x-dead-letter-* args.
     channel.queue_declare(queue=queue_name, durable=True)
+
     channel.queue_bind(queue=queue_name, exchange=USER_EVENTS_EXCHANGE, routing_key=routing_key)
 
     channel.queue_declare(
@@ -157,7 +160,9 @@ def _declare_user_topology(channel, queue_name: str, routing_key: str) -> None:
 
     channel.queue_declare(queue=dlq_queue, durable=True)
     channel.queue_bind(queue=dlq_queue, exchange=USER_EVENTS_DLX_EXCHANGE, routing_key=dlq_routing_key)
-
+    # Also bind on original routing key so policy-based DLX on existing queues
+    # can route messages without requiring queue recreation.
+    channel.queue_bind(queue=dlq_queue, exchange=USER_EVENTS_DLX_EXCHANGE, routing_key=routing_key)
 
 def _get_connection_params():
     try:
