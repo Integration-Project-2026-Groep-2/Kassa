@@ -48,12 +48,6 @@
     </xs:restriction>
   </xs:simpleType>
 
-  <xs:simpleType name="CountryCodeType">
-    <xs:restriction base="xs:string">
-      <xs:pattern value="[A-Z]{2}"/>
-    </xs:restriction>
-  </xs:simpleType>
-
   <xs:simpleType name="NameType">
     <xs:restriction base="xs:string">
       <xs:maxLength value="80"/>
