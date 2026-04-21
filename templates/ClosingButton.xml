@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="ClosingButton" name="Closing Button Template">
+        <button class="btn btn-primary closing-button" t-on-click="onClosingClick">
+            <i class="fa fa-save"></i>
+            Afsluitknop (Close & Send Batch)
+        </button>
+    </template>
+</odoo>
