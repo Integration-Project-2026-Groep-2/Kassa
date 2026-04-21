@@ -7,3 +7,7 @@ access_product_product_pos_user,product.product pos user,product.model_product_p
 access_product_product_pos_manager,product.product pos manager,product.model_product_product,point_of_sale.group_pos_manager,1,1,1,1
 access_product_category_pos_user,product.category pos user,product.model_product_category,point_of_sale.group_pos_user,1,0,0,0
 access_product_category_pos_manager,product.category pos manager,product.model_product_category,point_of_sale.group_pos_manager,1,1,1,1
+access_user_message_queue_user,user.message.queue pos user,kassa_pos.model_user_message_queue,point_of_sale.group_pos_user,1,0,0,0
+access_user_message_queue_manager,user.message.queue pos manager,kassa_pos.model_user_message_queue,point_of_sale.group_pos_manager,1,1,1,1
+access_pos_order_batch_user,pos.order.batch pos user,kassa_pos.model_pos_order_batch,point_of_sale.group_pos_user,1,0,0,0
+access_pos_order_batch_manager,pos.order.batch pos manager,kassa_pos.model_pos_order_batch,point_of_sale.group_pos_manager,1,1,1,1

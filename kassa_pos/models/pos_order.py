@@ -135,3 +135,111 @@ class PosOrder(models.Model):
         if order.payment_type == 'Invoice' and order.partner_id and order.partner_id.company_id_custom:
             invoice_data = order._build_invoice_requested_data()
             rabbitmq_sender.send_invoice_requested(invoice_data)
+
+    @api.model
+    def close_daily_batch(self, session=None) -> dict:
+        """
+        Afsluitknop: Collect today's transactions and send to facturatie.
+        
+        This is called when the POS manager closes the daily session.
+        It aggregates all orders with:
+        - paymentType = 'Invoice'
+        - Identified customer (UUID in order_id_custom)
+        
+        And sends them as a BatchClosed message to RabbitMQ.
+        
+        Args:
+            session: Optional pos.session record to close.
+                    If not provided, uses the current active session.
+        
+        Returns:
+            {
+                'success': bool,
+                'message': str,
+                'batch_id': Optional[str],
+                'orders_count': int,
+                'total_amount': float
+            }
+        """
+        import logging
+        _logger = logging.getLogger(__name__)
+        
+        try:
+            # Get the session to close
+            if not session:
+                # Try to find the current active session
+                PosSession = self.env['pos.session']
+                session = PosSession.search([
+                    ('state', '=', 'opened')
+                ], limit=1)
+            
+            if not session:
+                return {
+                    'success': False,
+                    'message': 'No active POS session found',
+                    'batch_id': None,
+                    'orders_count': 0,
+                    'total_amount': 0.0
+                }
+            
+            # Use the batch service to close
+            from ..services import PosOrderBatchService
+            service = PosOrderBatchService(self.env)
+            
+            # Close the session
+            success, error_msg, batch_data = service.close_session(session)
+            
+            if not success:
+                return {
+                    'success': False,
+                    'message': f'Error closing batch: {error_msg}',
+                    'batch_id': None,
+                    'orders_count': 0,
+                    'total_amount': 0.0
+                }
+            
+            if not batch_data:
+                # No qualifying orders
+                return {
+                    'success': True,
+                    'message': 'No orders to process (all direct payments or unidentified customers)',
+                    'batch_id': None,
+                    'orders_count': 0,
+                    'total_amount': 0.0
+                }
+            
+            # Get the batch record for this batch
+            batch_record = self.env['pos.order.batch'].get_batch_for_uuid(batch_data['batchId'])
+            
+            # Publish to RabbitMQ
+            success, error_msg = service.publish_batch(batch_data, batch_record)
+            
+            if not success:
+                return {
+                    'success': False,
+                    'message': f'Error publishing batch: {error_msg}',
+                    'batch_id': batch_data['batchId'],
+                    'orders_count': batch_data['totalOrders'],
+                    'total_amount': batch_data['totalAmount']
+                }
+            
+            _logger.info(f"Successfully closed batch {batch_record.name}")
+            
+            return {
+                'success': True,
+                'message': 'Batch closed and sent to facturatie system',
+                'batch_id': batch_data['batchId'],
+                'orders_count': batch_data['totalOrders'],
+                'total_amount': batch_data['totalAmount']
+            }
+        
+        except Exception as e:
+            _logger.exception(f"Error in close_daily_batch: {str(e)}")
+            return {
+                'success': False,
+                'message': f'Unexpected error: {str(e)}',
+                'batch_id': None,
+                'orders_count': 0,
+                'total_amount': 0.0
+            }
+

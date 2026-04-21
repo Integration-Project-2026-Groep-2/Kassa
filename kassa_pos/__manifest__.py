@@ -32,6 +32,7 @@
             'kassa_pos/static/src/js/UserRegistration.js',
             'kassa_pos/static/src/js/ProductScreenUserButton.js',
             'kassa_pos/static/src/js/BadgeScanner.js',
+            'kassa_pos/static/src/js/ClosingButton.js',
         ],
     },
     'external_dependencies': {

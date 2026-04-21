@@ -235,3 +235,87 @@ def build_user_deleted_message(user_id: str) -> str:
     ET.SubElement(root, 'deletedAt').text = _now_iso()
     
     return ET.tostring(root, encoding='unicode')
+
+
+# ── BatchClosed — Afsluitknop (Closing Button) ────────────────────────────────
+
+def build_batch_closed_xml(batch_data: dict) -> str:
+    """
+    Bouw een BatchClosed XML-bericht conform het kassa.closed contract.
+    
+    Dit bericht wordt gegenereerd wanneer de POS-afsluitknop wordt ingedrukt.
+    Het bevat alle transacties van die dag voor geïdentificeerde klanten met 
+    paymentType=Invoice.
+    
+    batch_data moet bevatten:
+    {
+        'batchId': str (UUID),
+        'closedAt': str (ISO8601, optional - default now),
+        'currency': str (optional - default 'EUR'),
+        'users': [
+            {
+                'userId': str (UUID),
+                'items': [
+                    {
+                        'productName': str,
+                        'quantity': int,
+                        'unitPrice': float,
+                        'totalPrice': float
+                    },
+                    ...
+                ],
+                'totalAmount': float
+            },
+            ...
+        ],
+        'totalOrders': int,
+        'totalAmount': float,
+        'orderIds': [str (UUID), ...]
+    }
+    
+    Returns:
+        XML string representation of the batch
+    """
+    root = ET.Element('BatchClosed')
+    
+    # Required: batchId
+    ET.SubElement(root, 'batchId').text = str(batch_data.get('batchId', ''))
+    
+    # Required: closedAt
+    closed_at = batch_data.get('closedAt') or _now_iso()
+    ET.SubElement(root, 'closedAt').text = str(closed_at)
+    
+    # Required: currency
+    ET.SubElement(root, 'currency').text = batch_data.get('currency', 'EUR')
+    
+    # Optional: users with their items
+    if batch_data.get('users'):
+        users_el = ET.SubElement(root, 'users')
+        for user in batch_data['users']:
+            user_el = ET.SubElement(users_el, 'user')
+            
+            ET.SubElement(user_el, 'userId').text = str(user.get('userId', ''))
+            
+            # Items grouped by user
+            if user.get('items'):
+                items_el = ET.SubElement(user_el, 'items')
+                for item in user['items']:
+                    item_el = ET.SubElement(items_el, 'item')
+                    ET.SubElement(item_el, 'productName').text = str(item.get('productName', ''))
+                    ET.SubElement(item_el, 'quantity').text = str(item.get('quantity', '0'))
+                    ET.SubElement(item_el, 'unitPrice').text = f"{float(item.get('unitPrice', 0)):.2f}"
+                    ET.SubElement(item_el, 'totalPrice').text = f"{float(item.get('totalPrice', 0)):.2f}"
+            
+            ET.SubElement(user_el, 'totalAmount').text = f"{float(user.get('totalAmount', 0)):.2f}"
+    
+    # Required: summary
+    summary_el = ET.SubElement(root, 'summary')
+    ET.SubElement(summary_el, 'totalOrders').text = str(batch_data.get('totalOrders', 0))
+    ET.SubElement(summary_el, 'totalAmount').text = f"{float(batch_data.get('totalAmount', 0)):.2f}"
+    
+    if batch_data.get('orderIds'):
+        order_ids_el = ET.SubElement(summary_el, 'orderIds')
+        for order_id in batch_data['orderIds']:
+            ET.SubElement(order_ids_el, 'orderId').text = str(order_id)
+    
+    return ET.tostring(root, encoding='unicode')

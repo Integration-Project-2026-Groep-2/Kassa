@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Kassa Closed Batch Schema — kassa.closed contract
+  Afsluitknop batches for daily transaction aggregation
+  Integration Project 2025/2026 | Groep 2
+  
+  Contract: kassa.closed
+  Queue: kassa.closed (topic exchange)
+  Routing Key: kassa.closed
+  Durable: true
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="unqualified"
+           version="1.0">
+
+  <!-- ============================================================
+       SIMPLE TYPES
+  ============================================================ -->
+
+  <xs:simpleType name="UUIDType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ISO8601DateTimeType">
+    <xs:restriction base="xs:dateTime"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="NonNegativeAmountType">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+      <xs:fractionDigits value="2"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="NameType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="80"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CurrencyType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="EUR"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ============================================================
+       COMPLEX TYPES
+  ============================================================ -->
+
+  <xs:complexType name="OrderItemType">
+    <xs:sequence>
+      <xs:element name="productName" type="xs:string"/>
+      <xs:element name="quantity" type="xs:positiveInteger"/>
+      <xs:element name="unitPrice" type="NonNegativeAmountType"/>
+      <xs:element name="totalPrice" type="NonNegativeAmountType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="UserOrdersType">
+    <xs:sequence>
+      <xs:element name="userId" type="UUIDType"/>
+      <xs:element name="items" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="item" type="OrderItemType" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="totalAmount" type="NonNegativeAmountType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ============================================================
+       ROOT ELEMENT — BatchClosed
+       Triggered when POS session is closed
+  ============================================================ -->
+  <xs:element name="BatchClosed">
+    <xs:complexType>
+      <xs:sequence>
+        <!-- Unique batch identifier for idempotency -->
+        <xs:element name="batchId" type="UUIDType"/>
+        
+        <!-- Timestamp when batch was closed (UTC ISO8601) -->
+        <xs:element name="closedAt" type="ISO8601DateTimeType"/>
+        
+        <!-- Currency code (always EUR) -->
+        <xs:element name="currency" type="CurrencyType"/>
+        
+        <!-- Aggregated user orders (only Invoice payment type, identified users) -->
+        <xs:element name="users" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="user" type="UserOrdersType" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        
+        <!-- Batch summary -->
+        <xs:element name="summary">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="totalOrders" type="xs:nonNegativeInteger"/>
+              <xs:element name="totalAmount" type="NonNegativeAmountType"/>
+              <xs:element name="orderIds" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="orderId" type="UUIDType" maxOccurs="unbounded"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>
