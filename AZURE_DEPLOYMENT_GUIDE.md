@@ -46,83 +46,99 @@ ODOO_DOMAIN=kassa.integration-project-2026-groep-2.my.be
 
 ```bash
 # Build and start all services
-docker-compose up -d
+docker compose -f docker-compose.production.yml up -d --build
 
 # Verify all services are running
-docker-compose ps
+docker compose -f docker-compose.production.yml ps
 
 # Watch logs (Ctrl+C to exit)
-docker-compose logs -f odoo
+docker compose -f docker-compose.production.yml logs -f odoo
 
 # Check service health
-docker-compose exec odoo curl -s http://localhost:8069/health
-docker-compose exec rabbitmq rabbitmq-diagnostics -q ping
-docker-compose exec db pg_isready -U kassa
+docker compose -f docker-compose.production.yml exec odoo curl -s http://localhost:8069/health
+docker compose -f docker-compose.production.yml exec rabbitmq rabbitmq-diagnostics -q ping
+docker compose -f docker-compose.production.yml exec db pg_isready -U kassa
 ```
 
 ### Step 3: Configure Nginx Reverse Proxy
 
-Create `/etc/nginx/sites-available/kassa.conf`:
+Copy the repository template to `/etc/nginx/sites-available/kassa.conf` and adjust `server_name`/TLS paths if needed:
+
+```bash
+sudo mkdir -p /etc/nginx/sites-available
+sudo cp nginx/kassa.conf /etc/nginx/sites-available/kassa.conf
+```
+
+Reference content:
 
 ```nginx
-# Main Odoo application proxy
+# Nginx reverse proxy for Odoo 17 on VM
 upstream kassa_odoo {
     server 127.0.0.1:8069;
+}
+
+upstream kassa_odoo_ws {
+  server 127.0.0.1:8072;
+}
+
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  '' close;
 }
 
 server {
     listen 80;
     server_name kassa.integration-project-2026-groep-2.my.be;
-    
-    # Redirect HTTP to HTTPS
-    return 301 https://$server_name$request_uri;
+
+  return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl http2;
     server_name kassa.integration-project-2026-groep-2.my.be;
-    
-    # SSL certificate paths (managed by certbot or Azure)
+
     ssl_certificate /etc/letsencrypt/live/kassa.integration-project-2026-groep-2.my.be/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/kassa.integration-project-2026-groep-2.my.be/privkey.pem;
-    
-    # Security headers
+
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    
-    # Proxy timeout settings
-    proxy_connect_timeout 600;
-    proxy_send_timeout 600;
-    proxy_read_timeout 600;
-    send_timeout 600;
-    
-    # Client body size (for file uploads)
+
     client_max_body_size 50M;
-    
-    # Main application proxy
+
+  proxy_connect_timeout 600s;
+  proxy_send_timeout 600s;
+  proxy_read_timeout 600s;
+
+  # Main Odoo HTTP traffic
     location / {
         proxy_pass http://kassa_odoo;
-        
-        # Forward client information
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto https;
-        proxy_set_header X-Forwarded-Host $server_name;
-        
-        # WebSocket support
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_redirect off;
     }
-    
-    # Static files caching
-    location ~* ^/web/(css|js|image|content)/ {
+
+  # Odoo websocket endpoint (POS bus, notifications)
+  location /websocket {
+    proxy_pass http://kassa_odoo_ws;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  # Cache static assets
+  location ~* ^/web/static/ {
         proxy_pass http://kassa_odoo;
-        expires 7d;
-        add_header Cache-Control "public, max-age=604800";
+    proxy_cache_valid 200 90m;
+    proxy_buffering on;
+    expires 1h;
+    add_header Cache-Control "public";
     }
 }
 
@@ -152,20 +168,24 @@ server {
 
 Enable the site:
 ```bash
-sudo ln -s /etc/nginx/sites-available/kassa.conf /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/kassa.conf /etc/nginx/sites-enabled/kassa.conf
 
 # Test Nginx configuration
 sudo nginx -t
 
-# Restart Nginx
-sudo systemctl restart nginx
+# Reload Nginx
+sudo systemctl reload nginx
+
+# Validate reverse proxy paths
+curl -I https://kassa.integration-project-2026-groep-2.my.be
+curl -I -N -H "Connection: Upgrade" -H "Upgrade: websocket" https://kassa.integration-project-2026-groep-2.my.be/websocket
 ```
 
 ### Step 4: Initialize Odoo Database
 
 ```bash
 # Create initial Odoo database
-docker-compose exec odoo odoo \
+docker compose -f docker-compose.production.yml exec odoo odoo \
   --db_host=db \
   --db_user=kassa \
   --db_password=$(grep POSTGRES_PASSWORD .env | cut -d= -f2) \
@@ -174,10 +194,10 @@ docker-compose exec odoo odoo \
   --stop-after-init
 
 # Restart Odoo service
-docker-compose restart odoo
+docker compose -f docker-compose.production.yml restart odoo
 
 # View startup logs
-docker-compose logs odoo
+docker compose -f docker-compose.production.yml logs odoo
 ```
 
 ### Step 5: Install Custom Module
@@ -195,17 +215,17 @@ In Odoo UI (after database initialization):
 Create Odoo user in RabbitMQ:
 ```bash
 # Create user
-docker-compose exec rabbitmq rabbitmqctl add_user kassa_user <PASSWORD>
+docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl add_user kassa_user <PASSWORD>
 
 # Create virtual host
-docker-compose exec rabbitmq rabbitmqctl add_vhost /kassa
+docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl add_vhost /kassa
 
 # Set permissions
-docker-compose exec rabbitmq rabbitmqctl set_permissions -p /kassa kassa_user ".*" ".*" ".*"
+docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl set_permissions -p /kassa kassa_user ".*" ".*" ".*"
 
 # Verify
-docker-compose exec rabbitmq rabbitmqctl list_users
-docker-compose exec rabbitmq rabbitmqctl list_vhosts
+docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl list_users
+docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl list_vhosts
 ```
 
 Access RabbitMQ Management UI:
@@ -223,6 +243,7 @@ Services communicate using short names within Docker network:
 | Service | Port | Internal Address |
 |---------|------|------------------|
 | Odoo | 8069 | `http://odoo:8069` (internal) |
+| Odoo WebSocket | 8072 | `http://odoo:8072` (internal) |
 | RabbitMQ AMQP | 5672 | `amqp://rabbitmq:5672` (internal) |
 | RabbitMQ Management | 15672 | `http://rabbitmq:15672` (internal) |
 | PostgreSQL | 5432 | `postgresql://db:5432` (internal) |
@@ -242,7 +263,7 @@ Client (Browser/API)
 Internet → Azure VM Public IP
   ↓ (HTTPS port 443, 15671)
 Nginx Reverse Proxy (:443, :15671)
-  ↓ (HTTP port 8069, 15672)
+  ↓ (HTTP port 8069, 8072, 15672)
 Docker Bridge Network (kassa-network)
   ↓
 Containers (Odoo, RabbitMQ, PostgreSQL, etc.)
@@ -317,32 +338,32 @@ HEARTBEAT_QUEUE=heartbeat_queue
 ### Monitoring & Logging
 ```bash
 # View container logs
-docker-compose logs -f odoo        # Odoo application
-docker-compose logs -f rabbitmq    # RabbitMQ broker
-docker-compose logs -f db          # PostgreSQL database
-docker-compose logs -f pos_receiver # POS message consumer
-docker-compose logs -f heartbeat   # Health monitoring
+docker compose -f docker-compose.production.yml logs -f odoo         # Odoo application
+docker compose -f docker-compose.production.yml logs -f rabbitmq     # RabbitMQ broker
+docker compose -f docker-compose.production.yml logs -f db           # PostgreSQL database
+docker compose -f docker-compose.production.yml logs -f pos_receiver # POS message consumer
+docker compose -f docker-compose.production.yml logs -f heartbeat    # Health monitoring
 
 # Clean up old logs
-docker-compose logs --tail=100     # Last 100 lines
+docker compose -f docker-compose.production.yml logs --tail=100      # Last 100 lines
 docker system prune -a             # Remove unused containers/images
 ```
 
 ### Backup & Recovery
 ```bash
 # Backup PostgreSQL
-docker-compose exec db pg_dump \
+docker compose -f docker-compose.production.yml exec db pg_dump \
   -U kassa kassa_db > backup_$(date +%Y%m%d).sql
 
 # Backup Odoo filestore
 docker cp kassa-odoo:/var/lib/odoo ./odoo_backup_$(date +%Y%m%d)
 
 # Backup RabbitMQ definitions
-docker-compose exec rabbitmq rabbitmqctl export_definitions /tmp/rabbitmq_defs.json
+docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl export_definitions /tmp/rabbitmq_defs.json
 docker cp kassa-rabbitmq:/tmp/rabbitmq_defs.json ./
 
 # Restore PostgreSQL
-docker-compose exec -T db psql -U kassa kassa_db < backup_*.sql
+docker compose -f docker-compose.production.yml exec -T db psql -U kassa kassa_db < backup_*.sql
 ```
 
 ### Performance Tuning
@@ -351,10 +372,10 @@ docker-compose exec -T db psql -U kassa kassa_db < backup_*.sql
 docker stats
 
 # Adjust RabbitMQ memory
-docker-compose exec rabbitmq rabbitmqctl set_vm_memory_high_watermark 0.6
+docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl set_vm_memory_high_watermark 0.6
 
 # Check PostgreSQL connections
-docker-compose exec db psql -U kassa kassa_db -c "SELECT count(*) FROM pg_stat_activity;"
+docker compose -f docker-compose.production.yml exec db psql -U kassa kassa_db -c "SELECT count(*) FROM pg_stat_activity;"
 ```
 
 ---
@@ -366,10 +387,10 @@ docker-compose exec db psql -U kassa kassa_db -c "SELECT count(*) FROM pg_stat_a
 Error: Connection refused at rabbitmq:5672
 
 Solution:
-1. docker-compose exec rabbitmq rabbitmq-diagnostics ping
+1. docker compose -f docker-compose.production.yml exec rabbitmq rabbitmq-diagnostics ping
 2. Check RABBIT_HOST and RABBIT_PORT in .env
-3. Verify RabbitMQ container is healthy: docker-compose ps
-4. Check RabbitMQ logs: docker-compose logs rabbitmq
+3. Verify RabbitMQ container is healthy: docker compose -f docker-compose.production.yml ps
+4. Check RabbitMQ logs: docker compose -f docker-compose.production.yml logs rabbitmq
 ```
 
 ### PostgreSQL Connection Errors
@@ -377,10 +398,10 @@ Solution:
 Error: FATAL: role "kassa" does not exist
 
 Solution:
-1. Recreate database: docker-compose down && docker-compose up -d
+1. Recreate database: docker compose -f docker-compose.production.yml down && docker compose -f docker-compose.production.yml up -d
 2. Verify credentials in .env match actual database
 3. Check file permissions on postgres_data volume
-4. Restart PostgreSQL: docker-compose restart db
+4. Restart PostgreSQL: docker compose -f docker-compose.production.yml restart db
 ```
 
 ### Nginx Proxy Errors (502 Bad Gateway)
@@ -388,9 +409,9 @@ Solution:
 Error: upstream timed out while connecting to upstream
 
 Solution:
-1. Verify Odoo is running: docker-compose logs odoo
-2. Check port mapping: docker-compose ps
-3. Verify local:8069:8069 mapping in docker-compose.yml
+1. Verify Odoo is running: docker compose -f docker-compose.production.yml logs odoo
+2. Check port mapping: docker compose -f docker-compose.production.yml ps
+3. Verify localhost mapping for 8069 and 8072 in docker-compose.production.yml
 4. Increase proxy timeouts in nginx.conf
 5. Check Azure NSG allows traffic to Docker bridge
 ```
@@ -400,9 +421,9 @@ Solution:
 Error: 401 Unauthorized at https://kassa.../15671
 
 Solution:
-1. Verify credentials: docker-compose exec rabbitmq rabbitmqctl list_users
-2. Create user if missing: docker-compose exec rabbitmq rabbitmqctl add_user <user> <pass>
-3. Set permissions: docker-compose exec rabbitmq rabbitmqctl set_permissions -p /kassa <user> ".*" ".*" ".*"
+1. Verify credentials: docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl list_users
+2. Create user if missing: docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl add_user <user> <pass>
+3. Set permissions: docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl set_permissions -p /kassa <user> ".*" ".*" ".*"
 4. Clear browser cache or use incognito window
 ```
 
@@ -421,8 +442,8 @@ Solution:
 - [ ] Copy `.env.example` to `.env`
 - [ ] Fill in Azure infrastructure details
 - [ ] Set strong passwords (min 20 chars)
-- [ ] Run `docker-compose up -d`
-- [ ] Verify all services healthy: `docker-compose ps`
+- [ ] Run `docker compose -f docker-compose.production.yml up -d --build`
+- [ ] Verify all services healthy: `docker compose -f docker-compose.production.yml ps`
 - [ ] Initialize Odoo database
 - [ ] Install Kassa module via Odoo UI
 - [ ] Configure Nginx reverse proxy
@@ -453,7 +474,7 @@ Solution:
 ## Support & Escalation
 
 For issues or questions:
-1. Check logs: `docker-compose logs -f <service>`
+1. Check logs: `docker compose -f docker-compose.production.yml logs -f <service>`
 2. Review [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)
 3. Consult Azure infrastructure documentation
 4. Contact DevOps team for Azure/infrastructure issues

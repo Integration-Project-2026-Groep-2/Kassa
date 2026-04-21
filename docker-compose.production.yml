@@ -90,6 +90,8 @@ services:
     ports:
       # Internal port 8069 - accessed via Nginx reverse proxy
       - "127.0.0.1:8069:8069"  # Localhost only (Nginx handles external access)
+      # Odoo websocket/longpolling endpoint for realtime features behind Nginx
+      - "127.0.0.1:8072:8072"
     volumes:
       # Mount custom Kassa module
       - ./kassa_pos:/mnt/extra-addons/kassa_pos
@@ -137,6 +139,8 @@ services:
       --addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
       --db-filter=^${POSTGRES_DB:-kassa_db}$
       --http-port=8069
+      --longpolling-port=8072
+      --proxy-mode
       --log-level=${LOG_LEVEL:-info}
     
     networks:

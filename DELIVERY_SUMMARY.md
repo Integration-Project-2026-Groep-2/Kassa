@@ -46,6 +46,7 @@ RabbitMQ:
   
 Odoo:
   ODOO_PORT=8069 (internal)
+   ODOO_LONGPOLLING_PORT=8072 (internal websocket/longpolling)
   ODOO_DOMAIN=kassa.integration-project-2026-groep-2.my.be (public)
 ```
 
@@ -131,6 +132,7 @@ All documentation includes your specific infrastructure:
 
 ### Kassa Frontend (Odoo)
 - **Internal Port**: 8069
+- **WebSocket/Longpolling Port**: 8072
 - **Public Domain**: `kassa.integration-project-2026-groep-2.my.be`
 - **Protocol**: HTTPS (via Nginx reverse proxy)
 - **Access**: `https://kassa.integration-project-2026-groep-2.my.be`
@@ -148,6 +150,7 @@ Nginx Reverse Proxy (:443, :15671)
    ↓ (HTTP internal)
 Docker Network (kassa-network)
    ├── Odoo:8069
+   ├── Odoo WebSocket:8072
    ├── RabbitMQ:5672 (AMQP), :15672 (Mgmt, proxied)
    ├── PostgreSQL:5432
    ├── POS Receiver
@@ -241,7 +244,7 @@ Docker Network (kassa-network)
 
 5. **Deploy** (10-15 min)
    - Follow: [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md#quick-start---azure-vm-deployment)
-   - Command: `docker-compose up -d`
+   - Command: `docker compose -f docker-compose.production.yml up -d --build`
 
 ---
 
@@ -324,11 +327,11 @@ Before you start, verify you have:
 ## 🎯 You Now Have:
 
 ✅ Complete table of environment variables  
-✅ docker-compose.yml snippet  
+✅ docker-compose.production.yml snippet  
 ✅ Documentation on how custom code reads variables  
 ✅ No real passwords in output (all placeholders)  
 ✅ Azure infrastructure context integrated  
-✅ Nginx reverse proxy configuration  
+✅ Nginx reverse proxy configuration (including /websocket -> 8072)  
 ✅ Step-by-step deployment guide  
 ✅ Security best practices  
 ✅ Production deployment checklist  

@@ -125,7 +125,7 @@
 - **Domain**: [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md#odoo-configuration)
 - **Deployment**: [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md#step-5-install-custom-module)
 - **Nginx**: [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md#step-3-configure-nginx-reverse-proxy)
-- **Port**: 8069 (internal), accessed via HTTPS public domain
+- **Ports**: 8069 (HTTP app) and 8072 (websocket/longpolling), accessed via HTTPS public domain
 
 ### Docker Compose Setup
 - **File**: [docker-compose.production.yml](./docker-compose.production.yml)
@@ -140,8 +140,8 @@
 
 ### Nginx Reverse Proxy
 - **Setup**: [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md#step-3-configure-nginx-reverse-proxy)
-- **References**: [docker-compose.production.yml](./docker-compose.production.yml) (bottom section)
-- **Configuration**: Complete example with HTTPS, caching, WebSocket support
+- **Template File**: [nginx/kassa.conf](./nginx/kassa.conf)
+- **Configuration**: Complete example with HTTPS, caching, and `/websocket` upstream to Odoo port 8072
 
 ### Security & Best Practices
 - **Overview**: [ENVIRONMENT_SETUP_SUMMARY.md](./ENVIRONMENT_SETUP_SUMMARY.md#-security-best-practices)
@@ -206,7 +206,7 @@ ENVIRONMENT_SETUP_SUMMARY.md (Main Overview)
 
 ├─ AZURE_DEPLOYMENT_GUIDE.md (Deployment)
 │  └── Step-by-step Azure VM setup
-│      ├── References: .env.example, docker-compose
+│      ├── References: .env.example, docker-compose.production.yml
 │      └── Read when: Actually deploying
 
 ├─ docker-compose.production.yml (Implementation)
