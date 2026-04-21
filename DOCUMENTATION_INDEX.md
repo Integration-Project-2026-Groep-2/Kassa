@@ -90,7 +90,7 @@ Welcome! This is your guide to all documentation for the **POS User Registration
 #### 🚀 DevOps/Infrastructure
 1. [README.md](README.md) - Setup & infrastructure
 2. [DEPLOYMENT_TESTING_GUIDE.md](DEPLOYMENT_TESTING_GUIDE.md) - Deployment steps
-3. [docker-compose.yml](../docker-compose.yml) - Container config
+3. [docker-compose.production.yml](docker-compose.production.yml) - Production container config
 4. [Dockerfile](../Dockerfile) - Build config
 
 ---

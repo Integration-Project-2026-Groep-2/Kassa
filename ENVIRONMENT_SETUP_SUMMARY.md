@@ -44,8 +44,8 @@ ODOO_DOMAIN=kassa.integration-project-2026-groep-2.my.be
 
 ### Step 3: Deploy
 ```bash
-docker-compose up -d
-docker-compose logs -f odoo
+docker compose -f docker-compose.production.yml up -d --build
+docker compose -f docker-compose.production.yml logs -f odoo
 ```
 
 ### Step 4: Configure Nginx
@@ -157,6 +157,7 @@ Reference → **[.env.example](./.env.example)**
 
 ### Odoo Setup
 - **Internal Port**: `8069`
+- **WebSocket/Longpolling Port**: `8072`
 - **Public URL**: `https://kassa.integration-project-2026-groep-2.my.be`
 - **Access**: Via Nginx reverse proxy (no direct external access)
 - **Domain Variable**: `ODOO_DOMAIN=kassa.integration-project-2026-groep-2.my.be`
@@ -171,7 +172,7 @@ Reference → **[.env.example](./.env.example)**
 ┌─────────────────────────────────────────────────────────┐
 │ NGINX REVERSE PROXY (kassa.integration-project-2026-    │
 │ groep-2.my.be)                                          │
-│ Maps to localhost:8069 (Odoo) & localhost:15672 (Mgmt) │
+│ Maps to localhost:8069 (Odoo), 8072 (WebSocket), 15672 │
 └────────────────────┬────────────────────────────────────┘
                      │ HTTP (internal)
                      ↓
@@ -181,6 +182,7 @@ Reference → **[.env.example](./.env.example)**
 │ Service       │ Port  │ Access                           │
 ├──────────────┼──────────┬─────────────────────────────┤
 │ odoo          │ 8069  │ http://odoo:8069 (internal)  │
+│ odoo-ws       │ 8072  │ http://odoo:8072 (internal)  │
 │ rabbitmq      │ 5672  │ amqp://rabbitmq:5672        │
 │ rabbitmq-mgmt │ 15672 │ http://rabbitmq:15672       │
 │ db            │ 5432  │ postgresql://db:5432         │
@@ -195,7 +197,7 @@ Reference → **[.env.example](./.env.example)**
 ```bash
 cp .env.example .env
 # Use defaults (db, rabbitmq, guest credentials)
-docker-compose up -d
+docker compose up -d
 # Access at http://localhost:8069
 ```
 
@@ -203,7 +205,7 @@ docker-compose up -d
 ```bash
 cp .env.example .env.staging
 # Update with staging values
-docker-compose --env-file .env.staging up -d
+docker compose --env-file .env.staging up -d
 ```
 
 ### Production Deployment
@@ -216,11 +218,11 @@ nano .env  # Edit with secure values
 git pull origin main
 
 # Step 3: Build and deploy
-docker-compose build
-docker-compose up -d
+docker compose -f docker-compose.production.yml build
+docker compose -f docker-compose.production.yml up -d
 
 # Step 4: Monitor startup
-docker-compose logs -f odoo
+docker compose -f docker-compose.production.yml logs -f odoo
 
 # Step 5: Configure Nginx (if not already done)
 # See AZURE_DEPLOYMENT_GUIDE.md
@@ -238,9 +240,9 @@ docker-compose logs -f odoo
 
 ### Docker
 - [ ] Docker and Docker Compose installed on Azure VM
-- [ ] Built Docker image: `docker-compose build`
-- [ ] Started services: `docker-compose up -d`
-- [ ] All services healthy: `docker-compose ps`
+- [ ] Built Docker image: `docker compose -f docker-compose.production.yml build`
+- [ ] Started services: `docker compose -f docker-compose.production.yml up -d`
+- [ ] All services healthy: `docker compose -f docker-compose.production.yml ps`
 
 ### Networking
 - [ ] Azure NSG allows HTTP 80 and HTTPS 443
@@ -342,8 +344,8 @@ These documents work together:
 |-------|------------|-----------|
 | RabbitMQ connection refused | `RABBIT_HOST=rabbitmq`, `RABBIT_PORT=5672` | ENVIRONMENT_VARIABLES.md |
 | PostgreSQL connection error | `DB_HOST=db`, database credentials | ENVIRONMENT_VARIABLES.md |
-| Odoo not starting | Check logs: `docker-compose logs odoo` | AZURE_DEPLOYMENT_GUIDE.md |
-| 502 Bad Gateway from Nginx | Verify Odoo port mapping (8069) | AZURE_DEPLOYMENT_GUIDE.md |
+| Odoo not starting | Check logs: `docker compose -f docker-compose.production.yml logs odoo` | AZURE_DEPLOYMENT_GUIDE.md |
+| 502 Bad Gateway from Nginx | Verify Odoo port mapping (8069 and 8072) | AZURE_DEPLOYMENT_GUIDE.md |
 | RabbitMQ auth failed | Verify `RABBIT_USER` and `RABBIT_PASSWORD` | CODE_EXAMPLES_ENV_VARIABLES.md |
 | Module not loading | Ensure `/mnt/extra-addons/kassa_pos` mounted | AZURE_DEPLOYMENT_GUIDE.md |
 
@@ -357,7 +359,7 @@ These documents work together:
 ```
 POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, DB_HOST, DB_PORT
 RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
-ODOO_PORT, ODOO_DOMAIN
+ODOO_PORT, ODOO_LONGPOLLING_PORT, ODOO_DOMAIN
 ```
 
 **Service-Specific Variables**:
@@ -386,7 +388,7 @@ See **[ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md#environment-variable
 - Use `.env.example` as baseline template
 - Create `.env.production` with actual values (in Key Vault, not Git)
 - Follow Azure_DEPLOYMENT_GUIDE.md for Nginx setup
-- Monitor services via `docker-compose logs`
+- Monitor services via `docker compose -f docker-compose.production.yml logs`
 
 ### For Developers
 - Reference CODE_EXAMPLES_ENV_VARIABLES.md for reading env vars
@@ -396,7 +398,7 @@ See **[ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md#environment-variable
 
 ### For Infrastructure Teams
 - RabbitMQ Management UI requires HTTPS/15671
-- Nginx must proxy both Odoo (443 → 8069) and RabbitMQ (15671 → 15672)
+- Nginx must proxy Odoo main traffic (443 -> 8069), Odoo websocket (443 /websocket -> 8072), and RabbitMQ (15671 -> 15672)
 - All internal services use Docker bridge network
 - Implement backups for PostgreSQL data volume
 

@@ -31,6 +31,7 @@ services:
       - rabbitmq
     ports:
       - "0.0.0.0:${ODOO_PORT:-8069}:8069"
+      - "0.0.0.0:${ODOO_LONGPOLLING_PORT:-8072}:8072"
     volumes:
       - ./kassa_pos:/mnt/extra-addons/kassa_pos
       - odoo_data:/var/lib/odoo
@@ -56,6 +57,8 @@ services:
       --db_password=${POSTGRES_PASSWORD:-kassa}
       --addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
       --db-filter=^${POSTGRES_DB:-kassa_db}$
+      --longpolling-port=${ODOO_LONGPOLLING_PORT:-8072}
+      --proxy-mode
 
   pos_receiver:
     build: .
