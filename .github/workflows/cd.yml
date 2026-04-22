@@ -46,27 +46,26 @@ jobs:
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
           script: |
-            bash -lc '
-              set -euo pipefail
+            set -eu
 
-              DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-              if [ -z "$DEPLOY_PATH" ]; then
-                DEPLOY_PATH="$HOME/Kassa"
-              fi
-              cd "$DEPLOY_PATH"
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            if [ -z "$DEPLOY_PATH" ]; then
+              DEPLOY_PATH="$HOME/Kassa"
+            fi
+            cd "$DEPLOY_PATH"
 
-              if [ -n "${{ secrets.GHCR_USER }}" ] && [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
-                echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin
-              fi
+            if [ -n "${{ secrets.GHCR_USER }}" ] && [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
+              echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin
+            fi
 
-              if docker compose version >/dev/null 2>&1; then
-                DC="docker compose"
-              else
-                DC="docker-compose"
-              fi
+            export ODOO_IMAGE=${{ env.IMAGE }}:17
 
-              export ODOO_IMAGE=${{ env.IMAGE }}:17
-              $DC -f docker-compose.production.yml pull odoo
-              $DC -f docker-compose.production.yml up -d --force-recreate odoo
-              $DC -f docker-compose.production.yml ps
-            '
+            if docker compose version >/dev/null 2>&1; then
+              docker compose -f docker-compose.production.yml pull odoo
+              docker compose -f docker-compose.production.yml up -d --force-recreate odoo
+              docker compose -f docker-compose.production.yml ps
+            else
+              docker-compose -f docker-compose.production.yml pull odoo
+              docker-compose -f docker-compose.production.yml up -d --force-recreate odoo
+              docker-compose -f docker-compose.production.yml ps
+            fi
