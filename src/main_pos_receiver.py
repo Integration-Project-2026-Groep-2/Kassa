@@ -10,6 +10,7 @@ from config import (
     RABBIT_HOST, PAYMENT_CONFIRMED_QUEUE, INVOICE_REQUESTED_QUEUE,
     HEARTBEAT_INTERVAL_SECONDS,
     HEARTBEAT_EXCHANGE,
+    HEARTBEAT_QUEUE,
     HEARTBEAT_ROUTING_KEY,
     )
 
@@ -65,6 +66,7 @@ def run_heartbeat(interval_seconds: int = 1):
             producer.publish(
                 xml,
                 routing_key=HEARTBEAT_ROUTING_KEY,
+                queue_name=HEARTBEAT_QUEUE
                 exchange=HEARTBEAT_EXCHANGE,
                 durable=True
             )
