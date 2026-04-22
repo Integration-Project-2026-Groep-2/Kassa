@@ -40,16 +40,24 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - name: Validate deploy secrets
+        run: |
+          test -n "${{ secrets.DEPLOY_HOST || secrets.VM_HOST || secrets.DEV_HOST }}" || (echo "Missing DEPLOY_HOST/VM_HOST/DEV_HOST" && exit 1)
+          test -n "${{ secrets.DEPLOY_USER || secrets.VM_USER || secrets.DEV_USER }}" || (echo "Missing DEPLOY_USER/VM_USER/DEV_USER" && exit 1)
+          test -n "${{ secrets.DEPLOY_SSH_KEY || secrets.VM_SSH_KEY || secrets.DEV_SSH_KEY }}" || (echo "Missing DEPLOY_SSH_KEY/VM_SSH_KEY/DEV_SSH_KEY" && exit 1)
+          test -n "${{ secrets.DEPLOY_PATH || secrets.VM_DEPLOY_PATH }}" || (echo "Missing DEPLOY_PATH (or VM_DEPLOY_PATH)" && exit 1)
+          test -n "${{ secrets.GHCR_USER }}" || (echo "Missing GHCR_USER" && exit 1)
+          test -n "${{ secrets.GHCR_TOKEN }}" || (echo "Missing GHCR_TOKEN" && exit 1)
+
       - name: Deploy to Dev
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          script_stop: true
+          host: ${{ secrets.DEPLOY_HOST || secrets.VM_HOST || secrets.DEV_HOST }}
+          username: ${{ secrets.DEPLOY_USER || secrets.VM_USER || secrets.DEV_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY || secrets.VM_SSH_KEY || secrets.DEV_SSH_KEY }}
           script: |
             set -e
-            cd ${{ secrets.VM_DEPLOY_PATH }}
+            cd ${{ secrets.DEPLOY_PATH || secrets.VM_DEPLOY_PATH }}
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin
             export ODOO_IMAGE=${{ env.IMAGE }}:latest
             docker compose -f docker-compose.production.yml pull odoo
