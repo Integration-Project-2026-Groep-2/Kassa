@@ -1,10 +1,11 @@
-name: Build & Deploy Odoo 17
+name: Build & Deploy Image to Main
 
 on:
   push:
     branches: [main]
 
 env:
+  SERVICE_NAME: kassa
   IMAGE: ghcr.io/integration-project-2026-groep-2/odoo-kassa
 
 jobs:
@@ -35,53 +36,14 @@ jobs:
           docker push ${{ env.IMAGE }}:sha-${SHORT_SHA}
           docker push ${{ env.IMAGE }}:17
 
-  deploy-main:
+  deploy-dev:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Main VM via SSH
-        env:
-          DEV_HOST: ${{ secrets.DEV_HOST }}
-          DEV_USER: ${{ secrets.DEV_USER }}
-          DEV_SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          GHCR_USER: ${{ secrets.GHCR_USER }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          IMAGE: ${{ env.IMAGE }}
-        run: |
-          set -euo pipefail
-
-          mkdir -p ~/.ssh
-          printf '%s\n' "$DEV_SSH_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$DEV_HOST" >> ~/.ssh/known_hosts
-
-          ssh -i ~/.ssh/deploy_key "$DEV_USER@$DEV_HOST" \
-            DEPLOY_PATH="$DEPLOY_PATH" \
-            GHCR_USER="$GHCR_USER" \
-            GHCR_TOKEN="$GHCR_TOKEN" \
-            ODOO_IMAGE="$IMAGE:17" \
-            'bash -s' <<'EOF'
-          set -euo pipefail
-
-          if [ -z "${DEPLOY_PATH:-}" ]; then
-            DEPLOY_PATH="$HOME/Kassa"
-          fi
-          cd "$DEPLOY_PATH"
-
-          if [ -n "${GHCR_USER:-}" ] && [ -n "${GHCR_TOKEN:-}" ]; then
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-          fi
-
-          export ODOO_IMAGE
-
-          if docker compose version >/dev/null 2>&1; then
-            docker compose -f docker-compose.production.yml pull odoo
-            docker compose -f docker-compose.production.yml up -d --force-recreate odoo
-            docker compose -f docker-compose.production.yml ps
-          else
-            docker-compose -f docker-compose.production.yml pull odoo
-            docker-compose -f docker-compose.production.yml up -d --force-recreate odoo
-            docker-compose -f docker-compose.production.yml ps
-          fi
-          EOF
+      - name: Deploy to Main
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script: ${{ env.SERVICE_NAME }}
