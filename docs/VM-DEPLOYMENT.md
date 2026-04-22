@@ -1,5 +1,7 @@
 # VM Deployment Guide - Kassa POS
 
+Deze VM-setup gebruikt de custom Odoo image `ghcr.io/teamkassa/odoo-kassa:latest` met een ingebakken entrypoint en Odoo-config. De realtime poort wordt automatisch afgehandeld door de entrypoint, zodat dezelfde deployment werkt voor zowel oudere als nieuwere Odoo-images.
+
 ## Scenario 1: Alles op VM (Odoo + RabbitMQ + Python Services)
 
 ### Setup stappen:
@@ -19,6 +21,11 @@ export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:latest
 docker compose -f docker-compose.production.yml pull odoo
 docker compose -f docker-compose.production.yml up -d
 
+# 3b. Belangrijk voor VM-deployments
+# - Odoo draait uit de GHCR image, niet uit een losse bind mount met shell scripts
+# - De data van Odoo staat in een managed Docker volume, zodat /var/lib/odoo/sessions schrijfbaar blijft
+# - De entrypoint kiest automatisch de juiste realtime flag voor de Odoo-versie in de image
+
 # 4. Initialize database (eenmalig)
 docker compose run --rm odoo odoo --db_host=db --db_user=odoo --db_password=odoo -d odoo -i base --without-demo=all --stop-after-init
 
@@ -32,6 +39,11 @@ RABBIT_HOST=localhost python main_pos_receiver.py
 ### Access services:
 - **Odoo**: `http://<VM-IP>:8069`
 - **RabbitMQ Management**: `http://<VM-IP>:15672` (guest/guest)
+
+### Realtime poort
+- De container exposeert intern ook `8072` voor websocket/gevent/longpolling-verkeer
+- Deze poort hoeft meestal niet extern open als Nginx de reverse proxy afhandelt
+- De entrypoint kiest automatisch de juiste Odoo-flag voor die realtime poort
 
 ---
 
@@ -76,6 +88,7 @@ RABBIT_HOST=rabbitmq
 odoo:
   ports:
     - "0.0.0.0:8069:8069"  # ALL interfaces
+    - "0.0.0.0:8072:8072"  # Realtime verkeer (websocket/gevent/longpolling)
 
 rabbitmq:
   ports:
@@ -86,6 +99,15 @@ rabbitmq:
 ---
 
 ## Troubleshooting
+
+**Odoo server: error: no such option: --longpolling-port**:
+- De VM gebruikt een Odoo image waarbij de realtime poort via `--gevent-port` wordt afgehandeld
+- Controleer dat je de nieuwste `docker/odoo-entrypoint.sh` uit deze repo gebruikt
+- Rebuild de image: `docker compose -f docker-compose.production.yml build odoo`
+
+**/var/lib/odoo/sessions not writable**:
+- Gebruik de production compose zoals aangeleverd; daar draait Odoo met een managed volume
+- Als je zelf volumes aanpast, vermijd een root-owned bind mount voor `/var/lib/odoo`
 
 **Connection refused from remote machine**:
 - Verifiy ports open: `netstat -an | grep 5672` (Linux) of `netstat -ano | findstr 5672` (Windows)
@@ -98,3 +120,8 @@ rabbitmq:
 **IPv6 vs IPv4 issues (Windows)**:
 - Use `127.0.0.1` instead of `localhost` in connection strings
 - Connection.py automatisch resolveert dit
+
+**Module skips / filestore warnings in the Odoo log**:
+- Deze meldingen zijn expected met de huidige image/database combinatie en stoppen de VM niet
+- Ze wijzen meestal op optionele modules of oudere database-attachments, niet op een startup failure
+- Focus op echte blockers zoals `bash\r`, ongeldige Odoo flags of write-permission errors

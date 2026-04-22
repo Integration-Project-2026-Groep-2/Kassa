@@ -192,7 +192,7 @@ docker compose -f docker-compose.production.yml exec odoo odoo \
   --db_host=db \
   --db_user=kassa \
   --db_password=$(grep POSTGRES_PASSWORD .env | cut -d= -f2) \
-  --db_name=kassa_db \
+  -d kassa_db \
   -i base,web --without-demo=all \
   --stop-after-init
 
