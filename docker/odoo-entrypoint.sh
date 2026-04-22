@@ -8,6 +8,8 @@ ODOO_DB_PASSWORD="${POSTGRES_PASSWORD:-${PASSWORD:-odoo}}"
 ODOO_DB_NAME="${POSTGRES_DB:-odoo}"
 ODOO_HTTP_PORT="${ODOO_PORT:-8069}"
 ODOO_LONGPOLLING_PORT="${ODOO_LONGPOLLING_PORT:-8072}"
+ODOO_DATA_DIR="${ODOO_DATA_DIR:-/var/lib/odoo}"
+ODOO_SESSION_DIR="${ODOO_SESSION_DIR:-${ODOO_DATA_DIR}/sessions}"
 ODOO_LOG_LEVEL_RAW="${LOG_LEVEL:-info}"
 ODOO_LOG_LEVEL="$(printf '%s' "$ODOO_LOG_LEVEL_RAW" | tr '[:upper:]' '[:lower:]')"
 ODOO_DB_FILTER="${ODOO_DB_FILTER:-^${ODOO_DB_NAME}$}"
@@ -20,6 +22,12 @@ case "$ODOO_LOG_LEVEL" in
     ODOO_LOG_LEVEL="info"
     ;;
 esac
+
+if [ "$(id -u)" = "0" ]; then
+  mkdir -p "$ODOO_DATA_DIR" "$ODOO_SESSION_DIR"
+  chown -R odoo:odoo "$ODOO_DATA_DIR" "$ODOO_SESSION_DIR"
+  chmod 700 "$ODOO_SESSION_DIR"
+fi
 
 ODOO_HELP_OUTPUT="$(odoo --help 2>&1 || true)"
 ODOO_REALTIME_PORT_ARG=""
@@ -77,4 +85,8 @@ if [ -n "${ODOO_EXTRA_ARGS:-}" ]; then
 fi
 
 echo "[entrypoint] Odoo starten met custom config en flags"
-"$@"
+if [ "$(id -u)" = "0" ]; then
+  exec runuser -u odoo -- "$@"
+fi
+
+exec "$@"

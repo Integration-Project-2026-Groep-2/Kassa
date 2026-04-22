@@ -17,4 +17,4 @@ RUN chmod +x /usr/local/bin/odoo-entrypoint.sh \
 
 ENTRYPOINT ["/usr/local/bin/odoo-entrypoint.sh"]
 
-USER odoo
+USER root
