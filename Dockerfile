@@ -9,7 +9,12 @@ RUN pip3 install pika
 COPY kassa_pos /mnt/extra-addons/kassa_pos
 COPY src /app/src
 COPY templates /app/templates
+COPY odoo.conf /etc/odoo/odoo.conf
+COPY docker/odoo-entrypoint.sh /usr/local/bin/odoo-entrypoint.sh
 
-RUN chown -R odoo:odoo /mnt/extra-addons/kassa_pos /app/src /app/templates
+RUN chmod +x /usr/local/bin/odoo-entrypoint.sh \
+	&& chown -R odoo:odoo /mnt/extra-addons/kassa_pos /app/src /app/templates /etc/odoo/odoo.conf
+
+ENTRYPOINT ["/usr/local/bin/odoo-entrypoint.sh"]
 
 USER odoo
