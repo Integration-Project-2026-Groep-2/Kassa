@@ -8,8 +8,18 @@ ODOO_DB_PASSWORD="${POSTGRES_PASSWORD:-${PASSWORD:-odoo}}"
 ODOO_DB_NAME="${POSTGRES_DB:-odoo}"
 ODOO_HTTP_PORT="${ODOO_PORT:-8069}"
 ODOO_LONGPOLLING_PORT="${ODOO_LONGPOLLING_PORT:-8072}"
-ODOO_LOG_LEVEL="${LOG_LEVEL:-info}"
+ODOO_LOG_LEVEL_RAW="${LOG_LEVEL:-info}"
+ODOO_LOG_LEVEL="$(printf '%s' "$ODOO_LOG_LEVEL_RAW" | tr '[:upper:]' '[:lower:]')"
 ODOO_DB_FILTER="${ODOO_DB_FILTER:-^${ODOO_DB_NAME}$}"
+
+case "$ODOO_LOG_LEVEL" in
+  info|debug_rpc|warn|test|critical|runbot|debug_sql|error|debug|debug_rpc_answer|notset)
+    ;;
+  *)
+    echo "[entrypoint] Ongeldige LOG_LEVEL='${ODOO_LOG_LEVEL_RAW}', fallback naar 'info'"
+    ODOO_LOG_LEVEL="info"
+    ;;
+esac
 
 ODOO_HELP_OUTPUT="$(odoo --help 2>&1 || true)"
 ODOO_REALTIME_PORT_ARG=""
