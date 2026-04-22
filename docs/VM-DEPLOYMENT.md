@@ -21,6 +21,9 @@ export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:latest
 docker compose -f docker-compose.production.yml pull odoo
 docker compose -f docker-compose.production.yml up -d
 
+# 3a. Als deze VM al een oudere database heeft: voer eenmalig de schema-upgrade uit
+docker compose -f docker-compose.production.yml run --rm --no-deps --entrypoint bash odoo -lc 'odoo --config=/etc/odoo/odoo.conf --db_host="$DB_HOST" --db_port="$DB_PORT" --db_user="$USER" --db_password="$PASSWORD" -d "$POSTGRES_DB" -u all --stop-after-init'
+
 # 3b. Belangrijk voor VM-deployments
 # - Odoo draait uit de GHCR image, niet uit een losse bind mount met shell scripts
 # - De data van Odoo staat in een bind-mount of projectvolume; Odoo-sessies gaan naar een writable tmp-locatie

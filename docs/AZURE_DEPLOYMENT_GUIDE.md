@@ -51,6 +51,9 @@ export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:latest
 # Build and start all services
 docker compose -f docker-compose.production.yml up -d --build
 
+# If you already have an older database, run a one-time schema upgrade before serving traffic
+docker compose -f docker-compose.production.yml run --rm --no-deps --entrypoint bash odoo -lc 'odoo --config=/etc/odoo/odoo.conf --db_host="$DB_HOST" --db_port="$DB_PORT" --db_user="$USER" --db_password="$PASSWORD" -d "$POSTGRES_DB" -u all --stop-after-init'
+
 # Verify all services are running
 docker compose -f docker-compose.production.yml ps
 
