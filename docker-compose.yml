@@ -73,26 +73,12 @@ services:
       RABBIT_USER: ${RABBIT_USER:-guest}
       RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
       RABBIT_VHOST: ${RABBIT_VHOST:-/}
-    restart: unless-stopped
-
-  heartbeat:
-    build: .
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    working_dir: /app/src
-    command: python3 main_heartbeat.py
-    environment:
-      RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
-      RABBIT_PORT: ${RABBIT_PORT:-5672}
-      RABBIT_USER: ${RABBIT_USER:-guest}
-      RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
-      RABBIT_VHOST: ${RABBIT_VHOST:-/}
       HEARTBEAT_INTERVAL_SECONDS: ${HEARTBEAT_INTERVAL_SECONDS:-1}
       HEARTBEAT_EXCHANGE: ${HEARTBEAT_EXCHANGE:-heartbeat.direct}
       HEARTBEAT_ROUTING_KEY: ${HEARTBEAT_ROUTING_KEY:-routing.heartbeat}
       HEARTBEAT_QUEUE: ${HEARTBEAT_QUEUE:-heartbeat_queue}
     restart: unless-stopped
+
 
 volumes:
   postgres_data:
