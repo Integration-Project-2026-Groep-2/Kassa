@@ -3,7 +3,7 @@ FROM odoo:latest
 USER root
 
 # Installeer pika voor RabbitMQ communicatie
-RUN pip3 install pika
+RUN pip3 install --break-system-packages pika
 
 # Integreer custom code in de image zodat die zonder bind mounts kan draaien.
 COPY kassa_pos /mnt/extra-addons/kassa_pos
