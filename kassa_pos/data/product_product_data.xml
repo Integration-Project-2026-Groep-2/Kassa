@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data noupdate="0">
 
         <!-- Product Categories -->
         <record id="product_category_drinks" model="product.category">
@@ -16,7 +16,7 @@
             <field name="name">Beer</field>
             <field name="categ_id" ref="product_category_drinks"/>
             <field name="type">consu</field>
-            <field name="list_price">3.50</field>
+            <field name="list_price">2.80</field>
             <field name="available_in_pos">True</field>
             <field name="sale_ok">True</field>
             <field name="purchase_ok">False</field>
@@ -26,7 +26,7 @@
             <field name="name">Soda</field>
             <field name="categ_id" ref="product_category_drinks"/>
             <field name="type">consu</field>
-            <field name="list_price">2.00</field>
+            <field name="list_price">1.80</field>
             <field name="available_in_pos">True</field>
             <field name="sale_ok">True</field>
             <field name="purchase_ok">False</field>
@@ -36,7 +36,7 @@
             <field name="name">Water</field>
             <field name="categ_id" ref="product_category_drinks"/>
             <field name="type">consu</field>
-            <field name="list_price">1.50</field>
+            <field name="list_price">1.20</field>
             <field name="available_in_pos">True</field>
             <field name="sale_ok">True</field>
             <field name="purchase_ok">False</field>
@@ -46,7 +46,7 @@
             <field name="name">Coffee</field>
             <field name="categ_id" ref="product_category_drinks"/>
             <field name="type">consu</field>
-            <field name="list_price">2.50</field>
+            <field name="list_price">1.50</field>
             <field name="available_in_pos">True</field>
             <field name="sale_ok">True</field>
             <field name="purchase_ok">False</field>
@@ -57,7 +57,7 @@
             <field name="name">Pizza</field>
             <field name="categ_id" ref="product_category_food"/>
             <field name="type">consu</field>
-            <field name="list_price">8.00</field>
+            <field name="list_price">4.50</field>
             <field name="available_in_pos">True</field>
             <field name="sale_ok">True</field>
             <field name="purchase_ok">False</field>
@@ -67,7 +67,7 @@
             <field name="name">Sandwich</field>
             <field name="categ_id" ref="product_category_food"/>
             <field name="type">consu</field>
-            <field name="list_price">5.00</field>
+            <field name="list_price">3.80</field>
             <field name="available_in_pos">True</field>
             <field name="sale_ok">True</field>
             <field name="purchase_ok">False</field>
@@ -77,7 +77,7 @@
             <field name="name">Fries</field>
             <field name="categ_id" ref="product_category_food"/>
             <field name="type">consu</field>
-            <field name="list_price">3.00</field>
+            <field name="list_price">2.50</field>
             <field name="available_in_pos">True</field>
             <field name="sale_ok">True</field>
             <field name="purchase_ok">False</field>
@@ -87,7 +87,7 @@
             <field name="name">Burger</field>
             <field name="categ_id" ref="product_category_food"/>
             <field name="type">consu</field>
-            <field name="list_price">7.50</field>
+            <field name="list_price">4.90</field>
             <field name="available_in_pos">True</field>
             <field name="sale_ok">True</field>
             <field name="purchase_ok">False</field>
