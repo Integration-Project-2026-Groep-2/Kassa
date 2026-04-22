@@ -204,10 +204,6 @@ volumes:
 
   odoo_data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${ODOO_DATA_PATH:-./data/odoo}
 
   rabbitmq_data:
     driver: local
