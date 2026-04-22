@@ -34,7 +34,7 @@ jobs:
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           docker push ${{ env.IMAGE }}:sha-${SHORT_SHA}
-          docker push ${{ env.IMAGE }}:17
+          docker push ${{ env.IMAGE }}:latest-dev
 
   deploy-dev:
     needs: build-and-push
