@@ -7,8 +7,6 @@ from config import (
     RABBIT_HOST,
     HEARTBEAT_QUEUE,
     HEARTBEAT_INTERVAL_SECONDS,
-    HEARTBEAT_EXCHANGE,
-    HEARTBEAT_ROUTING_KEY,
 )
 
 
@@ -35,23 +33,17 @@ def run_heartbeat(interval_seconds: int = 1):
     """
     producer = KassaProducer(host=RABBIT_HOST)
     producer.connect()
-    logger.info(
-        "Heartbeat route: exchange='%s', routing_key='%s', queue='%s'",
-        HEARTBEAT_EXCHANGE,
-        HEARTBEAT_ROUTING_KEY,
-        HEARTBEAT_QUEUE,
-    )
+    logger.info("Heartbeat route: queue='%s'", HEARTBEAT_QUEUE)
 
     try:
         while True:
             xml = build_heartbeat_xml()
 
-            # Publiceer expliciet naar de heartbeat exchange.
             producer.publish(
                 xml,
-                routing_key=HEARTBEAT_ROUTING_KEY,
-                exchange=HEARTBEAT_EXCHANGE,
+                routing_key=HEARTBEAT_QUEUE,
                 queue_name=HEARTBEAT_QUEUE,
+                durable=False
             )
             logger.info("Heartbeat verzonden")
             time.sleep(interval_seconds)

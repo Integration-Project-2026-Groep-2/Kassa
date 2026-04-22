@@ -89,9 +89,7 @@ services:
       RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
       RABBIT_VHOST: ${RABBIT_VHOST:-/}
       HEARTBEAT_INTERVAL_SECONDS: ${HEARTBEAT_INTERVAL_SECONDS:-1}
-      HEARTBEAT_EXCHANGE: ${HEARTBEAT_EXCHANGE:-heartbeat.direct}
-      HEARTBEAT_ROUTING_KEY: ${HEARTBEAT_ROUTING_KEY:-routing.heartbeat}
-      HEARTBEAT_QUEUE: ${HEARTBEAT_QUEUE:-heartbeat_queue}
+      HEARTBEAT_QUEUE: ${HEARTBEAT_QUEUE:-kassa.heartbeat}
     restart: unless-stopped
 
 volumes:

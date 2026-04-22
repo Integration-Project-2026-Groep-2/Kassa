@@ -49,7 +49,7 @@ HEARTBEAT_EXCHANGE = os.getenv('HEARTBEAT_EXCHANGE', 'heartbeat.direct')
 HEARTBEAT_ROUTING_KEY = os.getenv('HEARTBEAT_ROUTING_KEY', 'routing.heartbeat')
 
 # Legacy/local heartbeat queue naming (env-overridable)
-HEARTBEAT_QUEUE = os.getenv('HEARTBEAT_QUEUE', 'heartbeat_queue')
+HEARTBEAT_QUEUE = os.getenv('HEARTBEAT_QUEUE', 'kassa.heartbeat')
 USER_UPDATES_QUEUE = 'user_updates'
 CONSUMPTION_ORDER_QUEUE = 'ConsumptionOrder'
 PAYMENT_COMPLETED_QUEUE = 'PaymentCompleted'
