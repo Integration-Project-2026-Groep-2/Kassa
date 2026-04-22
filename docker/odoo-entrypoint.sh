@@ -11,6 +11,17 @@ ODOO_LONGPOLLING_PORT="${ODOO_LONGPOLLING_PORT:-8072}"
 ODOO_LOG_LEVEL="${LOG_LEVEL:-info}"
 ODOO_DB_FILTER="${ODOO_DB_FILTER:-^${ODOO_DB_NAME}$}"
 
+ODOO_HELP_OUTPUT="$(odoo --help 2>&1 || true)"
+ODOO_REALTIME_PORT_ARG=""
+
+if echo "$ODOO_HELP_OUTPUT" | grep -q -- "--longpolling-port"; then
+  ODOO_REALTIME_PORT_ARG="--longpolling-port=${ODOO_LONGPOLLING_PORT}"
+elif echo "$ODOO_HELP_OUTPUT" | grep -q -- "--gevent-port"; then
+  ODOO_REALTIME_PORT_ARG="--gevent-port=${ODOO_LONGPOLLING_PORT}"
+else
+  echo "[entrypoint] Geen ondersteunde realtime poort flag gevonden; ga verder zonder expliciete realtime poort argument"
+fi
+
 HEARTBEAT_ENABLED="${ENABLE_HEARTBEAT_IN_ODOO_IMAGE:-true}"
 HB_PID=""
 
@@ -39,9 +50,12 @@ set -- \
   --db_password="${ODOO_DB_PASSWORD}" \
   --db-filter="${ODOO_DB_FILTER}" \
   --http-port="${ODOO_HTTP_PORT}" \
-  --longpolling-port="${ODOO_LONGPOLLING_PORT}" \
   --proxy-mode \
   --log-level="${ODOO_LOG_LEVEL}"
+
+if [ -n "${ODOO_REALTIME_PORT_ARG}" ]; then
+  set -- "$@" "${ODOO_REALTIME_PORT_ARG}"
+fi
 
 if [ -n "${ODOO_DB_NAME:-}" ]; then
   set -- "$@" -d "${ODOO_DB_NAME}"
