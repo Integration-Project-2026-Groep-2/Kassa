@@ -1,12 +1,11 @@
-name: Build & Deploy Image to Main
+name: Build & Deploy Odoo 17
 
 on:
   push:
     branches: [main]
 
 env:
-  SERVICE_NAME: kassa
-  IMAGE: ghcr.io/integration-project-2026-groep-2/kassa
+  IMAGE: ghcr.io/integration-project-2026-groep-2/odoo-kassa
 
 jobs:
   build-and-push:
@@ -28,22 +27,39 @@ jobs:
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           docker build -t ${{ env.IMAGE }}:sha-${SHORT_SHA} .
-          docker tag ${{ env.IMAGE }}:sha-${SHORT_SHA} ${{ env.IMAGE }}:latest-main
+          docker tag ${{ env.IMAGE }}:sha-${SHORT_SHA} ${{ env.IMAGE }}:17
 
       - name: Push tags
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           docker push ${{ env.IMAGE }}:sha-${SHORT_SHA}
-          docker push ${{ env.IMAGE }}:latest-main
+          docker push ${{ env.IMAGE }}:17
 
-  deploy-dev:
+  deploy-main:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Dev
+      - name: Deploy to Main VM
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
-          script: ${{ env.SERVICE_NAME }}
+          script: |
+            set -e
+
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            if [ -z "$DEPLOY_PATH" ]; then
+              DEPLOY_PATH="$HOME/Kassa"
+            fi
+            cd "$DEPLOY_PATH"
+
+            # Optional GHCR login for private package visibility.
+            if [ -n "${{ secrets.GHCR_USER }}" ] && [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
+              echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin
+            fi
+
+            export ODOO_IMAGE=${{ env.IMAGE }}:17
+            docker compose -f docker-compose.production.yml pull odoo
+            docker compose -f docker-compose.production.yml up -d --force-recreate odoo
+            docker compose -f docker-compose.production.yml ps
