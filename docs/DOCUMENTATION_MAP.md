@@ -44,7 +44,8 @@
    - **Read time**: 10 minutes (detailed comments included)
    - **Best for**: Understanding Docker service setup
    - **Key sections**:
-     - 5 services configured (Odoo, PostgreSQL, RabbitMQ, POS Receiver, Heartbeat)
+       - 4 services configured (Odoo, PostgreSQL, RabbitMQ, POS Receiver)
+       - Heartbeat runs inside the Odoo image/container
      - Comments explaining each environment variable
      - Nginx reference configuration
      - Health checks and volumes
@@ -129,7 +130,8 @@
 
 ### Docker Compose Setup
 - **File**: [docker-compose.production.yml](./docker-compose.production.yml)
-- **Services**: 5 services (Odoo, PostgreSQL, RabbitMQ, POS Receiver, Heartbeat)
+- **Services**: 4 services (Odoo, PostgreSQL, RabbitMQ, POS Receiver)
+- **Heartbeat**: embedded in the Odoo image/container
 - **Deployment**: [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md#step-2-start-docker-compose)
 
 ### Azure Infrastructure

@@ -54,7 +54,8 @@ Odoo:
 **Delivered in**: [docker-compose.production.yml](./docker-compose.production.yml)
 
 Features:
-- ✅ All 5 services configured (Odoo, PostgreSQL, RabbitMQ, POS Receiver, Heartbeat)
+- ✅ All runtime services configured (Odoo, PostgreSQL, RabbitMQ, POS Receiver)
+- ✅ Heartbeat runs inside the custom Odoo image/container
 - ✅ Environment variables mapped with detailed comments
 - ✅ Health checks for each service
 - ✅ Volumes for data persistence
@@ -154,7 +155,7 @@ Docker Network (kassa-network)
    ├── RabbitMQ:5672 (AMQP), :15672 (Mgmt, proxied)
    ├── PostgreSQL:5432
    ├── POS Receiver
-   └── Heartbeat Monitor
+   └── Heartbeat runs inside the Odoo image/container
 ```
 
 ---
@@ -188,7 +189,8 @@ Docker Network (kassa-network)
 - ✅ Monitoring & troubleshooting
 
 ### 3. Docker Configuration
-- ✅ 5 services configured
+- ✅ 4 services configured
+- ✅ Heartbeat embedded in the Odoo image/container
 - ✅ Health checks
 - ✅ Volume persistence
 - ✅ Network isolation

@@ -45,6 +45,9 @@ ODOO_DOMAIN=kassa.integration-project-2026-groep-2.my.be
 ### Step 2: Start Docker Compose
 
 ```bash
+# Pull the custom Odoo image from GHCR
+export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:17
+
 # Build and start all services
 docker compose -f docker-compose.production.yml up -d --build
 
@@ -342,7 +345,8 @@ docker compose -f docker-compose.production.yml logs -f odoo         # Odoo appl
 docker compose -f docker-compose.production.yml logs -f rabbitmq     # RabbitMQ broker
 docker compose -f docker-compose.production.yml logs -f db           # PostgreSQL database
 docker compose -f docker-compose.production.yml logs -f pos_receiver # POS message consumer
-docker compose -f docker-compose.production.yml logs -f heartbeat    # Health monitoring
+
+# Heartbeat runs inside the Odoo container; use Odoo logs for heartbeat output
 
 # Clean up old logs
 docker compose -f docker-compose.production.yml logs --tail=100      # Last 100 lines

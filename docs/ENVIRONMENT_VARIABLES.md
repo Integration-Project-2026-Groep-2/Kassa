@@ -47,7 +47,7 @@ ODOO_PORT, ODOO_DOMAIN
 RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
 ```
 
-### Heartbeat Service
+### Embedded Heartbeat in Odoo Image
 ```
 RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
 HEARTBEAT_INTERVAL_SECONDS, HEARTBEAT_EXCHANGE, HEARTBEAT_ROUTING_KEY, HEARTBEAT_QUEUE
@@ -389,6 +389,6 @@ Your Kassa deployment uses environment variables to configure:
 - **Database**: PostgreSQL on Azure infrastructure
 - **Message Queue**: RabbitMQ with AMQP protocol
 - **Odoo**: Web server on port 8069, accessed via nginx reverse proxy
-- **Custom Services**: POS receiver and heartbeat monitoring
+- **Custom Services**: POS receiver; heartbeat runs inside the Odoo image/container
 
 All services read these variables at startup, ensuring consistency across development, testing, and production environments.

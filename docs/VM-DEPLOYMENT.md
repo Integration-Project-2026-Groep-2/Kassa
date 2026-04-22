@@ -14,17 +14,19 @@ pip install -r requirements.txt
 # 2. Start Docker services
 docker compose up -d --build
 
-# 3. Initialize database (eenmalig)
+# 3. Deploy custom Odoo image from GHCR
+export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:17
+docker compose -f docker-compose.production.yml pull odoo
+docker compose -f docker-compose.production.yml up -d
+
+# 4. Initialize database (eenmalig)
 docker compose run --rm odoo odoo --db_host=db --db_user=odoo --db_password=odoo -d odoo -i base --without-demo=all --stop-after-init
 
-# 4. Start Python services
+# 5. Start Python services
 cd src
 
 # Terminal 1: POS Receiver
 RABBIT_HOST=localhost python main_pos_receiver.py
-
-# Terminal 2: Heartbeat
-RABBIT_HOST=localhost python main_heartbeat.py
 ```
 
 ### Access services:
@@ -52,7 +54,6 @@ export RABBIT_HOST=<VM-IP>  # of 10.0.0.X etc.
 # Start services
 cd src
 python main_pos_receiver.py
-python main_heartbeat.py
 ```
 
 ---
