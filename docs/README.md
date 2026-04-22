@@ -1,13 +1,13 @@
 # Team Kassa Docker Deliverables
 
-Dit project levert een custom Odoo image (gebaseerd op de officiele `odoo:17` image) met Team Kassa code ingebakken.
+Dit project levert een custom Odoo image (gebaseerd op de officiele `odoo:latest` image) met Team Kassa code ingebakken.
 
 ## 1) Docker images
 
 
-- App image: bouw en publiceer als GHCR image `ghcr.io/<org-of-user>/odoo-kassa:17`
+- App image: bouw en publiceer als GHCR image `ghcr.io/<org-of-user>/odoo-kassa:latest`
 	Deze image bevat:
-	- Odoo 17 (officiele base image)
+	- Odoo latest (officiele base image)
 	- `kassa_pos` addon
 	- RabbitMQ messaging scripts (`src/` + `templates/`)
 	- Python package `pika`
@@ -45,7 +45,7 @@ Na de eerste `docker compose -f docker-compose.production.yml up -d` moet de Odo
 Gebruik:
 
 ```bash
-export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:17
+export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:latest
 docker compose -f docker-compose.production.yml pull odoo
 docker compose -f docker-compose.production.yml up -d
 

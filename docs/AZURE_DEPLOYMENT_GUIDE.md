@@ -46,7 +46,7 @@ ODOO_DOMAIN=kassa.integration-project-2026-groep-2.my.be
 
 ```bash
 # Pull the custom Odoo image from GHCR
-export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:17
+export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:latest
 
 # Build and start all services
 docker compose -f docker-compose.production.yml up -d --build

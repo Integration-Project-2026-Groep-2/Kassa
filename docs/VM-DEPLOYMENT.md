@@ -15,7 +15,7 @@ pip install -r requirements.txt
 docker compose up -d --build
 
 # 3. Deploy custom Odoo image from GHCR
-export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:17
+export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:latest
 docker compose -f docker-compose.production.yml pull odoo
 docker compose -f docker-compose.production.yml up -d
 

@@ -279,7 +279,7 @@ exec "$@"
 
 Update [Dockerfile](Dockerfile):
 ```dockerfile
-FROM odoo:17
+FROM odoo:latest
 USER root
 RUN pip3 install pika
 COPY entrypoint.sh /

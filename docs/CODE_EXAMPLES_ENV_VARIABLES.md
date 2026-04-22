@@ -841,7 +841,7 @@ exec "$@"
 Update `Dockerfile` to use entrypoint:
 
 ```dockerfile
-FROM odoo:17
+FROM odoo:latest
 
 USER root
 RUN pip3 install pika psycopg2-binary
