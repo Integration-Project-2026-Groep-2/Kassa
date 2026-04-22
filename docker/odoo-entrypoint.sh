@@ -37,12 +37,15 @@ set -- \
   --db_port="${ODOO_DB_PORT}" \
   --db_user="${ODOO_DB_USER}" \
   --db_password="${ODOO_DB_PASSWORD}" \
-  --db_name="${ODOO_DB_NAME}" \
   --db-filter="${ODOO_DB_FILTER}" \
   --http-port="${ODOO_HTTP_PORT}" \
   --longpolling-port="${ODOO_LONGPOLLING_PORT}" \
   --proxy-mode \
   --log-level="${ODOO_LOG_LEVEL}"
+
+if [ -n "${ODOO_DB_NAME:-}" ]; then
+  set -- "$@" -d "${ODOO_DB_NAME}"
+fi
 
 if [ -n "${ODOO_EXTRA_ARGS:-}" ]; then
   # shellcheck disable=SC2086
