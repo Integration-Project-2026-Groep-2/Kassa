@@ -6,8 +6,7 @@ import os
 from datetime import datetime, timezone
 
 import aio_pika
-from aio_pika import ExchangeType
-from aio_pika.abc import AbstractChannel, AbstractExchange, AbstractRobustConnection
+from aio_pika.abc import AbstractChannel, AbstractRobustConnection
 from lxml import etree
 
 from xml_validator import validate
@@ -30,30 +29,16 @@ def _build_heartbeat_xml() -> bytes:
     return etree.tostring(root, xml_declaration=True, encoding="UTF-8")
 
 
-async def _get_channel(
-    connection: AbstractRobustConnection,
-) -> tuple[AbstractChannel, AbstractExchange]:
-    """Open een nieuw kanaal en declareer de heartbeat exchange.
-    Apart gezet zodat het opnieuw aangeroepen kan worden na een kanaalfout.
-    """
-    channel = await connection.channel()
-    exchange = await channel.declare_exchange(
-        "heartbeat.direct", type=ExchangeType.DIRECT, durable=True
-    )
-    return channel, exchange
-
-
 async def run_heartbeat(connection: AbstractRobustConnection) -> None:
     """
-    Publiceer een XML heartbeat via heartbeat.direct exchange elke seconde.
+    Publiceer een XML heartbeat naar kassa.heartbeat elke seconde.
 
-    - Declareert exchange heartbeat.direct (direct, durable=True)
+    - Publiceert via default exchange naar queue kassa.heartbeat (durable=False)
     - Maakt automatisch een nieuw kanaal aan na een fout
     - Per iteratie try/except: logt fout, slaat iteratie over, loop gaat door
     - Heartbeat mag NOOIT stoppen
     """
     channel: AbstractChannel | None = None
-    exchange: AbstractExchange | None = None
 
     logger.info("Heartbeat task gestart (interval=%ds)", HEARTBEAT_INTERVAL_SECONDS)
 
@@ -61,14 +46,15 @@ async def run_heartbeat(connection: AbstractRobustConnection) -> None:
         try:
             if channel is None or channel.is_closed:
                 logger.info("Heartbeat kanaal openen...")
-                channel, exchange = await _get_channel(connection)
+                channel = await connection.channel()
+                await channel.declare_queue("kassa.heartbeat", durable=False)
 
             xml_bytes = _build_heartbeat_xml()
             validate(xml_bytes)
 
-            await exchange.publish(
+            await channel.default_exchange.publish(
                 aio_pika.Message(body=xml_bytes),
-                routing_key="routing.heartbeat",
+                routing_key="kassa.heartbeat",
             )
             logger.debug("Heartbeat gepubliceerd")
         except (ValueError, etree.XMLSyntaxError):
@@ -76,6 +62,5 @@ async def run_heartbeat(connection: AbstractRobustConnection) -> None:
         except Exception:
             logger.exception("Heartbeat iteratie mislukt")
             channel = None
-            exchange = None
 
         await asyncio.sleep(HEARTBEAT_INTERVAL_SECONDS)
