@@ -23,7 +23,7 @@ docker compose -f docker-compose.production.yml up -d
 
 # 3b. Belangrijk voor VM-deployments
 # - Odoo draait uit de GHCR image, niet uit een losse bind mount met shell scripts
-# - De data van Odoo staat in een managed Docker volume, zodat /var/lib/odoo/sessions schrijfbaar blijft
+# - De data van Odoo staat in een bind-mount of projectvolume; Odoo-sessies gaan naar een writable tmp-locatie
 # - De entrypoint kiest automatisch de juiste realtime flag voor de Odoo-versie in de image
 
 # 4. Initialize database (eenmalig)
@@ -106,8 +106,8 @@ rabbitmq:
 - Rebuild de image: `docker compose -f docker-compose.production.yml build odoo`
 
 **/var/lib/odoo/sessions not writable**:
-- Gebruik de production compose zoals aangeleverd; daar draait Odoo met een managed volume
-- Als je zelf volumes aanpast, vermijd een root-owned bind mount voor `/var/lib/odoo`
+- De productie-config gebruikt nu een aparte writable `session_dir` onder `/tmp`
+- Als je eigen config afwijkt, zorg dan dat `session_dir` niet onder een niet-writable volume staat
 
 **Connection refused from remote machine**:
 - Verifiy ports open: `netstat -an | grep 5672` (Linux) of `netstat -ano | findstr 5672` (Windows)
