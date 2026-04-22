@@ -2,6 +2,17 @@
 .env.*
 !.env.example
 
+# Runtime data volumes (database, Odoo filestore, RabbitMQ, etc.)
+/data/
+/data/*
+!/data/.gitkeep
+
+# Local Python environment and caches
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
 # Python cache
 __pycache__/
 *.pyc

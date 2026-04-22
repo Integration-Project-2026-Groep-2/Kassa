@@ -1,4 +1,4 @@
-name: Build & Deploy Image to Dev
+name: Build & Deploy Image to VM
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 env:
   SERVICE_NAME: kassa
-  IMAGE: ghcr.io/integration-project-2026-groep-2/kassa
+  IMAGE: ghcr.io/teamkassa/odoo-kassa
 
 jobs:
   build-and-push:
@@ -28,13 +28,13 @@ jobs:
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           docker build -t ${{ env.IMAGE }}:sha-${SHORT_SHA} .
-          docker tag ${{ env.IMAGE }}:sha-${SHORT_SHA} ${{ env.IMAGE }}:latest-dev
+          docker tag ${{ env.IMAGE }}:sha-${SHORT_SHA} ${{ env.IMAGE }}:latest
 
       - name: Push tags
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           docker push ${{ env.IMAGE }}:sha-${SHORT_SHA}
-          docker push ${{ env.IMAGE }}:latest-dev
+          docker push ${{ env.IMAGE }}:latest
 
   deploy-dev:
     needs: build-and-push
@@ -43,7 +43,16 @@ jobs:
       - name: Deploy to Dev
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          script: ${{ env.SERVICE_NAME }}
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd ${{ secrets.VM_DEPLOY_PATH }}
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin
+            export ODOO_IMAGE=${{ env.IMAGE }}:latest
+            docker compose -f docker-compose.production.yml pull odoo
+            docker compose -f docker-compose.production.yml up -d db rabbitmq
+            docker compose -f docker-compose.production.yml run --rm --no-deps --entrypoint bash odoo -lc 'odoo --config=/etc/odoo/odoo.conf --db_host="$DB_HOST" --db_port="$DB_PORT" --db_user="$USER" --db_password="$PASSWORD" -d "$POSTGRES_DB" -u all --stop-after-init'
+            docker compose -f docker-compose.production.yml up -d --force-recreate odoo

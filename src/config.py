@@ -7,7 +7,6 @@ Plaats hier eenvoudige constants zoals hostnamen en queue-namen.
 import os
 from pathlib import Path
 
-
 def _load_local_env() -> None:
 	root_env = Path(__file__).resolve().parents[1] / '.env'
 	if not root_env.exists():

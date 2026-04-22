@@ -62,7 +62,8 @@ See [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md#step-3-configure-ngi
 - **Examples** for local dev, staging, and production
 
 ### ✅ Docker Compose Configuration
-- **5 services** configured: Odoo, PostgreSQL, RabbitMQ, POS Receiver, Heartbeat
+- **4 services** configured: Odoo, PostgreSQL, RabbitMQ, POS Receiver
+- **Heartbeat** runs inside the Odoo image/container and stops with Odoo
 - **Health checks** for each service
 - **Volume persistence** for data durability
 - **Internal networking** using Docker bridge network
@@ -260,7 +261,7 @@ docker compose -f docker-compose.production.yml logs -f odoo
 - [ ] RabbitMQ users configured
 - [ ] Virtual host created (`/kassa`)
 - [ ] POS Receiver connected to RabbitMQ
-- [ ] Heartbeat service active
+- [ ] Heartbeat running inside Odoo container
 
 ### Monitoring
 - [ ] Logs collection configured
@@ -359,7 +360,7 @@ These documents work together:
 ```
 POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, DB_HOST, DB_PORT
 RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
-ODOO_PORT, ODOO_LONGPOLLING_PORT, ODOO_DOMAIN
+ODOO_PORT, ODOO_LONGPOLLING_PORT (realtime port alias; auto-mapped by the entrypoint), ODOO_DOMAIN
 ```
 
 **Service-Specific Variables**:

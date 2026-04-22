@@ -19,7 +19,7 @@ The Kassa system uses RabbitMQ for message publishing and consuming between diff
 
 ### Automatic Setup (Recommended)
 
-After starting the Docker containers with `docker compose up -d`, run the setup script to create all exchanges:
+After starting the Docker containers with `docker compose -f docker-compose.production.yml up -d --build`, run the setup script to create all exchanges:
 
 ```bash
 python setup_rabbitmq.py
@@ -86,7 +86,7 @@ You should see all exchanges listed with their types.
 ### Routing Keys
 
 - `kassa.closed` - Batch closing events from POS (published to `kassa.topic`)
-- `kassa.heartbeat` - System heartbeat messages
+- `kassa.heartbeat` - System heartbeat messages (published from the Odoo image/container)
 - `user.*` - User CRUD operations
 
 ## Troubleshooting
@@ -129,7 +129,7 @@ The `rabbitmq` service in docker-compose.yml is configured with:
 - **Health Check:** `rabbitmq-diagnostics ping` every 10 seconds
 - **Credentials:** From `.env` file environment variables
 
-Dependent services (`pos_receiver`, `heartbeat`) wait for RabbitMQ to be healthy before starting:
+Dependent services (`pos_receiver`) wait for RabbitMQ to be healthy before starting:
 
 ```yaml
 depends_on:

@@ -1,15 +1,17 @@
 # Team Kassa Docker Deliverables
 
-Dit project levert een custom Odoo image (gebaseerd op de officiele `odoo:17` image) met Team Kassa code ingebakken.
+Dit project levert een custom Odoo image (gebaseerd op de officiele `odoo:latest` image) met Team Kassa code ingebakken.
 
 ## 1) Docker images
 
-- App image: bouw met `docker build -t teamkassa/odoo-kassa:17 .`
+
+- App image: bouw en publiceer als GHCR image `ghcr.io/<org-of-user>/odoo-kassa:latest`
 	Deze image bevat:
-	- Odoo 17 (officiele base image)
+	- Odoo latest (officiele base image)
 	- `kassa_pos` addon
 	- RabbitMQ messaging scripts (`src/` + `templates/`)
 	- Python package `pika`
+- Heartbeat draait in dezelfde Odoo image/container en stopt dus mee als Odoo stopt
 - DB image: `postgres:15`
 - RabbitMQ image: `rabbitmq:3-management`
 
@@ -38,12 +40,16 @@ Gebruik `.env.example` als basis.
 
 ## 3) Eerste opstart (manuele stap)
 
-Na de eerste `docker compose up -d --build` moet de Odoo database geinitialiseerd worden.
+Na de eerste `docker compose -f docker-compose.production.yml up -d` moet de Odoo database geinitialiseerd worden.
 
 Gebruik:
 
 ```bash
-docker compose exec odoo odoo \
+export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:latest
+docker compose -f docker-compose.production.yml pull odoo
+docker compose -f docker-compose.production.yml up -d
+
+docker compose -f docker-compose.production.yml exec odoo odoo \
 	-d ${POSTGRES_DB} \
 	-i base \
 	--without-demo=all \

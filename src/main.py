@@ -1,11 +1,9 @@
 """
 Entry point voor de Kassa integratieservice.
-Start 4 asyncio-taken gelijktijdig in één Python-proces:
+Start de status- en receiver-taken in één Python-proces.
 
-    heartbeat  — Contract 7:  XML heartbeat elke seconde naar Control Room
-    status     — Contract 8:  StatusCheck elke 30s naar Control Room
-    receiver   — R1–R3:       Luistert op alle inkomende CRM/Controlroom queues
-    sender     — Contract 10a/17a: helper voor uitgaande requests (wordt on-demand gebruikt)
+De heartbeat draait niet meer hier: die wordt in de custom Odoo image
+gestart zodat hij automatisch stopt zodra Odoo stopt.
 
 Opstarten:
     python src/main.py
@@ -21,7 +19,6 @@ import os
 
 import aio_pika
 
-from heartbeat import run_heartbeat
 from status import run_status
 from receiver import run_receiver
 
@@ -48,9 +45,8 @@ async def main() -> None:
     connection = await aio_pika.connect_robust(RABBITMQ_URL)
     logger.info("Verbinding geslaagd")
 
-    # Alle 4 taken starten en gelijktijdig laten draaien
+    # Status en receiver draaien samen in dit proces.
     await asyncio.gather(
-        run_heartbeat(connection),
         run_status(connection),
         run_receiver(connection),
     )
