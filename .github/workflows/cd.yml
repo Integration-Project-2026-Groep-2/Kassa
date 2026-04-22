@@ -39,33 +39,49 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Main VM
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          script: |
-            set -eu
+      - name: Deploy to Main VM via SSH
+        env:
+          DEV_HOST: ${{ secrets.DEV_HOST }}
+          DEV_USER: ${{ secrets.DEV_USER }}
+          DEV_SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          GHCR_USER: ${{ secrets.GHCR_USER }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          IMAGE: ${{ env.IMAGE }}
+        run: |
+          set -euo pipefail
 
-            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            if [ -z "$DEPLOY_PATH" ]; then
-              DEPLOY_PATH="$HOME/Kassa"
-            fi
-            cd "$DEPLOY_PATH"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEV_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEV_HOST" >> ~/.ssh/known_hosts
 
-            if [ -n "${{ secrets.GHCR_USER }}" ] && [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
-              echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin
-            fi
+          ssh -i ~/.ssh/deploy_key "$DEV_USER@$DEV_HOST" \
+            DEPLOY_PATH="$DEPLOY_PATH" \
+            GHCR_USER="$GHCR_USER" \
+            GHCR_TOKEN="$GHCR_TOKEN" \
+            ODOO_IMAGE="$IMAGE:17" \
+            'bash -s' <<'EOF'
+          set -euo pipefail
 
-            export ODOO_IMAGE=${{ env.IMAGE }}:17
+          if [ -z "${DEPLOY_PATH:-}" ]; then
+            DEPLOY_PATH="$HOME/Kassa"
+          fi
+          cd "$DEPLOY_PATH"
 
-            if docker compose version >/dev/null 2>&1; then
-              docker compose -f docker-compose.production.yml pull odoo
-              docker compose -f docker-compose.production.yml up -d --force-recreate odoo
-              docker compose -f docker-compose.production.yml ps
-            else
-              docker-compose -f docker-compose.production.yml pull odoo
-              docker-compose -f docker-compose.production.yml up -d --force-recreate odoo
-              docker-compose -f docker-compose.production.yml ps
-            fi
+          if [ -n "${GHCR_USER:-}" ] && [ -n "${GHCR_TOKEN:-}" ]; then
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+          fi
+
+          export ODOO_IMAGE
+
+          if docker compose version >/dev/null 2>&1; then
+            docker compose -f docker-compose.production.yml pull odoo
+            docker compose -f docker-compose.production.yml up -d --force-recreate odoo
+            docker compose -f docker-compose.production.yml ps
+          else
+            docker-compose -f docker-compose.production.yml pull odoo
+            docker-compose -f docker-compose.production.yml up -d --force-recreate odoo
+            docker-compose -f docker-compose.production.yml ps
+          fi
+          EOF
