@@ -177,6 +177,12 @@ services:
       RABBIT_USER: ${RABBIT_USER:-guest}
       RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}        # Override via .env
       RABBIT_VHOST: ${RABBIT_VHOST:-/}
+
+       # ========== HEARTBEAT CONFIGURATION ==========
+      HEARTBEAT_INTERVAL_SECONDS: ${HEARTBEAT_INTERVAL_SECONDS:-1}      # Pulse interval
+      HEARTBEAT_EXCHANGE: ${HEARTBEAT_EXCHANGE:-heartbeat.direct}       # RabbitMQ exchange
+      HEARTBEAT_ROUTING_KEY: ${HEARTBEAT_ROUTING_KEY:-routing.heartbeat}# Routing key
+      HEARTBEAT_QUEUE: ${HEARTBEAT_QUEUE:-heartbeat_queue}             # Queue name
       
       # Message queue configuration (override in .env if needed)
       POS_EXCHANGE: ${POS_EXCHANGE:-pos.events}         # RabbitMQ exchange
@@ -195,48 +201,7 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 5
-
-  # Heartbeat Service - Monitors service health
-  heartbeat:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: kassa-heartbeat
-    restart: unless-stopped
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    working_dir: /app/src
-    
-    # Service definition for Python heartbeat script
-    command: python3 main_heartbeat.py
-    
-    environment:
-      # ========== RABBITMQ CONFIGURATION ==========
-      RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
-      RABBIT_PORT: ${RABBIT_PORT:-5672}
-      RABBIT_USER: ${RABBIT_USER:-guest}
-      RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}     # Override via .env
-      RABBIT_VHOST: ${RABBIT_VHOST:-/}
-      
-      # ========== HEARTBEAT CONFIGURATION ==========
-      HEARTBEAT_INTERVAL_SECONDS: ${HEARTBEAT_INTERVAL_SECONDS:-1}      # Pulse interval
-      HEARTBEAT_EXCHANGE: ${HEARTBEAT_EXCHANGE:-heartbeat.direct}       # RabbitMQ exchange
-      HEARTBEAT_ROUTING_KEY: ${HEARTBEAT_ROUTING_KEY:-routing.heartbeat}# Routing key
-      HEARTBEAT_QUEUE: ${HEARTBEAT_QUEUE:-heartbeat_queue}             # Queue name
-      
-      # ========== LOGGING ==========
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-    
-    networks:
-      - kassa-network
-    
-    # Auto-restart service if it crashes
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 5
+ 
 
 # ============================================================
 # VOLUMES - Persistent Data Storage
