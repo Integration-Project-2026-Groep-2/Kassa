@@ -46,7 +46,7 @@ RabbitMQ:
   
 Odoo:
   ODOO_PORT=8069 (internal)
-   ODOO_LONGPOLLING_PORT=8072 (internal websocket/longpolling)
+   ODOO_LONGPOLLING_PORT=8072 (internal realtime port; entrypoint auto-selects the correct Odoo realtime flag)
   ODOO_DOMAIN=kassa.integration-project-2026-groep-2.my.be (public)
 ```
 
