@@ -180,3 +180,131 @@
 .kassa-add-user-btn i {
     margin-right: 4px;
 }
+
+/* POS Product Grid and Card Modernization */
+.pos .product-list.kassa-product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    padding: 12px;
+    align-content: start;
+}
+
+.pos .kassa-product-card {
+    min-height: 100px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    background: #f8f9fa;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 0.1s ease;
+}
+
+.pos .kassa-product-card:hover {
+    transform: translateY(-1px);
+    border-color: #cfd4dc;
+    box-shadow: 0 8px 18px rgba(17, 24, 39, 0.12);
+}
+
+.pos .kassa-product-card:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 6px rgba(17, 24, 39, 0.18);
+}
+
+.pos .kassa-product-card.product-drink {
+    background-color: #d1ecf1 !important;
+    border-color: rgba(0, 0, 0, 0.05) !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.pos .kassa-product-card.product-food {
+    background-color: #f8d7da !important;
+    border-color: rgba(0, 0, 0, 0.05) !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.pos .kassa-product-card.product-drink:active,
+.pos .kassa-product-card.product-food:active {
+    filter: brightness(0.9);
+}
+
+.pos .kassa-product-content {
+    width: 100%;
+    padding: 12px 12px 40px;
+}
+
+.pos .kassa-product-name {
+    width: 100%;
+    font-weight: 600;
+    font-size: 1.1rem;
+    line-height: 1.35;
+    color: #1f2937;
+    margin-top: 4px;
+    text-align: center;
+}
+
+.pos .kassa-price-pill {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: auto;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #444;
+    font-weight: bold;
+    font-size: 0.9rem;
+    letter-spacing: 0.01em;
+    box-shadow: none;
+}
+
+/* Receipt/Cart readability and aligned prices */
+.pos .order-container .orderline {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eef1f4;
+}
+
+.pos .order-container .orderline .product-price,
+.pos .order-container .orderline .price,
+.pos .order-summary .total,
+.pos .order-summary .tax {
+    font-family: "Consolas", "SFMono-Regular", Menlo, Monaco, "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Distinct outline style for closing action */
+.pos .closing-button-container {
+    display: inline-flex;
+}
+
+.pos .kassa-closing-button-outline,
+.pos .closing-button.kassa-closing-button-outline {
+    border: 2px solid #7a8797;
+    background: #ffffff;
+    color: #233142;
+    border-radius: 10px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    padding: 0.58rem 0.9rem;
+    transition: background-color 0.15s ease, color 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+}
+
+.pos .kassa-closing-button-outline i,
+.pos .closing-button.kassa-closing-button-outline i {
+    margin-right: 6px;
+}
+
+.pos .kassa-closing-button-outline:hover,
+.pos .closing-button.kassa-closing-button-outline:hover {
+    background: #f2f4f7;
+    color: #16202b;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.pos .kassa-closing-button-outline:active,
+.pos .closing-button.kassa-closing-button-outline:active {
+    transform: scale(0.96);
+}

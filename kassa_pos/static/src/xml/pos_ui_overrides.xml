@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates id="template" xml:space="preserve">
+    <t t-name="kassa_pos.ProductsWidgetGrid" t-inherit="point_of_sale.ProductsWidget" t-inherit-mode="extension" owl="1">
+        <xpath expr="//div[contains(@class, 'product-list-container')]/div[contains(@class, 'product-list')]" position="attributes">
+            <attribute name="class" add="kassa-product-grid" separator=" "/>
+            <attribute name="t-att-data-category-name">(pos.db.category_by_id[selectedCategoryId] and pos.db.category_by_id[selectedCategoryId].name) or ''</attribute>
+        </xpath>
+        <xpath expr="//ProductCard" position="attributes">
+            <attribute name="class">pos.productViewMode + ' ' + ((product.pos_categ_ids &amp;&amp; product.pos_categ_ids.length &amp;&amp; pos.db.category_by_id[product.pos_categ_ids[0]] &amp;&amp; pos.db.category_by_id[product.pos_categ_ids[0]].name === 'Drinks') ? 'product-drink' : ((product.pos_categ_ids &amp;&amp; product.pos_categ_ids.length &amp;&amp; pos.db.category_by_id[product.pos_categ_ids[0]] &amp;&amp; pos.db.category_by_id[product.pos_categ_ids[0]].name === 'Food') ? 'product-food' : ''))</attribute>
+        </xpath>
+    </t>
+
+    <t t-name="kassa_pos.ProductCardModern" t-inherit="point_of_sale.ProductCard" t-inherit-mode="extension" owl="1">
+        <xpath expr="//article" position="attributes">
+            <attribute name="class" add="kassa-product-card" separator=" "/>
+            <attribute name="t-att-data-product-name">props.name</attribute>
+        </xpath>
+        <xpath expr="//div[contains(@class, 'product-content')]" position="attributes">
+            <attribute name="class" add="kassa-product-content d-flex flex-column justify-content-start" separator=" "/>
+        </xpath>
+        <xpath expr="//div[contains(@class, 'product-content')]/div[contains(@class, 'product-name')]" position="attributes">
+            <attribute name="class" add="kassa-product-name text-center" separator=" "/>
+        </xpath>
+        <xpath expr="//span[contains(@class, 'price-tag')]" position="attributes">
+            <attribute name="class" add="kassa-price-pill" separator=" "/>
+        </xpath>
+    </t>
+</templates>

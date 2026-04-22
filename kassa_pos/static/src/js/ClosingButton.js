@@ -82,9 +82,9 @@ import { xml } from '@odoo/owl';
 
 ClosingButton.template = xml`
     <div class="closing-button-container">
-        <button class="btn btn-lg btn-success closing-button" t-on-click="onClosingClick" title="Close daily session and send batch to facturatie">
+        <button class="btn btn-lg kassa-closing-button-outline closing-button" t-on-click="onClosingClick" title="Close daily session and send batch to facturatie">
             <i class="fa fa-save"></i>
-            Afsluitknop
+            Afsluiten &amp; Batch Verzenden
         </button>
     </div>
 `;
