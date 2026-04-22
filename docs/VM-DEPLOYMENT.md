@@ -120,3 +120,8 @@ rabbitmq:
 **IPv6 vs IPv4 issues (Windows)**:
 - Use `127.0.0.1` instead of `localhost` in connection strings
 - Connection.py automatisch resolveert dit
+
+**Module skips / filestore warnings in the Odoo log**:
+- Deze meldingen zijn expected met de huidige image/database combinatie en stoppen de VM niet
+- Ze wijzen meestal op optionele modules of oudere database-attachments, niet op een startup failure
+- Focus op echte blockers zoals `bash\r`, ongeldige Odoo flags of write-permission errors
