@@ -32,4 +32,3 @@ rabbitmqctl declare_exchange heartbeat.direct direct durable=true auto_delete=fa
 
 echo "✓ All exchanges created successfully!"
 echo "Kassa system is ready for message publishing."
-
