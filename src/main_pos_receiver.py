@@ -8,7 +8,6 @@ from messaging.message_builders import build_heartbeat_xml
 
 from config import (
     RABBIT_HOST, PAYMENT_CONFIRMED_QUEUE, INVOICE_REQUESTED_QUEUE,
-    HEARTBEAT_QUEUE,
     HEARTBEAT_INTERVAL_SECONDS,
     HEARTBEAT_EXCHANGE,
     HEARTBEAT_ROUTING_KEY,
