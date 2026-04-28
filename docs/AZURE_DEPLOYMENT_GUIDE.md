@@ -8,6 +8,7 @@
 ## Quick Start - Azure VM Deployment
 
 ### Prerequisites
+
 - Azure VM with Docker and Docker Compose installed
 - Ubuntu 20.04 LTS or 22.04 LTS recommended
 - Nginx installed and configured for reverse proxy
@@ -152,16 +153,16 @@ server {
 server {
     listen 15671 ssl http2;
     server_name kassa.integration-project-2026-groep-2.my.be;
-    
+
     ssl_certificate /etc/letsencrypt/live/kassa.integration-project-2026-groep-2.my.be/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/kassa.integration-project-2026-groep-2.my.be/privkey.pem;
-    
+
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
-    
+
     auth_basic "RabbitMQ Admin";
     auth_basic_user_file /etc/nginx/.htpasswd_rabbitmq;
-    
+
     location / {
         proxy_pass http://127.0.0.1:15672;
         proxy_set_header Host $host;
@@ -173,6 +174,7 @@ server {
 ```
 
 Enable the site:
+
 ```bash
 sudo ln -sf /etc/nginx/sites-available/kassa.conf /etc/nginx/sites-enabled/kassa.conf
 
@@ -211,6 +213,7 @@ docker compose -f docker-compose.production.yml logs odoo
 The Kassa POS module is mounted at `/mnt/extra-addons/kassa_pos` inside the container.
 
 In Odoo UI (after database initialization):
+
 1. Enable Developer Mode: Settings → Activate the Developer Mode (top-right menu)
 2. Go to Apps → Update App List
 3. Search for "Kassa" or "kassa_pos"
@@ -219,6 +222,7 @@ In Odoo UI (after database initialization):
 ### Step 6: Configure RabbitMQ
 
 Create Odoo user in RabbitMQ:
+
 ```bash
 # Create user
 docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl add_user kassa_user <PASSWORD>
@@ -235,6 +239,7 @@ docker compose -f docker-compose.production.yml exec rabbitmq rabbitmqctl list_v
 ```
 
 Access RabbitMQ Management UI:
+
 - **URL**: https://kassa.integration-project-2026-groep-2.my.be:15671
 - **Username/Password**: Use `RABBIT_USER` and `RABBIT_PASSWORD` from `.env`
 
@@ -246,25 +251,25 @@ Access RabbitMQ Management UI:
 
 Services communicate using short names within Docker network:
 
-| Service | Port | Internal Address |
-|---------|------|------------------|
-| Odoo | 8069 | `http://odoo:8069` (internal) |
-| Odoo WebSocket | 8072 | `http://odoo:8072` (internal) |
-| RabbitMQ AMQP | 5672 | `amqp://rabbitmq:5672` (internal) |
+| Service             | Port  | Internal Address                   |
+| ------------------- | ----- | ---------------------------------- |
+| Odoo                | 8069  | `http://odoo:8069` (internal)      |
+| Odoo WebSocket      | 8072  | `http://odoo:8072` (internal)      |
+| RabbitMQ AMQP       | 5672  | `amqp://rabbitmq:5672` (internal)  |
 | RabbitMQ Management | 15672 | `http://rabbitmq:15672` (internal) |
-| PostgreSQL | 5432 | `postgresql://db:5432` (internal) |
+| PostgreSQL          | 5432  | `postgresql://db:5432` (internal)  |
 
 ### External Access
 
-| Service | External URL | Protocol | Notes |
-|---------|---|---|---|
-| Odoo | `https://kassa.integration-project-2026-groep-2.my.be` | HTTPS/443 | Via Nginx reverse proxy |
+| Service       | External URL                                                 | Protocol    | Notes                                    |
+| ------------- | ------------------------------------------------------------ | ----------- | ---------------------------------------- |
+| Odoo          | `https://kassa.integration-project-2026-groep-2.my.be`       | HTTPS/443   | Via Nginx reverse proxy                  |
 | RabbitMQ Mgmt | `https://kassa.integration-project-2026-groep-2.my.be:15671` | HTTPS/15671 | Via Nginx reverse proxy, HTTP Basic Auth |
 
 ### Network Flow
 
 ```
-Client (Browser/API) 
+Client (Browser/API)
   ↓ (HTTPS)
 Internet → Azure VM Public IP
   ↓ (HTTPS port 443, 15671)
@@ -280,6 +285,7 @@ Containers (Odoo, RabbitMQ, PostgreSQL, etc.)
 ## Environment Variables Summary
 
 ### For Odoo Container
+
 ```bash
 # Database
 DB_HOST=db
@@ -300,6 +306,7 @@ ODOO_DOMAIN=kassa.integration-project-2026-groep-2.my.be
 ```
 
 ### For POS Receiver Container
+
 ```bash
 RABBIT_HOST=rabbitmq
 RABBIT_PORT=5672
@@ -309,6 +316,7 @@ RABBIT_VHOST=/kassa
 ```
 
 ### For Heartbeat Container
+
 ```bash
 RABBIT_HOST=rabbitmq
 RABBIT_PORT=5672
@@ -326,28 +334,31 @@ HEARTBEAT_QUEUE=heartbeat_queue
 ## Production Best Practices
 
 ### Security
+
 1. **Never use default credentials**
-   - RabbitMQ: Change from `guest/guest`
-   - PostgreSQL: Use unique passwords per environment
-   - Use Azure Key Vault for secrets management
+    - RabbitMQ: Change from `guest/guest`
+    - PostgreSQL: Use unique passwords per environment
+    - Use Azure Key Vault for secrets management
 
 2. **Network isolation**
-   - Expose only Odoo port (via Nginx) and RabbitMQ management UI
-   - Keep database and AMQP ports internal only
-   - Use Azure Network Security Groups to restrict traffic
+    - Expose only Odoo port (via Nginx) and RabbitMQ management UI
+    - Keep database and AMQP ports internal only
+    - Use Azure Network Security Groups to restrict traffic
 
 3. **SSL/TLS Certificates**
-   - Use Let's Encrypt with auto-renewal
-   - Or managed certificates from Azure
-   - Update Nginx configuration with certificate paths
+    - Use Let's Encrypt with auto-renewal
+    - Or managed certificates from Azure
+    - Update Nginx configuration with certificate paths
 
 ### Monitoring & Logging
+
 ```bash
 # View container logs
 docker compose -f docker-compose.production.yml logs -f odoo         # Odoo application
 docker compose -f docker-compose.production.yml logs -f rabbitmq     # RabbitMQ broker
 docker compose -f docker-compose.production.yml logs -f db           # PostgreSQL database
 docker compose -f docker-compose.production.yml logs -f pos_receiver # POS message consumer
+docker compose -f docker-compose.production.yml logs -f contact_receiver # CRM user consumer
 
 # Heartbeat runs inside the Odoo container; use Odoo logs for heartbeat output
 
@@ -357,6 +368,7 @@ docker system prune -a             # Remove unused containers/images
 ```
 
 ### Backup & Recovery
+
 ```bash
 # Backup PostgreSQL
 docker compose -f docker-compose.production.yml exec db pg_dump \
@@ -374,6 +386,7 @@ docker compose -f docker-compose.production.yml exec -T db psql -U kassa kassa_d
 ```
 
 ### Performance Tuning
+
 ```bash
 # Check container resource usage
 docker stats
@@ -390,6 +403,7 @@ docker compose -f docker-compose.production.yml exec db psql -U kassa kassa_db -
 ## Troubleshooting
 
 ### Odoo Cannot Connect to RabbitMQ
+
 ```
 Error: Connection refused at rabbitmq:5672
 
@@ -401,6 +415,7 @@ Solution:
 ```
 
 ### PostgreSQL Connection Errors
+
 ```
 Error: FATAL: role "kassa" does not exist
 
@@ -412,6 +427,7 @@ Solution:
 ```
 
 ### Nginx Proxy Errors (502 Bad Gateway)
+
 ```
 Error: upstream timed out while connecting to upstream
 
@@ -424,6 +440,7 @@ Solution:
 ```
 
 ### RabbitMQ Management UI Access Denied
+
 ```
 Error: 401 Unauthorized at https://kassa.../15671
 
@@ -439,6 +456,7 @@ Solution:
 ## Deployment Checklist
 
 ### Pre-Deployment
+
 - [ ] Clone repository to Azure VM
 - [ ] Install Docker and Docker Compose
 - [ ] Configure Azure Network Security Groups
@@ -446,6 +464,7 @@ Solution:
 - [ ] Reserve static public IP for VM
 
 ### Deployment
+
 - [ ] Copy `.env.example` to `.env`
 - [ ] Fill in Azure infrastructure details
 - [ ] Set strong passwords (min 20 chars)
@@ -458,6 +477,7 @@ Solution:
 - [ ] Test RabbitMQ Management UI
 
 ### Post-Deployment
+
 - [ ] Configure backup strategy
 - [ ] Set up monitoring and alerts
 - [ ] Document access credentials (store in Key Vault)
@@ -481,6 +501,7 @@ Solution:
 ## Support & Escalation
 
 For issues or questions:
+
 1. Check logs: `docker compose -f docker-compose.production.yml logs -f <service>`
 2. Review [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)
 3. Consult Azure infrastructure documentation

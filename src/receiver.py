@@ -213,74 +213,29 @@ async def on_company_deactivated(message: aio_pika.IncomingMessage) -> None:
         )
 
 
-# ── User CRUD handlers ──────────────────────────────────────────────────────
-
-async def on_user_message(message: aio_pika.IncomingMessage) -> None:
-    """
-    Handle User, UserCreated, UserUpdated, or UserDeleted messages.
-    Uses the global UserConsumer to process and store user data.
-    """
-    async with message.process():
-        if _user_consumer is None:
-            logger.error("UserConsumer not initialized")
-            return
-        
-        try:
-            xml_string = message.body.decode('utf-8')
-        except UnicodeDecodeError:
-            logger.error("Integration User: could not decode message as UTF-8")
-            return
-        
-        success = _user_consumer.process_user_message(xml_string)
-        if not success:
-            logger.error("Failed to process user message")
-            return
-        
-        logger.info("User message processed successfully")
-
-
-async def on_user_confirmed_integration(message: aio_pika.IncomingMessage) -> None:
-    """
-    Handle UserConfirmed messages from CRM for integration service.
-    Updates or creates user in the local store.
-    """
-    async with message.process():
-        if _user_consumer is None:
-            logger.error("UserConsumer not initialized")
-            return
-        
-        try:
-            xml_string = message.body.decode('utf-8')
-        except UnicodeDecodeError:
-            logger.error("Integration UserConfirmed: could not decode message as UTF-8")
-            return
-        
-        success = _user_consumer.process_user_message(xml_string)
-        if not success:
-            logger.error("Failed to process UserConfirmed message")
-            return
-        
-        logger.info("UserConfirmed message processed for integration store")
-
-
 # ── Queue configuratie ─────────────────────────────────────────────────────────
 
-# (queue_name, durable, handler)
+# (queue_name, durable, handler, routing_key)
+CONTACT_TOPIC_EXCHANGE = "contact.topic"
 QUEUE_HANDLERS = [
-    ("controlroom.warning.issued",      False, on_warning),
-    ("crm.person.lookup.responded",     False, on_person_lookup_response),
-    ("crm.user.confirmed",              True,  on_user_confirmed),
-    ("crm.company.confirmed",           True,  on_company_confirmed),
-    ("crm.unpaid.responded",            False, on_unpaid_response),
-    ("crm.user.updated",                True,  on_user_updated),
-    ("crm.company.updated",             True,  on_company_updated),
-    ("crm.user.deactivated",            True,  on_user_deactivated),
-    ("crm.company.deactivated",         True,  on_company_deactivated),
-    # Integration Service User CRUD queues
-    ("integration.user.created",        True,  on_user_message),
-    ("integration.user.updated",        True,  on_user_message),
-    ("integration.user.deleted",        True,  on_user_message),
-    ("crm.user.confirmed",              True,  on_user_confirmed_integration),
+    # Controlroom warnings
+    ("controlroom.warning.issued",      False, on_warning, None),
+    
+    # CRM → Kassa: Person lookups
+    ("crm.person.lookup.responded",     False, on_person_lookup_response, None),
+    
+    # CRM → Kassa: User lifecycle (R1-R3) — Salesforce CRM integration
+    ('kassa.user.confirmed',             True,  on_user_confirmed, "crm.user.confirmed"),
+    ('kassa.user.updated',               True,  on_user_updated, "crm.user.updated"),
+    ('kassa.user.deactivated',           True,  on_user_deactivated, "crm.user.deactivated"),
+    
+    # CRM → Kassa: Company lifecycle
+    ("crm.company.confirmed",           True,  on_company_confirmed, None),
+    ("crm.company.updated",             True,  on_company_updated, None),
+    ("crm.company.deactivated",         True,  on_company_deactivated, None),
+    
+    # CRM → Kassa: Other
+    ("crm.unpaid.responded",            False, on_unpaid_response, None),
 ]
 
 
@@ -306,9 +261,16 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
 
     channel = await connection.channel()
     await channel.set_qos(prefetch_count=10)
+    contact_exchange = await channel.declare_exchange(
+        CONTACT_TOPIC_EXCHANGE,
+        aio_pika.ExchangeType.TOPIC,
+        durable=True,
+    )
 
-    for queue_name, durable, handler in QUEUE_HANDLERS:
+    for queue_name, durable, handler, routing_key in QUEUE_HANDLERS:
         queue = await channel.declare_queue(queue_name, durable=durable)
+        if routing_key:
+            await queue.bind(contact_exchange, routing_key=routing_key)
         await queue.consume(handler)
         logger.info("Luisteren op queue '%s'", queue_name)
 

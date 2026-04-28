@@ -4,8 +4,6 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-from xml_validator import validate_xml
-
 """
 Helpers om XML-berichten te bouwen voor RabbitMQ.
 Bevat builders voor: Heartbeat (Contract 7), PaymentConfirmed (Contract 16),
@@ -150,6 +148,8 @@ def build_user_xml(user_data: Dict) -> str:
         ET.SubElement(root, 'updatedAt').text = str(user_data['updatedAt'])
 
     xml_string = ET.tostring(root, encoding='unicode')
+    from xml_validator import validate_xml
+
     valid, error = validate_xml(xml_string)
     if not valid:
         logger.error("Invalid User XML generated: %s", error)

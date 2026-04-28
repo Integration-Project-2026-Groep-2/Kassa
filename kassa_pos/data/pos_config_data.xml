@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data noupdate="0">
 
         <!-- Accounting Journals for Payment Methods -->
-        <record id="account_journal_cash_kassa" model="account.journal">
+        <record id="account_journal_cash_kassa" model="account.journal" forcecreate="False">
             <field name="name">Kassa Cash</field>
             <field name="code">KCASH</field>
-            <field name="type">cash</field>
         </record>
 
-        <record id="account_journal_bank_kassa" model="account.journal">
+        <record id="account_journal_bank_kassa" model="account.journal" forcecreate="False">
             <field name="name">Kassa Bank</field>
             <field name="code">KBANK</field>
-            <field name="type">bank</field>
         </record>
 
         <!-- Payment Methods -->

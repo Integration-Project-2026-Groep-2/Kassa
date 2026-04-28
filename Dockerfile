@@ -2,12 +2,14 @@ FROM odoo:17
 
 USER root
 
-# Installeer pika voor RabbitMQ communicatie
-RUN pip3 install pika || pip3 install --break-system-packages pika
+# Installeer RabbitMQ- en XML-afhankelijkheden voor de receiver scripts
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install -r /tmp/requirements.txt || pip3 install --break-system-packages -r /tmp/requirements.txt
 
 # Integreer custom code in de image zodat die zonder bind mounts kan draaien.
 COPY kassa_pos /mnt/extra-addons/kassa_pos
 COPY src /app/src
+COPY setup_rabbitmq.py /app/setup_rabbitmq.py
 COPY templates /app/templates
 COPY odoo.conf /etc/odoo/odoo.conf
 COPY docker/odoo-entrypoint.sh /usr/local/bin/odoo-entrypoint.sh

@@ -67,6 +67,7 @@ class ResPartner(models.Model):
         delete_candidates = [
             {
                 'user_id_custom': record.user_id_custom,
+                'email': record.email,
             }
             for record in self
             if record.user_id_custom
@@ -75,7 +76,7 @@ class ResPartner(models.Model):
         result = super().unlink()
 
         for candidate in delete_candidates:
-            self._publish_user_deleted(candidate['user_id_custom'])
+            self._publish_user_deactivated(candidate['user_id_custom'])
 
         return result
 
@@ -85,62 +86,91 @@ class ResPartner(models.Model):
         if operation not in ('created', 'updated'):
             return
 
-        routing_key = f'integration.user.{operation}'
-        queue_message_type = 'UserCreated' if operation == 'created' else 'UserUpdated'
-        user_data = self._build_user_data_dict()
-        payload = self._build_user_payload_xml(user_data)
+        # For UserCreated: use Odoo's record ID (self.id)
+        # For UserUpdated: use user_id_custom (CRM Master UUID)
+        user_id_for_message = self.id if operation == 'created' else self.user_id_custom
+
+        user_data = self._build_user_data_dict(use_custom_id=(operation == 'updated'))
+        operation_type = 'created' if operation == 'created' else 'updated'
 
         self._publish_with_fallback(
-            payload=payload,
-            operation=operation,
+            operation=operation_type,
             user_data=user_data,
-            routing_key=routing_key,
-            queue_message_type=queue_message_type,
             user_id_custom=self.user_id_custom,
         )
 
-    def _publish_user_deleted(self, user_id_custom):
+    def _publish_user_deactivated(self, user_id_custom):
+        """Publish UserDeactivated message when user is deleted."""
         if not user_id_custom:
             return
 
-        payload = self._build_user_deleted_payload(user_id_custom)
-        self._publish_with_fallback(
-            payload=payload,
-            operation='deleted',
-            user_data={'userId': user_id_custom},
-            routing_key='integration.user.deleted',
-            queue_message_type='UserDeleted',
+        self._publish_deactivated_with_fallback(
+            user_email=self.email or '',
             user_id_custom=user_id_custom,
         )
 
-    def _publish_with_fallback(self, payload, operation, user_data, routing_key, queue_message_type, user_id_custom):
+    def _publish_with_fallback(self, operation, user_data, user_id_custom):
         try:
-            from ..utils.rabbitmq_sender import send_user_created, send_user_updated, send_user_deleted
+            from ..utils.rabbitmq_sender import send_user_created, send_user_updated
 
             if operation == 'created':
                 sent = send_user_created(user_data)
             elif operation == 'updated':
                 sent = send_user_updated(user_data)
             else:
-                sent = send_user_deleted(user_data.get('userId', ''))
+                return
 
             if not sent:
                 raise RuntimeError('RabbitMQ sender returned False')
 
             _logger.info(
-                "User event published [routing_key=%s user_id=%s]",
-                routing_key,
+                "User event published [operation=%s user_id_custom=%s]",
+                operation,
                 user_id_custom,
             )
 
         except Exception as exc:
             _logger.warning(
-                "Failed to publish user event, queueing locally [routing_key=%s user_id=%s error=%s]",
-                routing_key,
+                "Failed to publish user event, queueing locally [operation=%s user_id_custom=%s error=%s]",
+                operation,
                 user_id_custom,
                 str(exc),
             )
+            queue_message_type = 'UserCreated' if operation == 'created' else 'UserUpdated'
+            payload = self._build_user_payload_xml(user_data) if operation == 'created' else self._build_user_payload_xml(user_data)
             self._enqueue_user_message(user_id_custom, queue_message_type, payload, str(exc))
+
+    def _publish_deactivated_with_fallback(self, user_email, user_id_custom):
+        """Publish UserDeactivated or queue for retry on failure."""
+        try:
+            from ..utils.rabbitmq_sender import send_user_deactivated
+
+            sent = send_user_deactivated(user_email, user_id_custom)
+
+            if not sent:
+                raise RuntimeError('RabbitMQ sender returned False')
+
+            _logger.info(
+                "User deactivated event published [user_id_custom=%s]",
+                user_id_custom,
+            )
+
+        except Exception as exc:
+            _logger.warning(
+                "Failed to publish user deactivated event, queueing locally [user_id_custom=%s error=%s]",
+                user_id_custom,
+                str(exc),
+            )
+            # Build UserDeactivated XML for fallback queue
+            import datetime
+            import xml.etree.ElementTree as ET
+            root = ET.Element('UserDeactivated')
+            ET.SubElement(root, 'id').text = str(user_id_custom)
+            ET.SubElement(root, 'email').text = str(user_email)
+            ET.SubElement(root, 'deactivatedAt').text = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+            payload = ET.tostring(root, encoding='unicode')
+            
+            self._enqueue_user_message(user_id_custom, 'UserDeactivated', payload, str(exc))
 
     def _enqueue_user_message(self, user_id_custom, message_type, payload, error_message=''):
         try:
@@ -160,12 +190,16 @@ class ResPartner(models.Model):
                 str(queue_exc),
             )
 
-    def _build_user_data_dict(self):
+    def _build_user_data_dict(self, use_custom_id=False):
         self.ensure_one()
 
         first_name, last_name = self._split_name(self.name or '')
+        # For UserCreated: use self.id (Odoo record ID)
+        # For UserUpdated: use self.user_id_custom (CRM Master UUID)
+        user_id = self.user_id_custom if use_custom_id else str(self.id)
+        
         return {
-            'userId': self.user_id_custom,
+            'userId': user_id,
             'firstName': first_name,
             'lastName': last_name,
             'email': self.email or '',
@@ -199,13 +233,6 @@ class ResPartner(models.Model):
         if updated_at:
             ET.SubElement(root, 'updatedAt').text = str(updated_at)
 
-        return ET.tostring(root, encoding='unicode')
-
-    @staticmethod
-    def _build_user_deleted_payload(user_id_custom):
-        root = ET.Element('UserDeleted')
-        ET.SubElement(root, 'userId').text = str(user_id_custom)
-        ET.SubElement(root, 'deletedAt').text = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         return ET.tostring(root, encoding='unicode')
 
     @staticmethod

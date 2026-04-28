@@ -79,11 +79,11 @@ class UserMessageQueue(models.Model):
                 producer.connect()
                 
                 try:
-                    # Send based on message type
+                    # Send based on message type using new user.topic exchange (Salesforce CRM integration)
                     routing_key_map = {
-                        'UserCreated': 'integration.user.created',
-                        'UserUpdated': 'integration.user.updated',
-                        'UserDeleted': 'integration.user.deleted',
+                        'UserCreated': 'kassa.user.created',
+                        'UserUpdated': 'kassa.user.updated',
+                        'UserDeactivated': 'kassa.user.deactivated',
                     }
                     routing_key = routing_key_map.get(message.message_type)
                     if not routing_key:
@@ -91,7 +91,7 @@ class UserMessageQueue(models.Model):
                             f"Unsupported user message type for RabbitMQ publish: {message.message_type}"
                         )
 
-                    producer.publish(message.payload, routing_key=routing_key, exchange='')
+                    producer.publish(message.payload, routing_key=routing_key, exchange='user.topic')
                     
                     message.write({
                         'status': 'sent',

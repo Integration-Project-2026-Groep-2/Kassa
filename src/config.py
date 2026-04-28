@@ -44,30 +44,32 @@ RABBIT_VHOST = os.getenv('RABBIT_VHOST', '/')
 
 # Heartbeat instellingen
 HEARTBEAT_INTERVAL_SECONDS = _get_int_env('HEARTBEAT_INTERVAL_SECONDS', 1)
-HEARTBEAT_EXCHANGE = os.getenv('HEARTBEAT_EXCHANGE', 'heartbeat.direct')
-HEARTBEAT_ROUTING_KEY = os.getenv('HEARTBEAT_ROUTING_KEY', 'routing.heartbeat')
+HEARTBEAT_EXCHANGE = 'heartbeat.direct'
+HEARTBEAT_ROUTING_KEY = 'routing.heartbeat'
 
-# Legacy/local heartbeat queue naming (env-overridable)
-HEARTBEAT_QUEUE = os.getenv('HEARTBEAT_QUEUE', 'heartbeat_queue')
+# User CRUD messaging (Salesforce CRM integration)
+USER_EVENTS_EXCHANGE = 'user.topic'
+USER_EVENTS_EXCHANGE_TYPE = 'topic'
+
 USER_UPDATES_QUEUE = 'user_updates'
 CONSUMPTION_ORDER_QUEUE = 'ConsumptionOrder'
 PAYMENT_COMPLETED_QUEUE = 'PaymentCompleted'
 
 # Queue names — conform contracten (Kassa publiceert op)
-CONTRACT_HEARTBEAT_QUEUE = os.getenv('CONTRACT_HEARTBEAT_QUEUE', 'kassa.heartbeat')
-STATUS_QUEUE = os.getenv('STATUS_QUEUE', 'kassa.status.checked')
-PERSON_LOOKUP_QUEUE = os.getenv('PERSON_LOOKUP_QUEUE', 'kassa.person.lookup.requested')
-PAYMENT_CONFIRMED_QUEUE = os.getenv('PAYMENT_CONFIRMED_QUEUE', 'kassa.payment.confirmed')
-UNPAID_REQUEST_QUEUE = os.getenv('UNPAID_REQUEST_QUEUE', 'kassa.unpaid.requested')
-INVOICE_REQUESTED_QUEUE = os.getenv('INVOICE_REQUESTED_QUEUE', 'kassa.invoice.requested')
+CONTRACT_HEARTBEAT_QUEUE = 'routing.heartbeat'
+STATUS_QUEUE = 'kassa.status.checked'
+PERSON_LOOKUP_QUEUE = 'kassa.person.lookup.requested'
+PAYMENT_CONFIRMED_QUEUE = 'kassa.payment.confirmed'
+UNPAID_REQUEST_QUEUE = 'kassa.unpaid.requested'
+INVOICE_REQUESTED_QUEUE = 'kassa.invoice.requested'
 
 # Queue names — conform contracten (Kassa luistert op)
-WARNING_QUEUE = os.getenv('WARNING_QUEUE', 'controlroom.warning.issued')
-PERSON_LOOKUP_RESPONSE_QUEUE = os.getenv('PERSON_LOOKUP_RESPONSE_QUEUE', 'crm.person.lookup.responded')
-USER_CONFIRMED_QUEUE = os.getenv('USER_CONFIRMED_QUEUE', 'crm.user.confirmed')
-COMPANY_CONFIRMED_QUEUE = os.getenv('COMPANY_CONFIRMED_QUEUE', 'crm.company.confirmed')
-UNPAID_RESPONSE_QUEUE = os.getenv('UNPAID_RESPONSE_QUEUE', 'crm.unpaid.responded')
-USER_UPDATED_QUEUE = os.getenv('USER_UPDATED_QUEUE', 'crm.user.updated')
-COMPANY_UPDATED_QUEUE = os.getenv('COMPANY_UPDATED_QUEUE', 'crm.company.updated')
-USER_DEACTIVATED_QUEUE = os.getenv('USER_DEACTIVATED_QUEUE', 'crm.user.deactivated')
-COMPANY_DEACTIVATED_QUEUE = os.getenv('COMPANY_DEACTIVATED_QUEUE', 'crm.company.deactivated')
+WARNING_QUEUE = 'controlroom.warning.issued'
+PERSON_LOOKUP_RESPONSE_QUEUE = 'crm.person.lookup.responded'
+USER_CONFIRMED_QUEUE = 'kassa.user.confirmed'
+COMPANY_CONFIRMED_QUEUE = 'crm.company.confirmed'
+UNPAID_RESPONSE_QUEUE = 'crm.unpaid.responded'
+USER_UPDATED_QUEUE = 'kassa.user.updated'
+COMPANY_UPDATED_QUEUE = 'crm.company.updated'
+USER_DEACTIVATED_QUEUE = 'kassa.user.deactivated'
+COMPANY_DEACTIVATED_QUEUE = 'crm.company.deactivated'
