@@ -157,49 +157,7 @@ class UserConsumer:
         Returns:
             True on success, False otherwise
         """
-        try:
-            user_data = {
-                'userId': root.findtext('id', '').strip(),
-                'firstName': root.findtext('firstName', '').strip(),
-                'lastName': root.findtext('lastName', '').strip(),
-                'email': root.findtext('email', '').strip(),
-                'badgeCode': root.findtext('badgeCode', '').strip(),
-                'role': root.findtext('role', '').strip(),
-            }
-            
-            # Optional fields
-            companyId = root.findtext('companyId', '').strip()
-            if companyId:
-                user_data['companyId'] = companyId
-            
-            if not user_data.get('badgeCode'):
-                user_data['badgeCode'] = f"DEFAULT_{user_data['userId']}"
-
-            user = User(**user_data)
-            
-            # Create or update user
-            existing_user = self.user_store.get_user_by_id(user.userId)
-            if not existing_user:
-                success, error, _ = self.user_store.create_user(user)
-            else:
-                updates = {k: v for k, v in user_data.items() if v}
-                success, error, _ = self.user_store.update_user(user.userId, updates)
-            
-            if not success:
-                logger.error("Failed to process UserConfirmed: %s", error)
-                if self.on_error:
-                    self.on_error('UserConfirmed', error)
-                return False
-            
-            logger.info("UserConfirmed processed: userId=%s", user.userId)
-            return True
-        
-        except Exception as e:
-            error = f"Error handling UserConfirmed: {str(e)}"
-            logger.error(error)
-            if self.on_error:
-                self.on_error('UserConfirmed', error)
-            return False
+        return self._handle_crm_user_snapshot(root, 'UserConfirmed')
 
     def _handle_user_updated(self, root: ET.Element) -> bool:
         """
@@ -213,56 +171,7 @@ class UserConsumer:
         Returns:
             True on success, False otherwise
         """
-        try:
-            user_id = root.findtext('id', '').strip()
-            
-            updates = {
-                'firstName': root.findtext('firstName', '').strip(),
-                'lastName': root.findtext('lastName', '').strip(),
-                'email': root.findtext('email', '').strip(),
-                'role': root.findtext('role', '').strip(),
-            }
-            
-            # Remove empty strings
-            updates = {k: v for k, v in updates.items() if v}
-            
-            # Optional fields
-            badgeCode = root.findtext('badgeCode', '').strip()
-            if badgeCode:
-                updates['badgeCode'] = badgeCode
-            
-            companyId = root.findtext('companyId', '').strip()
-            if companyId:
-                updates['companyId'] = companyId
-
-            existing_user = self.user_store.get_user_by_id(user_id)
-            if not existing_user:
-                # Create user if doesn't exist
-                logger.warning("UserUpdated for non-existent user, creating: userId=%s", user_id)
-                # Create with minimum required fields
-                if not updates.get('badgeCode'):
-                    updates['badgeCode'] = f"DEFAULT_{user_id}"
-                user = User(userId=user_id, **updates)
-                success, error, _ = self.user_store.create_user(user)
-            else:
-                # Update existing user
-                success, error, _ = self.user_store.update_user(user_id, updates)
-            
-            if not success:
-                logger.error("Failed to process UserUpdated: %s", error)
-                if self.on_error:
-                    self.on_error('UserUpdated', error)
-                return False
-            
-            logger.info("UserUpdated processed: userId=%s", user_id)
-            return True
-        
-        except Exception as e:
-            error = f"Error handling UserUpdated: {str(e)}"
-            logger.error(error)
-            if self.on_error:
-                self.on_error('UserUpdated', error)
-            return False
+        return self._handle_crm_user_snapshot(root, 'UserUpdated')
 
     def _handle_user_deactivated(self, root: ET.Element) -> bool:
         """
@@ -278,21 +187,105 @@ class UserConsumer:
         """
         try:
             user_id = root.findtext('id', '').strip()
-            
-            # Delete user from store
-            success, error = self.user_store.delete_user(user_id)
-            if not success:
-                logger.error("Failed to process UserDeactivated: %s", error)
+            existing_user = self.user_store.get_user_by_id(user_id)
+
+            if not existing_user:
+                error = f"Cannot deactivate unknown user: {user_id}"
+                logger.error(error)
                 if self.on_error:
                     self.on_error('UserDeactivated', error)
                 return False
-            
-            logger.info("UserDeactivated processed: userId=%s", user_id)
+
+            existing_user.isActive = False
+            deactivated_at = root.findtext('deactivatedAt', '').strip()
+            if deactivated_at:
+                existing_user.updatedAt = deactivated_at
+                setattr(existing_user, 'deactivatedAt', deactivated_at)
+
+            logger.info("UserDeactivated processed: userId=%s (soft delete)", user_id)
             return True
-        
+
         except Exception as e:
             error = f"Error handling UserDeactivated: {str(e)}"
             logger.error(error)
             if self.on_error:
                 self.on_error('UserDeactivated', error)
             return False
+
+    def _handle_crm_user_snapshot(self, root: ET.Element, message_type: str) -> bool:
+        """Replace the local user snapshot from a CRM UserConfirmed/UserUpdated message."""
+        try:
+            user_id = root.findtext('id', '').strip()
+            if not user_id:
+                raise ValueError('id is required')
+
+            badge_code = root.findtext('badgeCode', '').strip()
+            if not badge_code:
+                badge_code = f"DEFAULT_{user_id}"
+                logger.warning("%s missing badgeCode, using fallback for userId=%s", message_type, user_id)
+
+            user_data = {
+                'userId': user_id,
+                'firstName': root.findtext('firstName', '').strip(),
+                'lastName': root.findtext('lastName', '').strip(),
+                'email': root.findtext('email', '').strip(),
+                'badgeCode': badge_code,
+                'role': root.findtext('role', '').strip(),
+            }
+
+            company_id = root.findtext('companyId', '').strip()
+            if company_id:
+                user_data['companyId'] = company_id
+
+            if message_type == 'UserConfirmed':
+                confirmed_at = root.findtext('confirmedAt', '').strip()
+                if confirmed_at:
+                    user_data['createdAt'] = confirmed_at
+                    user_data['updatedAt'] = confirmed_at
+            else:
+                updated_at = root.findtext('updatedAt', '').strip()
+                if updated_at:
+                    user_data['updatedAt'] = updated_at
+
+            user = User(**user_data)
+            setattr(user, 'isActive', root.findtext('isActive', 'true').strip().lower() == 'true')
+
+            gdpr_consent = root.findtext('gdprConsent', '').strip()
+            if gdpr_consent:
+                setattr(user, 'gdprConsent', gdpr_consent.lower() == 'true')
+
+            for field_name in ('phone', 'street', 'houseNumber', 'postalCode', 'city', 'country'):
+                value = root.findtext(field_name, '').strip()
+                if value:
+                    setattr(user, field_name, value)
+
+            success, error = self._replace_user_snapshot(user)
+            if not success:
+                logger.error("Failed to replace CRM user snapshot: %s", error)
+                if self.on_error:
+                    self.on_error(message_type, error)
+                return False
+
+            logger.info("%s processed: userId=%s (full replace)", message_type, user.userId)
+            return True
+
+        except Exception as e:
+            error = f"Error handling {message_type}: {str(e)}"
+            logger.error(error)
+            if self.on_error:
+                self.on_error(message_type, error)
+            return False
+
+    def _replace_user_snapshot(self, user: User) -> tuple[bool, Optional[str]]:
+        """Replace the stored user object without merging partial fields."""
+        existing_owner = self.user_store._badge_index.get(user.badgeCode)
+        if existing_owner and existing_owner != user.userId:
+            return False, f"badgeCode already in use: {user.badgeCode}"
+
+        existing_user = self.user_store._users.get(user.userId)
+        if existing_user and existing_user.badgeCode in self.user_store._badge_index:
+            del self.user_store._badge_index[existing_user.badgeCode]
+
+        self.user_store._users[user.userId] = user
+        self.user_store._badge_index[user.badgeCode] = user.userId
+        return True, None

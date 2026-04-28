@@ -86,6 +86,20 @@ async def on_user_confirmed(message: aio_pika.IncomingMessage) -> None:
         root = _parse_and_validate(message.body, "Contract 13 UserConfirmed")
         if root is None:
             return
+        if _user_consumer is None:
+            logger.error("UserConsumer not initialized")
+            return
+
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("Contract 13 UserConfirmed: kon bericht niet decoderen als UTF-8")
+            return
+
+        if not _user_consumer.process_user_message(xml_string):
+            logger.error("Failed to process UserConfirmed message")
+            return
+
         user_id = root.findtext("id", "")
         email = root.findtext("email", "")
         role = root.findtext("role", "")
@@ -125,6 +139,20 @@ async def on_user_updated(message: aio_pika.IncomingMessage) -> None:
         root = _parse_and_validate(message.body, "Contract 18 UserUpdated")
         if root is None:
             return
+        if _user_consumer is None:
+            logger.error("UserConsumer not initialized")
+            return
+
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("Contract 18 UserUpdated: kon bericht niet decoderen als UTF-8")
+            return
+
+        if not _user_consumer.process_user_message(xml_string):
+            logger.error("Failed to process UserUpdated message")
+            return
+
         user_id = root.findtext("id", "")
         email = root.findtext("email", "")
         logger.info("UserUpdated ontvangen [id=%s email=%s] — lokale kopie vervangen", user_id, email)
@@ -149,6 +177,20 @@ async def on_user_deactivated(message: aio_pika.IncomingMessage) -> None:
         root = _parse_and_validate(message.body, "Contract 22 UserDeactivated")
         if root is None:
             return
+        if _user_consumer is None:
+            logger.error("UserConsumer not initialized")
+            return
+
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("Contract 22 UserDeactivated: kon bericht niet decoderen als UTF-8")
+            return
+
+        if not _user_consumer.process_user_message(xml_string):
+            logger.error("Failed to process UserDeactivated message")
+            return
+
         user_id = root.findtext("id", "")
         email = root.findtext("email", "")
         logger.info(
