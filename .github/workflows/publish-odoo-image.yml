@@ -38,6 +38,8 @@ jobs:
           push: true
           tags: |
             ghcr.io/integration-project-2026-groep-2/odoo-kassa:17
+            ghcr.io/integration-project-2026-groep-2/kassa:latest-dev
+            ghcr.io/integration-project-2026-groep-2/kassa:sha-${{ github.sha }}
 
   deploy-to-vm:
     name: Deploy to VM
