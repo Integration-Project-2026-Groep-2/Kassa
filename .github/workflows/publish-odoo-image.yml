@@ -51,16 +51,4 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            set -e
-            if [ -n "${{ secrets.DEPLOY_PATH }}" ]; then
-              cd "${{ secrets.DEPLOY_PATH }}"
-            elif [ -d "$HOME/Kassa" ]; then
-              cd "$HOME/Kassa"
-            elif [ -f "docker-compose.production.yml" ]; then
-              :
-            else
-              echo "Deployment path not found"; exit 1
-            fi
-            docker compose -f docker-compose.production.yml pull odoo
-            docker compose -f docker-compose.production.yml up -d odoo
+          script: odoo
