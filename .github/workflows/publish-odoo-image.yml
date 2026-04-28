@@ -38,3 +38,31 @@ jobs:
           push: true
           tags: |
             ghcr.io/integration-project-2026-groep-2/odoo-kassa:17
+
+  deploy-to-vm:
+    name: Deploy to VM
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: 22
+          strict: false
+          script: |
+            # try common deploy locations; adjust as needed
+            if [ -d "$HOME/Kassa" ]; then
+              cd "$HOME/Kassa"
+            elif [ -d "/home/${{ secrets.DEPLOY_USER }}/Kassa" ]; then
+              cd "/home/${{ secrets.DEPLOY_USER }}/Kassa"
+            elif [ -f "docker-compose.production.yml" ]; then
+              :
+            else
+              echo "Deployment path not found; please set DEPLOY_PATH or update the workflow."; exit 1
+            fi
+            docker compose -f docker-compose.production.yml pull odoo
+            docker compose -f docker-compose.production.yml up -d odoo
