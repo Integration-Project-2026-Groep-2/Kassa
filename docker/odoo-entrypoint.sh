@@ -13,6 +13,8 @@ ODOO_SESSION_DIR="${ODOO_SESSION_DIR:-${ODOO_DATA_DIR}/sessions}"
 ODOO_LOG_LEVEL_RAW="${LOG_LEVEL:-info}"
 ODOO_LOG_LEVEL="$(printf '%s' "$ODOO_LOG_LEVEL_RAW" | tr '[:upper:]' '[:lower:]')"
 ODOO_DB_FILTER="${ODOO_DB_FILTER:-^${ODOO_DB_NAME}$}"
+ODOO_SYNC_MODULES="${ODOO_SYNC_MODULES:-kassa_pos}"
+ODOO_SKIP_MODULE_SYNC="${ODOO_SKIP_MODULE_SYNC:-false}"
 
 case "$ODOO_LOG_LEVEL" in
   info|debug_rpc|warn|test|critical|runbot|debug_sql|error|debug|debug_rpc_answer|notset)
@@ -82,6 +84,32 @@ fi
 if [ -n "${ODOO_EXTRA_ARGS:-}" ]; then
   # shellcheck disable=SC2086
   set -- "$@" ${ODOO_EXTRA_ARGS}
+fi
+
+if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_SYNC_MODULES" ] && [ -n "$ODOO_DB_NAME" ]; then
+  echo "[entrypoint] Modules synchroniseren: ${ODOO_SYNC_MODULES}"
+  SYNC_CMD=(
+    odoo
+    --config=/etc/odoo/odoo.conf
+    --db_host="${ODOO_DB_HOST}"
+    --db_port="${ODOO_DB_PORT}"
+    --db_user="${ODOO_DB_USER}"
+    --db_password="${ODOO_DB_PASSWORD}"
+    --db-filter="${ODOO_DB_FILTER}"
+    --http-port="${ODOO_HTTP_PORT}"
+    --proxy-mode
+    --log-level="${ODOO_LOG_LEVEL}"
+    -d "${ODOO_DB_NAME}"
+    -i "${ODOO_SYNC_MODULES}"
+    -u "${ODOO_SYNC_MODULES}"
+    --stop-after-init
+  )
+
+  if [ "$(id -u)" = "0" ]; then
+    runuser -u odoo -- "${SYNC_CMD[@]}"
+  else
+    "${SYNC_CMD[@]}"
+  fi
 fi
 
 echo "[entrypoint] Odoo starten met custom config en flags"
