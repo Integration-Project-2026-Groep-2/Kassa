@@ -196,28 +196,52 @@ def parse_user_xml(xml_string: str) -> Tuple[bool, Optional[str], Optional[Dict]
 
 def build_user_created_message(user_data: Dict) -> str:
     """
-    Build a UserCreated event message for RabbitMQ.
-    
-    Args:
-        user_data: Dict with user information
-    
-    Returns:
-        XML string for UserCreated message
+    Build a UserCreated event message for RabbitMQ (integration.user.created queue).
+    Conforms to the <UserCreated> element in kassa-schema-v1.xsd.
+
+    Verplichte velden: userId, firstName, lastName, email, badgeCode, role, createdAt
+    Optioneel: companyId
     """
-    return build_user_xml(user_data)
+    root = ET.Element('UserCreated')
+
+    ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
+    ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
+    ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
+    ET.SubElement(root, 'email').text = str(user_data.get('email', ''))
+
+    if user_data.get('companyId'):
+        ET.SubElement(root, 'companyId').text = str(user_data['companyId'])
+
+    ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
+    ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+    ET.SubElement(root, 'createdAt').text = str(user_data.get('createdAt') or _now_iso())
+
+    return ET.tostring(root, encoding='unicode')
 
 
 def build_user_updated_message(user_data: Dict) -> str:
     """
-    Build a UserUpdated event message for RabbitMQ.
-    
-    Args:
-        user_data: Dict with updated user information
-    
-    Returns:
-        XML string for UserUpdated message
+    Build a UserUpdatedIntegration event message for RabbitMQ (integration.user.updated queue).
+    Conforms to the <UserUpdatedIntegration> element in kassa-schema-v1.xsd.
+
+    Verplichte velden: userId, firstName, lastName, email, badgeCode, role, updatedAt
+    Optioneel: companyId
     """
-    return build_user_xml(user_data)
+    root = ET.Element('UserUpdatedIntegration')
+
+    ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
+    ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
+    ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
+    ET.SubElement(root, 'email').text = str(user_data.get('email', ''))
+
+    if user_data.get('companyId'):
+        ET.SubElement(root, 'companyId').text = str(user_data['companyId'])
+
+    ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
+    ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+    ET.SubElement(root, 'updatedAt').text = str(user_data.get('updatedAt') or _now_iso())
+
+    return ET.tostring(root, encoding='unicode')
 
 
 def build_user_deleted_message(user_id: str) -> str:
