@@ -132,6 +132,13 @@ services:
             # Public domain accessible via Nginx reverse proxy
             ODOO_DOMAIN: ${ODOO_DOMAIN:-kassa.integration-project-2026-groep-2.my.be}
 
+            # ========== RECEIVER CONFIGURATION ==========
+            ODOO_URL: ${ODOO_URL:-http://localhost:8069}
+            ODOO_DB: ${POSTGRES_DB:-kassa_db}
+            ODOO_USER: ${ODOO_USER}
+            ODOO_PASSWORD: ${ODOO_PASSWORD}
+            ENABLE_RECEIVER_IN_ODOO_IMAGE: ${ENABLE_RECEIVER_IN_ODOO_IMAGE:-true}
+
             # ========== LOGGING & DEBUGGING ==========
             LOG_LEVEL: ${LOG_LEVEL:-info} # Odoo log level (debug|info|warning|error)
 
@@ -190,47 +197,7 @@ services:
                 delay: 5s
                 max_attempts: 5
 
-    # CRM Contact User Receiver Service
-    contact_receiver:
-        build:
-            context: .
-            dockerfile: Dockerfile
-        container_name: kassa-contact-receiver
-        restart: unless-stopped
-        entrypoint: ["python3"]
-        depends_on:
-            rabbitmq:
-                condition: service_healthy
-        working_dir: /app/src
 
-        # Service definition for CRM user consumer script
-        command: main.py
-
-        environment:
-            # ========== RABBITMQ CONFIGURATION ==========
-            # Connect to RabbitMQ for consuming CRM contact messages
-            RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
-            RABBIT_PORT: ${RABBIT_PORT:-5672}
-            RABBIT_USER: ${RABBIT_USER}
-            RABBIT_PASSWORD: ${RABBIT_PASSWORD}
-            RABBIT_VHOST: ${RABBIT_VHOST:-/}
-            ODOO_URL: ${ODOO_URL:-http://odoo:8069}
-            ODOO_DB: ${POSTGRES_DB:-kassa_db}
-            ODOO_USER: ${ODOO_USER}
-            ODOO_PASSWORD: ${ODOO_PASSWORD}
-            ENABLE_HEARTBEAT_IN_ODOO_IMAGE: "false"
-
-            # ========== LOGGING ==========
-            LOG_LEVEL: ${LOG_LEVEL:-info}
-
-        networks:
-            - kassa-network
-
-        deploy:
-            restart_policy:
-                condition: on-failure
-                delay: 5s
-                max_attempts: 5
 
 # ============================================================
 # VOLUMES - Persistent Data Storage

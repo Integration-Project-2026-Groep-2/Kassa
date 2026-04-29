@@ -260,9 +260,15 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
     
     _odoo_connection = OdooConnection(odoo_url, odoo_db, odoo_user, odoo_password)
     
-    if not _odoo_connection.connect():
-        logger.error("Failed to connect to Odoo, receiver will not start")
-        raise RuntimeError("Cannot connect to Odoo instance")
+    retry_count = 0
+    max_retries = 30
+    while not _odoo_connection.connect():
+        retry_count += 1
+        if retry_count >= max_retries:
+            logger.error("Failed to connect to Odoo after %d retries, receiver will not start", max_retries)
+            raise RuntimeError("Cannot connect to Odoo instance")
+        logger.warning("Odoo not ready yet, retrying in 5s... (%d/%d)", retry_count, max_retries)
+        await asyncio.sleep(5)
     
     logger.info("Connected to Odoo [url=%s db=%s]", odoo_url, odoo_db)
     
