@@ -381,8 +381,12 @@ class OdooUserRepository:
             'customer_rank': 1,
         }
         
-        # Set company_id to False to ensure partner is shared and visible across all companies in a multi-company setup
-        values['company_id'] = False
+        # Use the connection's default company when available so records stay visible in the main company context.
+        default_company_id = None
+        if hasattr(self.odoo, 'get_default_company_id'):
+            default_company_id = self.odoo.get_default_company_id()
+
+        values['company_id'] = default_company_id or False
         
         # Optional fields
         if user.companyId:
