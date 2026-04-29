@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- UI Overrides for POS User Registration -->
+        <template id="kassa_pos_user_registration_modal" name="User Registration Modal">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Nieuwe Gebruiker Registreren</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&amp;times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form t-on-submit.prevent="onSubmit">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="firstName">Voornaam *</label>
+                                        <input type="text" class="form-control" id="firstName"
+                                               t-model="formData.firstName" required="required"
+                                               placeholder="Voornaam"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="lastName">Achternaam *</label>
+                                        <input type="text" class="form-control" id="lastName"
+                                               t-model="formData.lastName" required="required"
+                                               placeholder="Achternaam"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">E-mail *</label>
+                                <input type="email" class="form-control" id="email"
+                                       t-model="formData.email" required="required"
+                                       placeholder="voorbeeld@email.com"/>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="phone">Telefoon</label>
+                                        <input type="tel" class="form-control" id="phone"
+                                               t-model="formData.phone"
+                                               placeholder="+32 123 456 789"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="role">Rol *</label>
+                                        <select class="form-control" id="role" t-model="formData.role" required="required">
+                                            <option value="">Selecteer rol</option>
+                                            <option value="VISITOR">Bezoeker</option>
+                                            <option value="SPEAKER">Spreker</option>
+                                            <option value="CASHIER">Kassier</option>
+                                            <option value="ADMIN">Administrator</option>
+                                            <option value="EVENTMANAGER">Evenement Manager</option>
+                                            <option value="SPONSOR">Sponsor</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="companyId">Bedrijfs-ID</label>
+                                        <input type="text" class="form-control" id="companyId"
+                                               t-model="formData.companyId"
+                                               placeholder="UUID van bedrijf"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="badgeCode">Badge Code</label>
+                                        <input type="text" class="form-control" id="badgeCode"
+                                               t-model="formData.badgeCode"
+                                               placeholder="QR/barcode code"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="gdprConsent"
+                                           t-model="formData.gdprConsent" required="required"/>
+                                    <label class="form-check-label" for="gdprConsent">
+                                        Ik ga akkoord met de verwerking van mijn persoonsgegevens volgens de GDPR richtlijnen *
+                                    </label>
+                                </div>
+                            </div>
+                            <div t-if="errorMessage" class="alert alert-danger" role="alert">
+                                <t t-esc="errorMessage"/>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuleren</button>
+                        <button type="button" class="btn btn-primary" t-on-click="onSubmit"
+                                t-att-disabled="isLoading">
+                            <span t-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span t-if="isLoading">Registreren...</span>
+                            <span t-if="!isLoading">Registreren</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Product Screen Button Template -->
+        <template id="kassa_pos_add_user_button" name="Add User Button">
+            <div class="control-buttons">
+                <button class="btn btn-lg btn-info add-user-button" t-on-click="openUserRegistration"
+                        title="Nieuwe gebruiker registreren">
+                    <i class="fa fa-user-plus"></i>
+                    Gebruiker Toevoegen
+                </button>
+            </div>
+        </template>
+    </data>
+</odoo>
+<parameter name="filePath">c:\Users\adamo\Desktop\Erasmus\Integration Project\Kassa\kassa_pos\views\pos_ui_overrides.xml

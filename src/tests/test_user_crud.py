@@ -12,8 +12,8 @@ Tests cover:
 import unittest
 import uuid
 import xml.etree.ElementTree as ET
-from models.user import User, UserStore, UserRole
-from messaging.message_builders import build_user_xml, parse_user_xml
+from src.models.user import User, UserStore, UserRole
+from src.messaging.message_builders import build_user_xml, parse_user_xml
 
 
 class TestUserModel(unittest.TestCase):
@@ -125,7 +125,7 @@ class TestUserModel(unittest.TestCase):
         
         valid, error = user.validate()
         self.assertFalse(valid)
-        self.assertIn("userId", error.lower())
+        self.assertIn("userid", error.lower())
 
     def test_user_to_xml_dict(self):
         """Test converting user to XML dictionary."""

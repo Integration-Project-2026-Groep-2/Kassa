@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <!-- Assets are loaded via __manifest__.py (point_of_sale._assets_pos). -->
+        <!-- Include the UI override templates -->
+        <xpath expr="//div[@class='o_pos']" position="inside">
+            <!-- User Registration Modal will be dynamically inserted by JavaScript -->
+        </xpath>
     </data>
 </odoo>
