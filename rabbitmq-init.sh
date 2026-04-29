@@ -27,6 +27,9 @@ rabbitmqctl declare_exchange user.direct direct durable=true auto_delete=false |
 rabbitmqctl declare_exchange user.dlx direct durable=true auto_delete=false || echo "Exchange user.dlx already exists"
 rabbitmqctl declare_exchange user.retry direct durable=true auto_delete=false || echo "Exchange user.retry already exists"
 
+# Create user.topic exchange (shared with CRM/Facturatie/Mailing/Planning — C36/C37/C38)
+rabbitmqctl declare_exchange user.topic topic durable=true auto_delete=false || echo "Exchange user.topic already exists"
+
 # Create heartbeat exchange
 rabbitmqctl declare_exchange heartbeat.direct direct durable=true auto_delete=false || echo "Exchange heartbeat.direct already exists"
 
