@@ -387,14 +387,8 @@ class OdooUserRepository:
             'is_company': False,
             'company_type': 'person',
             'customer_rank': 1,
+            'company_id': False,  # False means visible across all Odoo companies
         }
-        
-        # Use the connection's default company when available so records stay visible in the main company context.
-        default_company_id = None
-        if hasattr(self.odoo, 'get_default_company_id'):
-            default_company_id = self.odoo.get_default_company_id()
-
-        values['company_id'] = default_company_id or False
         
         # Optional fields
         if user.companyId:
