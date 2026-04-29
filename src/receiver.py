@@ -220,24 +220,11 @@ async def on_company_deactivated(message: aio_pika.IncomingMessage) -> None:
 # (queue_name, durable, handler, routing_key)
 CONTACT_TOPIC_EXCHANGE = "contact.topic"
 QUEUE_HANDLERS = [
-    # Controlroom warnings
-    ("controlroom.warning.issued",      False, on_warning, None),
-    
-    # CRM → Kassa: Person lookups
-    ("crm.person.lookup.responded",     False, on_person_lookup_response, None),
-    
-    # CRM → Kassa: User lifecycle (R1-R3) — Salesforce CRM integration
-    ('kassa.user.confirmed',             True,  on_user_confirmed, "crm.user.confirmed"),
-    ('kassa.user.updated',               True,  on_user_updated, "crm.user.updated"),
-    ('kassa.user.deactivated',           True,  on_user_deactivated, "crm.user.deactivated"),
-    
-    # CRM → Kassa: Company lifecycle
-    ("kassa.company.confirmed",         True,  on_company_confirmed, None),
-    ("kassa.company.updated",           True,  on_company_updated, None),
-    ("kassa.company.deactivated",       True,  on_company_deactivated, None),
-    
-    # CRM → Kassa: Other
-    ("crm.unpaid.responded",            False, on_unpaid_response, None),
+    ("kassa.person.lookup.responded",   False, on_person_lookup_response, "crm.person.lookup.responded"),
+    ("kassa.user.confirmed",            True,  on_user_confirmed,         "crm.user.confirmed"),
+    ("kassa.unpaid.responded",          False, on_unpaid_response,        "crm.unpaid.responded"),
+    ("kassa.user.updated",              True,  on_user_updated,           "crm.user.updated"),
+    ("kassa.user.deactivated",          True,  on_user_deactivated,       "crm.user.deactivated"),
 ]
 
 
@@ -293,6 +280,8 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
         queue = await channel.declare_queue(queue_name, durable=durable)
         if routing_key:
             await queue.bind(contact_exchange, routing_key=routing_key)
+        else:
+            await queue.bind(contact_exchange, routing_key=queue_name)
         await queue.consume(handler)
         logger.info("Luisteren op queue '%s'", queue_name)
 

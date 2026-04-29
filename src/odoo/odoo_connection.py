@@ -50,6 +50,13 @@ class OdooConnection:
         Returns:
             True if connection successful, False otherwise
         """
+        if not self.db or not self.user or not self.password:
+            logger.error(
+                "Missing Odoo credentials: db=%s, user=%s, password_set=%s. Check your .env file.", 
+                self.db, self.user, bool(self.password)
+            )
+            return False
+            
         try:
             self._common = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/common')
             

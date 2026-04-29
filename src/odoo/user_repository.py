@@ -74,10 +74,14 @@ class OdooUserRepository:
         if not valid:
             raise ValueError(f"Invalid user data: {error_msg}")
         
-        # Check if user already exists by user_id_custom
+        # Check if user already exists by user_id_custom or email
+        domain = [['user_id_custom', '=', user.userId]]
+        if user.email:
+            domain = ['|', ['user_id_custom', '=', user.userId], ['email', '=', user.email]]
+            
         existing_ids = self.odoo.search(
             self.MODEL_NAME,
-            [['user_id_custom', '=', user.userId]]
+            domain
         )
         
         if existing_ids:
@@ -154,10 +158,14 @@ class OdooUserRepository:
         if not valid:
             raise ValueError(f"Invalid user data: {error_msg}")
         
-        # Find user by user_id_custom
+        # Find user by user_id_custom or email
+        domain = [['user_id_custom', '=', user.userId]]
+        if user.email:
+            domain = ['|', ['user_id_custom', '=', user.userId], ['email', '=', user.email]]
+            
         partner_ids = self.odoo.search(
             self.MODEL_NAME,
-            [['user_id_custom', '=', user.userId]]
+            domain
         )
         
         if not partner_ids:

@@ -104,8 +104,9 @@ class ResPartner(models.Model):
             user_id_custom=self.user_id_custom,
         )
 
-    def _publish_user_deactivated(self, user_id_custom):
-        """Publish UserDeactivated message when user is deleted."""
+
+
+    def _publish_user_deleted(self, user_id_custom, email=''):
         if not user_id_custom:
             return
 
@@ -113,6 +114,8 @@ class ResPartner(models.Model):
             user_email=self.email or '',
             user_id_custom=user_id_custom,
         )
+
+
 
     def _publish_with_fallback(self, operation, user_data, user_id_custom):
         try:
