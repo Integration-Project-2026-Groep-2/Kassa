@@ -20,6 +20,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 SCHEMA_PATH = Path(__file__).parent / 'schema' / 'kassa-schema-v1.xsd'
+KASSA_USER_SCHEMA_PATH = Path(__file__).parent / 'schema' / 'contracts' / 'kassa-user.xsd'
 
 try:
     from lxml import etree
@@ -36,6 +37,24 @@ except FileNotFoundError:
         "Zorg dat src/schema/kassa-schema-v1.xsd aanwezig is in de repo."
     )
 
+# Standalone schema voor Kassa → CRM contracts C36/C37/C38
+try:
+    from lxml import etree as _etree_kassa
+    _kassa_schema_doc = _etree_kassa.parse(str(KASSA_USER_SCHEMA_PATH))
+    _kassa_schema = _etree_kassa.XMLSchema(_kassa_schema_doc)
+    logger.info("Kassa user schema geladen: %s", KASSA_USER_SCHEMA_PATH)
+except ImportError:
+    _kassa_schema = None
+except FileNotFoundError:
+    _kassa_schema = None
+    logger.warning(
+        "Kassa user schema niet gevonden: %s — validate_kassa() uitgeschakeld",
+        KASSA_USER_SCHEMA_PATH,
+    )
+except Exception as exc:
+    _kassa_schema = None
+    logger.warning("Kassa user schema kon niet geladen worden: %s", exc)
+
 
 def validate_xml(xml_string: str) -> tuple[bool, str | None]:
     """
@@ -51,6 +70,32 @@ def validate_xml(xml_string: str) -> tuple[bool, str | None]:
     try:
         doc = etree.fromstring(xml_string.encode('utf-8'))
         _schema.assertValid(doc)
+        return True, None
+    except etree.DocumentInvalid as e:
+        return False, str(e)
+    except etree.XMLSyntaxError as e:
+        return False, f"XML syntax fout: {e}"
+
+
+def validate_kassa(xml_string: str) -> tuple[bool, str | None]:
+    """
+    Valideer een XML-string tegen het standalone Kassa user schema (C36/C37/C38).
+
+    Gebruikt voor uitgaande berichten naar CRM:
+      - <KassaUserCreated>  (Contract 36)
+      - <KassaUserUpdated>  (Contract 37)
+      - <UserDeactivated>   (Contract 38)
+
+    Returns:
+        (True, None)           als het bericht geldig is
+        (False, error_message) als het bericht ongeldig is
+    """
+    if _kassa_schema is None:
+        return True, None
+
+    try:
+        doc = etree.fromstring(xml_string.encode('utf-8'))
+        _kassa_schema.assertValid(doc)
         return True, None
     except etree.DocumentInvalid as e:
         return False, str(e)

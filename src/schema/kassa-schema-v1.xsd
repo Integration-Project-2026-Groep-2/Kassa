@@ -450,7 +450,7 @@
 
   <!-- ============================================================
        UserCreated Event — Emitted when a new user is created
-       Queue: integration.user.created | durable: true
+      Queue: kassa.user.created | durable: true
   ============================================================ -->
   <xs:element name="KassaUserCreated">
     <xs:complexType>
@@ -468,8 +468,8 @@
   </xs:element>
 
   <!-- ============================================================
-       KassaUserUpdated Event — Emitted when a Kassa-side user is updated
-       Queue: integration.user.updated | durable: true
+       UserUpdated Event — Emitted when a user is updated
+      Queue: kassa.user.updated | durable: true
   ============================================================ -->
   <xs:element name="KassaUserUpdated">
     <xs:complexType>
@@ -482,6 +482,19 @@
         <xs:element name="badgeCode" type="xs:string"/>
         <xs:element name="role" type="UserRoleType"/>
         <xs:element name="updatedAt" type="ISO8601DateTimeType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================================
+       UserDeleted Event — Emitted when a user is deleted/deactivated
+      Queue: kassa.user.deleted | durable: true
+  ============================================================ -->
+  <xs:element name="UserDeleted">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="userId" type="UUIDType"/>
+        <xs:element name="deletedAt" type="ISO8601DateTimeType"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

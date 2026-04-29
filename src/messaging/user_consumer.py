@@ -67,9 +67,13 @@ class UserConsumer:
         try:
             root = ET.fromstring(xml_payload)
             message_type = root.tag
-            
+
             if message_type == 'User':
                 return self._handle_user_message(root)
+            elif message_type == 'UserCreated':
+                return self._handle_user_created(root)
+            elif message_type == 'UserUpdatedIntegration':
+                return self._handle_user_updated_integration(root)
             elif message_type == 'UserConfirmed':
                 return self._handle_user_confirmed(root)
             elif message_type == 'UserUpdated':
@@ -130,6 +134,111 @@ class UserConsumer:
             logger.error("Failed to persist user to Odoo: %s", str(e))
             if self.on_error:
                 self.on_error('User', str(e))
+            return False
+
+    def _handle_user_created(self, root: ET.Element) -> bool:
+        """
+        Handle a UserCreated message from the integration service.
+        Uses <userId> field (not <id>) — integration service format.
+        """
+        try:
+            user_data = {
+                'userId': root.findtext('userId', '').strip(),
+                'firstName': root.findtext('firstName', '').strip(),
+                'lastName': root.findtext('lastName', '').strip(),
+                'email': root.findtext('email', '').strip(),
+                'badgeCode': root.findtext('badgeCode', '').strip(),
+                'role': root.findtext('role', '').strip(),
+            }
+
+            companyId = root.findtext('companyId', '').strip()
+            if companyId:
+                user_data['companyId'] = companyId
+
+            createdAt = root.findtext('createdAt', '').strip()
+            if createdAt:
+                user_data['createdAt'] = createdAt
+
+            if not user_data.get('badgeCode'):
+                user_data['badgeCode'] = f"DEFAULT_{user_data['userId']}"
+
+            user = User(**user_data)
+
+            existing = self.user_store.get_user_by_id(user.userId)
+            if not existing:
+                success, error, _ = self.user_store.create_user(user)
+            else:
+                updates = {k: v for k, v in user_data.items() if v}
+                success, error, _ = self.user_store.update_user(user.userId, updates)
+
+            if not success:
+                logger.error("Failed to process UserCreated: %s", error)
+                if self.on_error:
+                    self.on_error('UserCreated', error)
+                return False
+
+            logger.info("UserCreated processed: userId=%s", user.userId)
+            return True
+
+        except Exception as e:
+            error = f"Error handling UserCreated: {str(e)}"
+            logger.error(error)
+            if self.on_error:
+                self.on_error('UserCreated', error)
+            return False
+
+    def _handle_user_updated_integration(self, root: ET.Element) -> bool:
+        """
+        Handle a UserUpdatedIntegration message from the integration service.
+        Uses <userId> field (not <id>) — integration service format.
+        """
+        try:
+            user_id = root.findtext('userId', '').strip()
+
+            updates = {
+                'firstName': root.findtext('firstName', '').strip(),
+                'lastName': root.findtext('lastName', '').strip(),
+                'email': root.findtext('email', '').strip(),
+                'role': root.findtext('role', '').strip(),
+            }
+            updates = {k: v for k, v in updates.items() if v}
+
+            badgeCode = root.findtext('badgeCode', '').strip()
+            if badgeCode:
+                updates['badgeCode'] = badgeCode
+
+            companyId = root.findtext('companyId', '').strip()
+            if companyId:
+                updates['companyId'] = companyId
+
+            updatedAt = root.findtext('updatedAt', '').strip()
+            if updatedAt:
+                updates['updatedAt'] = updatedAt
+
+            existing = self.user_store.get_user_by_id(user_id)
+            if not existing:
+                logger.warning("UserUpdatedIntegration for non-existent user, creating: userId=%s", user_id)
+                if not updates.get('badgeCode'):
+                    updates['badgeCode'] = f"DEFAULT_{user_id}"
+                user = User(userId=user_id, **updates)
+                success, error, _ = self.user_store.create_user(user)
+            else:
+                success, error, _ = self.user_store.update_user(user_id, updates)
+
+            if not success:
+                logger.error("Failed to process UserUpdatedIntegration: %s", error)
+                if self.on_error:
+                    self.on_error('UserUpdatedIntegration', error)
+                return False
+
+            logger.info("UserUpdatedIntegration processed: userId=%s", user_id)
+            return True
+
+        except Exception as e:
+            error = f"Error handling UserUpdatedIntegration: {str(e)}"
+            logger.error(error)
+            if self.on_error:
+                self.on_error('UserUpdatedIntegration', error)
             return False
 
     def _handle_user_confirmed(self, root: ET.Element) -> bool:

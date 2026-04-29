@@ -107,6 +107,13 @@ async def on_user_confirmed(message: aio_pika.IncomingMessage) -> None:
         role = root.findtext("role", "")
         logger.info("UserConfirmed ontvangen [id=%s email=%s role=%s]", user_id, email, role)
 
+        if _user_consumer is not None:
+            try:
+                xml_string = message.body.decode('utf-8')
+                _user_consumer.process_user_message(xml_string)
+            except Exception as exc:
+                logger.error("UserConfirmed: fout bij opslaan in store: %s", exc)
+
 
 async def on_company_confirmed(message: aio_pika.IncomingMessage) -> None:
     """Contract 14 — CRM → Kassa: company confirmed."""
@@ -159,6 +166,13 @@ async def on_user_updated(message: aio_pika.IncomingMessage) -> None:
         email = root.findtext("email", "")
         logger.info("UserUpdated ontvangen [id=%s email=%s] — lokale kopie vervangen", user_id, email)
 
+        if _user_consumer is not None:
+            try:
+                xml_string = message.body.decode('utf-8')
+                _user_consumer.process_user_message(xml_string)
+            except Exception as exc:
+                logger.error("UserUpdated: fout bij opslaan in store: %s", exc)
+
 
 async def on_company_updated(message: aio_pika.IncomingMessage) -> None:
     """Contract 19 — CRM → Kassa: company updated (volledige replace, geen partial merge)."""
@@ -200,6 +214,13 @@ async def on_user_deactivated(message: aio_pika.IncomingMessage) -> None:
             user_id, email,
         )
 
+        if _user_consumer is not None:
+            try:
+                xml_string = message.body.decode('utf-8')
+                _user_consumer.process_user_message(xml_string)
+            except Exception as exc:
+                logger.error("UserDeactivated: fout bij verwijderen uit store: %s", exc)
+
 
 async def on_company_deactivated(message: aio_pika.IncomingMessage) -> None:
     """Contract 23 — CRM → Kassa: company deactivated."""
@@ -215,6 +236,31 @@ async def on_company_deactivated(message: aio_pika.IncomingMessage) -> None:
         )
 
 
+# (kept dev variant)
+# ── User CRUD handlers ──────────────────────────────────────────────────────
+
+async def on_user_message(message: aio_pika.IncomingMessage) -> None:
+    """
+    Handle User, UserCreated, UserUpdated, or UserDeleted messages.
+    Uses the global UserConsumer to process and store user data.
+    """
+    async with message.process():
+        if _user_consumer is None:
+            logger.error("UserConsumer not initialized")
+            return
+        
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("Integration User: could not decode message as UTF-8")
+            return
+        
+        success = _user_consumer.process_user_message(xml_string)
+        if not success:
+            logger.error("Failed to process user message")
+            return
+        
+    # (end dev variant)
 # ── Queue configuratie ─────────────────────────────────────────────────────────
 
 # (queue_name, durable, handler, routing_key)

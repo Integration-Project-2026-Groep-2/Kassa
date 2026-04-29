@@ -44,26 +44,20 @@ class ResPartner(models.Model):
             if not vals.get('user_id_custom'):
                 vals['user_id_custom'] = str(uuid.uuid4())
                 created_locally_indices.append(i)
-                
+
         records = super().create(vals_list)
         for i in created_locally_indices:
             records[i]._publish_user_change('created')
         return records
 
     def write(self, vals):
-        # We only publish an updated event if this write is initiated locally via Kassa POS UI.
-        # When contact_receiver updates via XML-RPC, it always passes 'user_id_custom'.
+        # Only publish an updated event if this write is initiated locally via Kassa POS UI.
         is_local_update = ('user_id_custom' not in vals)
-        
+
         result = super().write(vals)
 
         watched_fields = {
-            'name',
-            'email',
-            'phone',
-            'badge_code',
-            'role',
-            'company_id_custom',
+            'name', 'email', 'phone', 'badge_code', 'role', 'company_id_custom',
         }
         if is_local_update and watched_fields.intersection(vals.keys()):
             for record in self:
@@ -76,7 +70,7 @@ class ResPartner(models.Model):
         delete_candidates = [
             {
                 'user_id_custom': record.user_id_custom,
-                'email': record.email,
+                'email': record.email or '',
             }
             for record in self
             if record.user_id_custom
@@ -85,7 +79,7 @@ class ResPartner(models.Model):
         result = super().unlink()
 
         for candidate in delete_candidates:
-            self._publish_user_deactivated(candidate['user_id_custom'])
+            self._publish_user_deleted(candidate['user_id_custom'], candidate['email'])
 
         return result
 
@@ -96,26 +90,21 @@ class ResPartner(models.Model):
             return
 
         user_data = self._build_user_data_dict()
-        operation_type = 'created' if operation == 'created' else 'updated'
 
         self._publish_with_fallback(
-            operation=operation_type,
+            operation=operation,
             user_data=user_data,
             user_id_custom=self.user_id_custom,
         )
-
-
 
     def _publish_user_deleted(self, user_id_custom, email=''):
         if not user_id_custom:
             return
 
         self._publish_deactivated_with_fallback(
-            user_email=self.email or '',
+            user_email=email,
             user_id_custom=user_id_custom,
         )
-
-
 
     def _publish_with_fallback(self, operation, user_data, user_id_custom):
         try:
@@ -145,11 +134,10 @@ class ResPartner(models.Model):
                 str(exc),
             )
             queue_message_type = 'UserCreated' if operation == 'created' else 'UserUpdated'
-            payload = self._build_user_payload_xml(user_data) if operation == 'created' else self._build_user_payload_xml(user_data)
+            payload = self._build_user_created_payload_xml(user_data) if operation == 'created' else self._build_user_updated_payload_xml(user_data)
             self._enqueue_user_message(user_id_custom, queue_message_type, payload, str(exc))
 
     def _publish_deactivated_with_fallback(self, user_email, user_id_custom):
-        """Publish UserDeactivated or queue for retry on failure."""
         try:
             from ..utils.rabbitmq_sender import send_user_deactivated
 
@@ -169,15 +157,7 @@ class ResPartner(models.Model):
                 user_id_custom,
                 str(exc),
             )
-            # Build UserDeactivated XML for fallback queue
-            import datetime
-            import xml.etree.ElementTree as ET
-            root = ET.Element('UserDeactivated')
-            ET.SubElement(root, 'id').text = str(user_id_custom)
-            ET.SubElement(root, 'email').text = str(user_email)
-            ET.SubElement(root, 'deactivatedAt').text = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-            payload = ET.tostring(root, encoding='unicode')
-            
+            payload = self._build_user_deleted_payload(user_id_custom)
             self._enqueue_user_message(user_id_custom, 'UserDeactivated', payload, str(exc))
 
     def _enqueue_user_message(self, user_id_custom, message_type, payload, error_message=''):
@@ -216,8 +196,9 @@ class ResPartner(models.Model):
         }
 
     @staticmethod
-    def _build_user_payload_xml(user_data):
-        root = ET.Element('User')
+    def _build_user_created_payload_xml(user_data):
+        """Bouw <UserCreated> XML conform kassa-schema-v1.xsd."""
+        root = ET.Element('UserCreated')
         ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
         ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
         ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
@@ -229,15 +210,38 @@ class ResPartner(models.Model):
 
         ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
         ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+        ET.SubElement(root, 'createdAt').text = str(
+            user_data.get('createdAt') or datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        )
 
-        created_at = user_data.get('createdAt')
-        if created_at:
-            ET.SubElement(root, 'createdAt').text = str(created_at)
+        return ET.tostring(root, encoding='unicode')
 
-        updated_at = user_data.get('updatedAt')
-        if updated_at:
-            ET.SubElement(root, 'updatedAt').text = str(updated_at)
+    @staticmethod
+    def _build_user_updated_payload_xml(user_data):
+        """Bouw <UserUpdatedIntegration> XML conform kassa-schema-v1.xsd."""
+        root = ET.Element('UserUpdatedIntegration')
+        ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
+        ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
+        ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
+        ET.SubElement(root, 'email').text = str(user_data.get('email', ''))
 
+        company_id = user_data.get('companyId')
+        if company_id:
+            ET.SubElement(root, 'companyId').text = str(company_id)
+
+        ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
+        ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+        ET.SubElement(root, 'updatedAt').text = str(
+            user_data.get('updatedAt') or datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        )
+
+        return ET.tostring(root, encoding='unicode')
+
+    @staticmethod
+    def _build_user_deleted_payload(user_id_custom):
+        root = ET.Element('UserDeleted')
+        ET.SubElement(root, 'userId').text = str(user_id_custom)
+        ET.SubElement(root, 'deletedAt').text = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         return ET.tostring(root, encoding='unicode')
 
     @staticmethod

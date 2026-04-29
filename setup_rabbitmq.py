@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Setup script to create required RabbitMQ exchanges for Kassa system.
-Run this after docker-compose up to ensure exchanges exist.
+Setup script — declareert alle RabbitMQ exchanges voor het Kassa-systeem.
+Wordt automatisch uitgevoerd via de rabbitmq-setup service in docker-compose.yml.
+Kan ook handmatig gedraaid worden: python setup_rabbitmq.py
 """
 
+import os
 import pika
 import sys
 import time
-import os
 
 
 USER_QUEUE_BINDINGS = [
@@ -16,89 +17,62 @@ USER_QUEUE_BINDINGS = [
     ("kassa.user.deactivated", "crm.user.deactivated"),
 ]
 
+
 def create_exchanges():
     """Create all required exchanges for Kassa system."""
-    
-    # Connection parameters
-    rabbitmq_host = os.getenv("RABBIT_HOST", "localhost")
-    rabbitmq_port = int(os.getenv("RABBIT_PORT", "5672"))
-    rabbitmq_user = os.getenv("RABBIT_USER", "guest")
-    rabbitmq_password = os.getenv("RABBIT_PASSWORD", "guest")
-    rabbitmq_vhost = os.getenv("RABBIT_VHOST", "/")
-    
-    # Retry logic for container startup
-    max_retries = 30
-    retry_count = 0
-    
-    while retry_count < max_retries:
+
+    host     = os.environ.get('RABBIT_HOST', 'localhost')
+    port     = int(os.environ.get('RABBIT_PORT', 5672))
+    user     = os.environ.get('RABBIT_USER', 'guest')
+    password = os.environ.get('RABBIT_PASSWORD', 'guest')
+    vhost    = os.environ.get('RABBIT_VHOST', '/')
+
+    # Wacht tot RabbitMQ bereikbaar is
+    for attempt in range(1, 31):
         try:
-            credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_password)
-            parameters = pika.ConnectionParameters(
-                host=rabbitmq_host,
-                port=rabbitmq_port,
-                virtual_host=rabbitmq_vhost,
-                credentials=credentials,
-                connection_attempts=1
+            credentials = pika.PlainCredentials(user, password)
+            parameters  = pika.ConnectionParameters(
+                host=host, port=port, virtual_host=vhost,
+                credentials=credentials, connection_attempts=1,
             )
             connection = pika.BlockingConnection(parameters)
-            channel = connection.channel()
-            print("✓ Connected to RabbitMQ")
+            channel    = connection.channel()
+            print(f"✓ Verbonden met RabbitMQ op {host}:{port}")
             break
         except pika.exceptions.AMQPConnectionError:
-            retry_count += 1
-            if retry_count < max_retries:
-                print(f"Waiting for RabbitMQ... (attempt {retry_count}/{max_retries})")
-                time.sleep(2)
-            else:
-                print("✗ Failed to connect to RabbitMQ after retries")
-                sys.exit(1)
-    
-    # Define exchanges to create
-    exchanges = [
-        ("kassa.topic", "topic", True),      # Batch closing messages
-        ("kassa.direct", "direct", True),    # Other Kassa messages
-        ("user.topic", "topic", True),       # User CRUD events
-        ("heartbeat.direct", "direct", True), # Heartbeat messages
-        ("contact.topic", "topic", True),    # CRM -> Kassa inbound events
-    ]
-    
-    try:
-        for exchange_name, exchange_type, durable in exchanges:
-            try:
-                channel.exchange_declare(
-                    exchange=exchange_name,
-                    exchange_type=exchange_type,
-                    durable=durable,
-                    auto_delete=False,
-                    internal=False,
-                )
-                print(f"✓ Exchange '{exchange_name}' ({exchange_type}) created/verified")
-            except pika.exceptions.ChannelClosedByBroker as e:
-                # Exchange already exists - this is fine
-                if "NOT_FOUND" not in str(e) and "PRECONDITION_FAILED" not in str(e):
-                    print(f"⚠ Warning creating '{exchange_name}': {e}")
-                else:
-                    print(f"✓ Exchange '{exchange_name}' already exists")
+            print(f"Wachten op RabbitMQ... ({attempt}/30)")
+            time.sleep(2)
+    else:
+        print("✗ RabbitMQ niet bereikbaar na 30 pogingen")
+        sys.exit(1)
 
-        for queue_name, routing_key in USER_QUEUE_BINDINGS:
-            channel.queue_declare(queue=queue_name, durable=True, auto_delete=False)
-            channel.queue_bind(
-                queue=queue_name,
-                exchange="contact.topic",
-                routing_key=routing_key,
+    exchanges = [
+        # naam                 type      durable
+        ("kassa.topic",        "topic",  True),   # batch closing (Afsluitknop)
+        ("kassa.direct",       "direct", True),   # overige Kassa-berichten
+        ("user.direct",        "direct", True),   # interne user CRUD (integration service)
+        ("user.dlx",           "direct", True),   # dead letter exchange
+        ("user.retry",         "direct", True),   # retry exchange
+        ("user.topic",         "topic",  True),   # C36/C37/C38 Kassa → CRM user sync
+        ("heartbeat.direct",   "direct", True),   # heartbeat (Contract 7)
+    ]
+
+    for name, kind, durable in exchanges:
+        try:
+            channel.exchange_declare(
+                exchange=name,
+                exchange_type=kind,
+                durable=durable,
+                auto_delete=False,
             )
-            print(
-                f"✓ Queue '{queue_name}' bound to 'contact.topic' with routing key '{routing_key}'"
-            )
-        
-        connection.close()
-        print("\n✓ All exchanges created successfully!")
-        print("Kassa system is ready for message publishing.")
-        return 0
-    
-    except Exception as e:
-        print(f"✗ Error creating exchanges: {e}")
-        return 1
+            print(f"✓ Exchange '{name}' ({kind}) aangemaakt/geverifieerd")
+        except Exception as exc:
+            print(f"⚠  Waarschuwing voor '{name}': {exc}")
+
+    connection.close()
+    print("\n✓ Alle exchanges zijn klaar.")
+    return 0
+
 
 if __name__ == "__main__":
     sys.exit(create_exchanges())

@@ -144,7 +144,7 @@ user_data = {
 }
 
 xml = build_user_xml(user_data)
-# Send xml to RabbitMQ queue: integration.user.created
+# Send xml to RabbitMQ queue: kassa.user.created
 
 # On receiver side:
 store = UserStore()
@@ -367,9 +367,9 @@ def test_create_user_success():
 
 | Queue | Type | Purpose |
 |-------|------|---------|
-| `integration.user.created` | durable | New user from integration service |
-| `integration.user.updated` | durable | User update from integration service |
-| `integration.user.deleted` | durable | User deletion from integration service |
+| `kassa.user.created` | durable | New user from integration service |
+| `kassa.user.updated` | durable | User update from integration service |
+| `kassa.user.deleted` | durable | User deletion from integration service |
 | `crm.user.confirmed` | durable | New user confirmed from CRM |
 | `crm.user.updated` | durable | User update from CRM |
 | `crm.user.deactivated` | durable | User deactivation (GDPR) from CRM |
@@ -379,9 +379,9 @@ def test_create_user_success():
 ```python
 # src/receiver.py
 QUEUE_HANDLERS = [
-    ("integration.user.created",  True, on_user_message),
-    ("integration.user.updated",  True, on_user_message),
-    ("integration.user.deleted",  True, on_user_message),
+    ("kassa.user.created",  True, on_user_message),
+    ("kassa.user.updated",  True, on_user_message),
+    ("kassa.user.deleted",  True, on_user_message),
     # ... other queues
 ]
 ```

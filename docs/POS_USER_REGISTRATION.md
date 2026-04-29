@@ -196,7 +196,7 @@ Auto-retry when service online
 ## RabbitMQ Integration
 
 ### Message Type
-`UserCreated` message via `integration.user.created` queue
+`UserCreated` message via `kassa.user.created` queue
 
 ### Payload Format
 ```xml
