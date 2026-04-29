@@ -199,10 +199,15 @@ class PosOrderBatchService:
         Returns:
             Created PosOrderBatch record
         """
+        try:
+            closed_date = datetime.strptime(batch_data['closedAt'], '%Y-%m-%dT%H:%M:%SZ')
+        except (ValueError, KeyError):
+            closed_date = datetime.utcnow()
+
         batch_record = self.PosOrderBatch.create({
             'batch_uuid': batch_data['batchId'],
             'pos_session_id': session.id,
-            'closed_date': batch_data['closedAt'],
+            'closed_date': closed_date.strftime('%Y-%m-%d %H:%M:%S'),
             'total_orders': batch_data['totalOrders'],
             'total_amount': batch_data['totalAmount'],
             'status': 'draft',
