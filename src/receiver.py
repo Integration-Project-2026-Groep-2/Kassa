@@ -107,6 +107,13 @@ async def on_user_confirmed(message: aio_pika.IncomingMessage) -> None:
         role = root.findtext("role", "")
         logger.info("UserConfirmed ontvangen [id=%s email=%s role=%s]", user_id, email, role)
 
+        if _user_consumer is not None:
+            try:
+                xml_string = message.body.decode('utf-8')
+                _user_consumer.process_user_message(xml_string)
+            except Exception as exc:
+                logger.error("UserConfirmed: fout bij opslaan in store: %s", exc)
+
 
 async def on_company_confirmed(message: aio_pika.IncomingMessage) -> None:
     """Contract 14 — CRM → Kassa: company confirmed."""
@@ -159,6 +166,13 @@ async def on_user_updated(message: aio_pika.IncomingMessage) -> None:
         email = root.findtext("email", "")
         logger.info("UserUpdated ontvangen [id=%s email=%s] — lokale kopie vervangen", user_id, email)
 
+        if _user_consumer is not None:
+            try:
+                xml_string = message.body.decode('utf-8')
+                _user_consumer.process_user_message(xml_string)
+            except Exception as exc:
+                logger.error("UserUpdated: fout bij opslaan in store: %s", exc)
+
 
 async def on_company_updated(message: aio_pika.IncomingMessage) -> None:
     """Contract 19 — CRM → Kassa: company updated (volledige replace, geen partial merge)."""
@@ -200,6 +214,13 @@ async def on_user_deactivated(message: aio_pika.IncomingMessage) -> None:
             user_id, email,
         )
 
+        if _user_consumer is not None:
+            try:
+                xml_string = message.body.decode('utf-8')
+                _user_consumer.process_user_message(xml_string)
+            except Exception as exc:
+                logger.error("UserDeactivated: fout bij verwijderen uit store: %s", exc)
+
 
 async def on_company_deactivated(message: aio_pika.IncomingMessage) -> None:
     """Contract 23 — CRM → Kassa: company deactivated."""
@@ -215,29 +236,49 @@ async def on_company_deactivated(message: aio_pika.IncomingMessage) -> None:
         )
 
 
+# (kept dev variant)
+# ── User CRUD handlers ──────────────────────────────────────────────────────
+
+async def on_user_message(message: aio_pika.IncomingMessage) -> None:
+    """
+    Handle User, UserCreated, UserUpdated, or UserDeleted messages.
+    Uses the global UserConsumer to process and store user data.
+    """
+    async with message.process():
+        if _user_consumer is None:
+            logger.error("UserConsumer not initialized")
+            return
+        
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("Integration User: could not decode message as UTF-8")
+            return
+        
+        success = _user_consumer.process_user_message(xml_string)
+        if not success:
+            logger.error("Failed to process user message")
+            return
+        
+    # (end dev variant)
 # ── Queue configuratie ─────────────────────────────────────────────────────────
 
 # (queue_name, durable, handler, routing_key)
 CONTACT_TOPIC_EXCHANGE = "contact.topic"
 QUEUE_HANDLERS = [
-    # Controlroom warnings
-    ("controlroom.warning.issued",      False, on_warning, None),
-    
-    # CRM → Kassa: Person lookups
-    ("crm.person.lookup.responded",     False, on_person_lookup_response, None),
-    
-    # CRM → Kassa: User lifecycle (R1-R3) — Salesforce CRM integration
-    ('kassa.user.confirmed',             True,  on_user_confirmed, "crm.user.confirmed"),
-    ('kassa.user.updated',               True,  on_user_updated, "crm.user.updated"),
-    ('kassa.user.deactivated',           True,  on_user_deactivated, "crm.user.deactivated"),
-    
-    # CRM → Kassa: Company lifecycle
-    ("kassa.company.confirmed",         True,  on_company_confirmed, None),
-    ("kassa.company.updated",           True,  on_company_updated, None),
-    ("kassa.company.deactivated",       True,  on_company_deactivated, None),
-    
-    # CRM → Kassa: Other
-    ("crm.unpaid.responded",            False, on_unpaid_response, None),
+    ("controlroom.warning.issued",      False, on_warning),
+    ("crm.person.lookup.responded",     False, on_person_lookup_response),
+    ("crm.user.confirmed",              True,  on_user_confirmed),
+    ("crm.company.confirmed",           True,  on_company_confirmed),
+    ("crm.unpaid.responded",            False, on_unpaid_response),
+    ("crm.user.updated",                True,  on_user_updated),
+    ("crm.company.updated",             True,  on_company_updated),
+    ("crm.user.deactivated",            True,  on_user_deactivated),
+    ("crm.company.deactivated",         True,  on_company_deactivated),
+    # Kassa User CRUD queues
+    ("kassa.user.created",              True,  on_user_message),
+    ("kassa.user.updated",              True,  on_user_message),
+    ("kassa.user.deleted",              True,  on_user_message),
 ]
 
 

@@ -27,6 +27,9 @@ RABBITMQADMIN=(rabbitmqadmin -V "${RABBITMQ_DEFAULT_VHOST:-/}" -u "${RABBITMQ_DE
 # Create user events exchange (Salesforce CRM integration - topic-based routing)
 "${RABBITMQADMIN[@]}" declare exchange name=user.topic type=topic durable=true auto_delete=false || echo "Exchange user.topic already exists"
 
+# Create user.topic exchange (shared with CRM/Facturatie/Mailing/Planning — C36/C37/C38)
+rabbitmqctl declare_exchange user.topic topic durable=true auto_delete=false || echo "Exchange user.topic already exists"
+
 # Create heartbeat exchange
 "${RABBITMQADMIN[@]}" declare exchange name=heartbeat.direct type=direct durable=true auto_delete=false || echo "Exchange heartbeat.direct already exists"
 

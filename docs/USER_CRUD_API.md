@@ -253,7 +253,7 @@ user_data = {...}
 xml = build_user_xml(user_data)
 
 # Publish to queue
-producer.publish(xml, routing_key='integration.user.created')
+producer.publish(xml, routing_key='kassa.user.created')
 
 producer.close()
 ```
@@ -261,9 +261,9 @@ producer.close()
 ### Queue Names
 
 ```
-integration.user.created     # New user
-integration.user.updated     # User update
-integration.user.deleted     # User deletion
+kassa.user.created     # New user
+kassa.user.updated     # User update
+kassa.user.deleted     # User deletion
 crm.user.confirmed          # CRM registration
 crm.user.updated            # CRM change
 crm.user.deactivated        # CRM deactivation

@@ -14,17 +14,23 @@ RABBITMQ_PORT = int(os.environ.get('RABBIT_PORT') or os.environ.get('RABBITMQ_PO
 RABBITMQ_USER = os.environ.get('RABBIT_USER') or os.environ.get('RABBITMQ_USER', 'guest')
 RABBITMQ_PASS = os.environ.get('RABBIT_PASSWORD') or os.environ.get('RABBITMQ_PASS', 'guest')
 RABBITMQ_VHOST = os.environ.get('RABBIT_VHOST') or os.environ.get('RABBITMQ_VHOST', '/')
+SCHEMA_PATH = Path(__file__).resolve().parents[2] / 'src' / 'schema' / 'kassa-schema-v1.xsd'
 
-# User events: topic-based routing (Salesforce CRM integration)
-USER_EVENTS_EXCHANGE = 'user.topic'
-USER_EVENTS_EXCHANGE_TYPE = 'topic'
+# user.topic exchange — gedeeld met CRM, Facturatie, Mailing, Planning
+USER_TOPIC_EXCHANGE = os.environ.get('USER_TOPIC_EXCHANGE', 'user.topic')
 
-# Queue names for payment and invoice (non-user-event messages)
+# Queue namen conform Team Kassa contractoverzicht
 QUEUE_PAYMENT_CONFIRMED = 'kassa.payment.confirmed'   # Contract 16 → CRM
 QUEUE_INVOICE_REQUESTED = 'kassa.invoice.requested'   # Contract K-01 → Facturatie
+QUEUE_USER_CREATED = 'kassa.user.created'
+QUEUE_USER_UPDATED = 'kassa.user.updated'
+QUEUE_USER_DELETED = 'kassa.user.deleted'
 
-# XSD schema path for validation
-SCHEMA_PATH = os.environ.get('SCHEMA_PATH', 'src/schema/kassa-schema-v1.xsd')
+# Routing keys voor Kassa → CRM user sync (C36/C37/C38)
+# CRM declareert de consumer-queues zelf; Kassa publiceert via user.topic exchange.
+ROUTING_KEY_KASSA_USER_CREATED    = 'kassa.user.created'     # C36
+ROUTING_KEY_KASSA_USER_UPDATED    = 'kassa.user.updated'     # C37
+ROUTING_KEY_KASSA_USER_DEACTIVATED = 'kassa.user.deactivated'  # C38
 
 
 def _now_iso() -> str:
@@ -38,7 +44,7 @@ def _validate_xml_with_schema(xml_str: str, element_name: str) -> bool:
     Logs errors appropriately.
     """
     try:
-        from lxml import etree
+        from lxml import etree  # type: ignore[import-not-found]
     except ImportError:
         _logger.warning("lxml not installed, skipping XSD validation. Install with: pip install lxml")
         return True
@@ -135,12 +141,8 @@ def _build_invoice_requested_xml(invoice_data: dict) -> str:
 
 
 def _build_user_created_xml(user_data: dict) -> str:
-    """
-    Build UserCreated XML per Integration Service schema.
-    Required: userId, firstName, lastName, email, badgeCode, role, createdAt
-    Optional: companyId
-    """
-    root = ET.Element('KassaUserCreated')
+    """Bouw een UserCreated XML conform kassa-schema-v1.xsd <UserCreated>."""
+    root = ET.Element('UserCreated')
 
     ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
     ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
@@ -153,7 +155,27 @@ def _build_user_created_xml(user_data: dict) -> str:
 
     ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
     ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
-    ET.SubElement(root, 'createdAt').text = str(user_data.get('createdAt', _now_iso()))
+    ET.SubElement(root, 'createdAt').text = str(user_data.get('createdAt') or _now_iso())
+
+    return ET.tostring(root, encoding='unicode')
+
+
+def _build_user_updated_integration_xml(user_data: dict) -> str:
+    """Bouw een UserUpdatedIntegration XML conform kassa-schema-v1.xsd <UserUpdatedIntegration>."""
+    root = ET.Element('UserUpdatedIntegration')
+
+    ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
+    ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
+    ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
+    ET.SubElement(root, 'email').text = str(user_data.get('email', ''))
+
+    company_id = user_data.get('companyId')
+    if company_id:
+        ET.SubElement(root, 'companyId').text = str(company_id)
+
+    ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
+    ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+    ET.SubElement(root, 'updatedAt').text = str(user_data.get('updatedAt') or _now_iso())
 
     return ET.tostring(root, encoding='unicode')
 
@@ -358,33 +380,13 @@ def send_invoice_requested(invoice_data: dict) -> bool:
 
 
 def send_user_created(user_data: dict) -> bool:
-    """
-    Publish UserCreated to user.topic exchange with kassa.user.created routing key.
-    user_data should contain: userId (Odoo id), firstName, lastName, email, badgeCode, role, companyId (opt), createdAt
-    """
-    xml = _build_user_created_xml(user_data)
-    return _send_xml(
-        xml,
-        exchange=USER_EVENTS_EXCHANGE,
-        routing_key='kassa.user.created',
-        exchange_type=USER_EVENTS_EXCHANGE_TYPE,
-        element_name='KassaUserCreated',
-    )
+    # Compat wrapper: route to CRM topic exchange (same as send_kassa_user_created)
+    return send_kassa_user_created(user_data)
 
 
 def send_user_updated(user_data: dict) -> bool:
-    """
-    Publish UserUpdated to user.topic exchange with kassa.user.updated routing key.
-    user_data should contain: userId (user_id_custom - CRM Master UUID), firstName, lastName, email, badgeCode, role, companyId (opt), updatedAt
-    """
-    xml = _build_user_updated_xml(user_data)
-    return _send_xml(
-        xml,
-        exchange=USER_EVENTS_EXCHANGE,
-        routing_key='kassa.user.updated',
-        exchange_type=USER_EVENTS_EXCHANGE_TYPE,
-        element_name='KassaUserUpdated',
-    )
+    # Compat wrapper: route to CRM topic exchange (same as send_kassa_user_updated)
+    return send_kassa_user_updated(user_data)
 
 
 def send_user_deactivated(user_email: str, user_id_custom: str) -> bool:
@@ -392,13 +394,150 @@ def send_user_deactivated(user_email: str, user_id_custom: str) -> bool:
     Publish UserDeactivated to user.topic exchange with kassa.user.deactivated routing key.
     Uses user_id_custom (CRM Master UUID) as the id in the message.
     """
-    xml = _build_user_deactivated_xml(user_email, user_id_custom)
-    return _send_xml(
-        xml,
-        exchange=USER_EVENTS_EXCHANGE,
-        routing_key='kassa.user.deactivated',
-        exchange_type=USER_EVENTS_EXCHANGE_TYPE,
-        element_name='UserDeactivated',
-    )
+    # Compat wrapper: route to CRM topic exchange (same as send_kassa_user_deactivated)
+    return send_kassa_user_deactivated(user_id_custom, user_email)
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Kassa → CRM User Sync  (Contracts C36 / C37 / C38)
+# Exchange: user.topic (topic)
+# Kassa publiceert alleen naar de exchange met routing key.
+# CRM declareert zelf de consumer-queues (crm.kassa.user.*).
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_kassa_user_created_xml(user_data: dict) -> str:
+    """
+    C36 — Bouw een KassaUserCreated XML conform kassa-user.xsd v1.10.1.
+
+    Verplichte velden: userId, firstName, lastName, email, badgeCode, role, createdAt
+    Optioneel: companyId
+    """
+    root = ET.Element('KassaUserCreated')
+
+    ET.SubElement(root, 'userId').text    = str(user_data.get('userId', ''))
+    ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
+    ET.SubElement(root, 'lastName').text  = str(user_data.get('lastName', ''))
+    ET.SubElement(root, 'email').text     = str(user_data.get('email', ''))
+
+    company_id = user_data.get('companyId')
+    if company_id:
+        ET.SubElement(root, 'companyId').text = str(company_id)
+
+    ET.SubElement(root, 'badgeCode').text  = str(user_data.get('badgeCode', ''))
+    ET.SubElement(root, 'role').text       = str(user_data.get('role', ''))
+    ET.SubElement(root, 'createdAt').text  = str(user_data.get('createdAt') or _now_iso())
+
+    return ET.tostring(root, encoding='unicode')
+
+
+def _build_kassa_user_updated_xml(user_data: dict) -> str:
+    """
+    C37 — Bouw een KassaUserUpdated XML conform kassa-user.xsd v1.10.1.
+
+    Verplichte velden: userId, firstName, lastName, email, badgeCode, role, updatedAt
+    Optioneel: companyId
+    """
+    root = ET.Element('KassaUserUpdated')
+
+    ET.SubElement(root, 'userId').text    = str(user_data.get('userId', ''))
+    ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
+    ET.SubElement(root, 'lastName').text  = str(user_data.get('lastName', ''))
+    ET.SubElement(root, 'email').text     = str(user_data.get('email', ''))
+
+    company_id = user_data.get('companyId')
+    if company_id:
+        ET.SubElement(root, 'companyId').text = str(company_id)
+
+    ET.SubElement(root, 'badgeCode').text  = str(user_data.get('badgeCode', ''))
+    ET.SubElement(root, 'role').text       = str(user_data.get('role', ''))
+    ET.SubElement(root, 'updatedAt').text  = str(user_data.get('updatedAt') or _now_iso())
+
+    return ET.tostring(root, encoding='unicode')
+
+
+def _build_kassa_user_deactivated_xml(user_id: str, email: str) -> str:
+    """
+    C38 — Bouw een UserDeactivated XML conform kassa-user.xsd v1.10.1.
+
+    Let op: root element is <UserDeactivated>, sleutelveld is <id> (niet <userId>).
+    Verplichte velden: id, email, deactivatedAt
+    """
+    root = ET.Element('UserDeactivated')
+    ET.SubElement(root, 'id').text            = str(user_id)
+    ET.SubElement(root, 'email').text         = str(email)
+    ET.SubElement(root, 'deactivatedAt').text = _now_iso()
+    return ET.tostring(root, encoding='unicode')
+
+
+def _publish_to_topic_exchange(routing_key: str, xml_body: str) -> bool:
+    """
+    Publiceer een XML-bericht naar user.topic exchange met de gegeven routing key.
+    Declareert GEEN consumer-queues — dat is de verantwoordelijkheid van de receiver (CRM).
+    Geeft True terug bij succes, False bij fout.
+    """
+    try:
+        import pika
+        params = _get_connection_params()
+        connection = pika.BlockingConnection(params)
+        channel = connection.channel()
+
+        channel.exchange_declare(
+            exchange=USER_TOPIC_EXCHANGE,
+            exchange_type='topic',
+            durable=True,
+        )
+
+        channel.basic_publish(
+            exchange=USER_TOPIC_EXCHANGE,
+            routing_key=routing_key,
+            body=xml_body.encode('utf-8'),
+            properties=pika.BasicProperties(
+                delivery_mode=2,
+                content_type='application/xml',
+            ),
+        )
+        connection.close()
+        _logger.info(
+            "RabbitMQ: XML-bericht gepubliceerd [exchange=%s routing_key=%s]",
+            USER_TOPIC_EXCHANGE, routing_key,
+        )
+        return True
+
+    except Exception as e:
+        _logger.error(
+            "RabbitMQ: publiceren mislukt [exchange=%s routing_key=%s]: %s",
+            USER_TOPIC_EXCHANGE, routing_key, e,
+        )
+        return False
+
+
+def send_kassa_user_created(user_data: dict) -> bool:
+    """
+    Contract 36 — Kassa → CRM: user aanmaken.
+    Publiceert <KassaUserCreated> naar user.topic met routing key kassa.user.created.
+    CRM kent daarna een canonical CRM UUID toe en publiceert crm.user.confirmed.
+    """
+    xml = _build_kassa_user_created_xml(user_data)
+    return _publish_to_topic_exchange(ROUTING_KEY_KASSA_USER_CREATED, xml)
+
+
+def send_kassa_user_updated(user_data: dict) -> bool:
+    """
+    Contract 37 — Kassa → CRM: user bijwerken.
+    Publiceert <KassaUserUpdated> naar user.topic met routing key kassa.user.updated.
+    CRM verwerkt de update en publiceert crm.user.updated (C18).
+    """
+    xml = _build_kassa_user_updated_xml(user_data)
+    return _publish_to_topic_exchange(ROUTING_KEY_KASSA_USER_UPDATED, xml)
+
+
+def send_kassa_user_deactivated(user_id: str, email: str) -> bool:
+    """
+    Contract 38 — Kassa → CRM: user deactiveren.
+    Publiceert <UserDeactivated> naar user.topic met routing key kassa.user.deactivated.
+    CRM voert soft delete uit in Salesforce en publiceert crm.user.deactivated (C22).
+
+    Let op: veld is <id> (niet <userId>), conform kassa-user.xsd v1.10.1.
+    """
+    xml = _build_kassa_user_deactivated_xml(user_id, email)
+    return _publish_to_topic_exchange(ROUTING_KEY_KASSA_USER_DEACTIVATED, xml)
 

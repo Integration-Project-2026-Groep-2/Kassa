@@ -44,26 +44,20 @@ class ResPartner(models.Model):
             if not vals.get('user_id_custom'):
                 vals['user_id_custom'] = str(uuid.uuid4())
                 created_locally_indices.append(i)
-                
+
         records = super().create(vals_list)
         for i in created_locally_indices:
             records[i]._publish_user_change('created')
         return records
 
     def write(self, vals):
-        # We only publish an updated event if this write is initiated locally via Kassa POS UI.
-        # When contact_receiver updates via XML-RPC, it always passes 'user_id_custom'.
+        # Only publish an updated event if this write is initiated locally via Kassa POS UI.
         is_local_update = ('user_id_custom' not in vals)
-        
+
         result = super().write(vals)
 
         watched_fields = {
-            'name',
-            'email',
-            'phone',
-            'badge_code',
-            'role',
-            'company_id_custom',
+            'name', 'email', 'phone', 'badge_code', 'role', 'company_id_custom',
         }
         if is_local_update and watched_fields.intersection(vals.keys()):
             for record in self:
@@ -76,7 +70,7 @@ class ResPartner(models.Model):
         delete_candidates = [
             {
                 'user_id_custom': record.user_id_custom,
-                'email': record.email,
+                'email': record.email or '',
             }
             for record in self
             if record.user_id_custom
@@ -85,7 +79,7 @@ class ResPartner(models.Model):
         result = super().unlink()
 
         for candidate in delete_candidates:
-            self._publish_user_deactivated(candidate['user_id_custom'])
+            self._publish_user_deleted(candidate['user_id_custom'], candidate['email'])
 
         return result
 
@@ -95,35 +89,78 @@ class ResPartner(models.Model):
         if operation not in ('created', 'updated'):
             return
 
+        routing_key = f'kassa.user.{operation}'
         user_data = self._build_user_data_dict()
-        operation_type = 'created' if operation == 'created' else 'updated'
 
+        if operation == 'created':
+            queue_message_type = 'UserCreated'
+            payload = self._build_user_created_payload_xml(user_data)
+        else:
+            queue_message_type = 'UserUpdatedIntegration'
+            payload = self._build_user_updated_payload_xml(user_data)
+
+        # 1. Interne Kassa queue (local fallback)
         self._publish_with_fallback(
-            operation=operation_type,
+            payload=payload,
+            operation=operation,
             user_data=user_data,
+            routing_key=routing_key,
+            queue_message_type=queue_message_type,
             user_id_custom=self.user_id_custom,
         )
 
-    def _publish_user_deactivated(self, user_id_custom):
-        """Publish UserDeactivated message when user is deleted."""
+        # 2. CRM user.topic exchange (C36 / C37)
+        self._publish_to_crm(operation, user_data)
+
+    def _publish_user_deleted(self, user_id_custom, email=''):
         if not user_id_custom:
             return
 
-        self._publish_deactivated_with_fallback(
-            user_email=self.email or '',
+        # 1. Interne Kassa user queue (kassa.user.deleted)
+        payload = self._build_user_deleted_payload(user_id_custom)
+        self._publish_with_fallback(
+            payload=payload,
+            operation='deleted',
+            user_data={'userId': user_id_custom, 'email': email},
+            routing_key='kassa.user.deleted',
+            queue_message_type='UserDeleted',
             user_id_custom=user_id_custom,
         )
 
-    def _publish_with_fallback(self, operation, user_data, user_id_custom):
+        # 2. CRM user.topic exchange (C38 — UserDeactivated)
+        if email:
+            try:
+                from ..utils.rabbitmq_sender import send_kassa_user_deactivated
+                sent = send_kassa_user_deactivated(user_id_custom, email)
+                if not sent:
+                    _logger.warning(
+                        "C38 UserDeactivated niet verzonden naar CRM [user_id=%s]",
+                        user_id_custom,
+                    )
+            except Exception as exc:
+                _logger.warning(
+                    "C38 UserDeactivated: fout bij publiceren naar CRM [user_id=%s error=%s]",
+                    user_id_custom, str(exc),
+                )
+        else:
+            _logger.warning(
+                "C38 UserDeactivated: email ontbreekt, bericht niet verzonden naar CRM [user_id=%s]",
+                user_id_custom,
+            )
+
+    def _publish_with_fallback(self, payload, operation, user_data, routing_key, queue_message_type, user_id_custom):
         try:
-            from ..utils.rabbitmq_sender import send_user_created, send_user_updated
+            # Try to publish via compat wrappers in rabbitmq_sender
+            from ..utils.rabbitmq_sender import send_user_created, send_user_updated, send_user_deactivated
 
             if operation == 'created':
                 sent = send_user_created(user_data)
             elif operation == 'updated':
                 sent = send_user_updated(user_data)
+            elif operation == 'deleted':
+                sent = send_user_deactivated(user_data.get('email', ''), user_id_custom)
             else:
-                return
+                sent = False
 
             if not sent:
                 raise RuntimeError('RabbitMQ sender returned False')
@@ -141,41 +178,7 @@ class ResPartner(models.Model):
                 user_id_custom,
                 str(exc),
             )
-            queue_message_type = 'UserCreated' if operation == 'created' else 'UserUpdated'
-            payload = self._build_user_payload_xml(user_data) if operation == 'created' else self._build_user_payload_xml(user_data)
             self._enqueue_user_message(user_id_custom, queue_message_type, payload, str(exc))
-
-    def _publish_deactivated_with_fallback(self, user_email, user_id_custom):
-        """Publish UserDeactivated or queue for retry on failure."""
-        try:
-            from ..utils.rabbitmq_sender import send_user_deactivated
-
-            sent = send_user_deactivated(user_email, user_id_custom)
-
-            if not sent:
-                raise RuntimeError('RabbitMQ sender returned False')
-
-            _logger.info(
-                "User deactivated event published [user_id_custom=%s]",
-                user_id_custom,
-            )
-
-        except Exception as exc:
-            _logger.warning(
-                "Failed to publish user deactivated event, queueing locally [user_id_custom=%s error=%s]",
-                user_id_custom,
-                str(exc),
-            )
-            # Build UserDeactivated XML for fallback queue
-            import datetime
-            import xml.etree.ElementTree as ET
-            root = ET.Element('UserDeactivated')
-            ET.SubElement(root, 'id').text = str(user_id_custom)
-            ET.SubElement(root, 'email').text = str(user_email)
-            ET.SubElement(root, 'deactivatedAt').text = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-            payload = ET.tostring(root, encoding='unicode')
-            
-            self._enqueue_user_message(user_id_custom, 'UserDeactivated', payload, str(exc))
 
     def _enqueue_user_message(self, user_id_custom, message_type, payload, error_message=''):
         try:
@@ -213,8 +216,9 @@ class ResPartner(models.Model):
         }
 
     @staticmethod
-    def _build_user_payload_xml(user_data):
-        root = ET.Element('User')
+    def _build_user_created_payload_xml(user_data):
+        """Bouw <UserCreated> XML conform kassa-schema-v1.xsd."""
+        root = ET.Element('UserCreated')
         ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
         ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
         ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
@@ -226,15 +230,38 @@ class ResPartner(models.Model):
 
         ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
         ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+        ET.SubElement(root, 'createdAt').text = str(
+            user_data.get('createdAt') or datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        )
 
-        created_at = user_data.get('createdAt')
-        if created_at:
-            ET.SubElement(root, 'createdAt').text = str(created_at)
+        return ET.tostring(root, encoding='unicode')
 
-        updated_at = user_data.get('updatedAt')
-        if updated_at:
-            ET.SubElement(root, 'updatedAt').text = str(updated_at)
+    @staticmethod
+    def _build_user_updated_payload_xml(user_data):
+        """Bouw <UserUpdatedIntegration> XML conform kassa-schema-v1.xsd."""
+        root = ET.Element('UserUpdatedIntegration')
+        ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
+        ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
+        ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
+        ET.SubElement(root, 'email').text = str(user_data.get('email', ''))
 
+        company_id = user_data.get('companyId')
+        if company_id:
+            ET.SubElement(root, 'companyId').text = str(company_id)
+
+        ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
+        ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+        ET.SubElement(root, 'updatedAt').text = str(
+            user_data.get('updatedAt') or datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        )
+
+        return ET.tostring(root, encoding='unicode')
+
+    @staticmethod
+    def _build_user_deleted_payload(user_id_custom):
+        root = ET.Element('UserDeleted')
+        ET.SubElement(root, 'userId').text = str(user_id_custom)
+        ET.SubElement(root, 'deletedAt').text = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         return ET.tostring(root, encoding='unicode')
 
     @staticmethod
