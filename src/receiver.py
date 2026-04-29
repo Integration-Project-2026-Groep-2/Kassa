@@ -91,6 +91,13 @@ async def on_user_confirmed(message: aio_pika.IncomingMessage) -> None:
         role = root.findtext("role", "")
         logger.info("UserConfirmed ontvangen [id=%s email=%s role=%s]", user_id, email, role)
 
+        if _user_consumer is not None:
+            try:
+                xml_string = message.body.decode('utf-8')
+                _user_consumer.process_user_message(xml_string)
+            except Exception as exc:
+                logger.error("UserConfirmed: fout bij opslaan in store: %s", exc)
+
 
 async def on_company_confirmed(message: aio_pika.IncomingMessage) -> None:
     """Contract 14 — CRM → Kassa: company confirmed."""
@@ -129,6 +136,13 @@ async def on_user_updated(message: aio_pika.IncomingMessage) -> None:
         email = root.findtext("email", "")
         logger.info("UserUpdated ontvangen [id=%s email=%s] — lokale kopie vervangen", user_id, email)
 
+        if _user_consumer is not None:
+            try:
+                xml_string = message.body.decode('utf-8')
+                _user_consumer.process_user_message(xml_string)
+            except Exception as exc:
+                logger.error("UserUpdated: fout bij opslaan in store: %s", exc)
+
 
 async def on_company_updated(message: aio_pika.IncomingMessage) -> None:
     """Contract 19 — CRM → Kassa: company updated (volledige replace, geen partial merge)."""
@@ -155,6 +169,13 @@ async def on_user_deactivated(message: aio_pika.IncomingMessage) -> None:
             "UserDeactivated ontvangen [id=%s email=%s] — gebruiker gedeactiveerd, audit trail behouden",
             user_id, email,
         )
+
+        if _user_consumer is not None:
+            try:
+                xml_string = message.body.decode('utf-8')
+                _user_consumer.process_user_message(xml_string)
+            except Exception as exc:
+                logger.error("UserDeactivated: fout bij verwijderen uit store: %s", exc)
 
 
 async def on_company_deactivated(message: aio_pika.IncomingMessage) -> None:
@@ -197,30 +218,6 @@ async def on_user_message(message: aio_pika.IncomingMessage) -> None:
         logger.info("User message processed successfully")
 
 
-async def on_user_confirmed_integration(message: aio_pika.IncomingMessage) -> None:
-    """
-    Handle UserConfirmed messages from CRM for integration service.
-    Updates or creates user in the local store.
-    """
-    async with message.process():
-        if _user_consumer is None:
-            logger.error("UserConsumer not initialized")
-            return
-        
-        try:
-            xml_string = message.body.decode('utf-8')
-        except UnicodeDecodeError:
-            logger.error("Integration UserConfirmed: could not decode message as UTF-8")
-            return
-        
-        success = _user_consumer.process_user_message(xml_string)
-        if not success:
-            logger.error("Failed to process UserConfirmed message")
-            return
-        
-        logger.info("UserConfirmed message processed for integration store")
-
-
 # ── Queue configuratie ─────────────────────────────────────────────────────────
 
 # (queue_name, durable, handler)
@@ -238,7 +235,6 @@ QUEUE_HANDLERS = [
     ("integration.user.created",        True,  on_user_message),
     ("integration.user.updated",        True,  on_user_message),
     ("integration.user.deleted",        True,  on_user_message),
-    ("crm.user.confirmed",              True,  on_user_confirmed_integration),
 ]
 
 

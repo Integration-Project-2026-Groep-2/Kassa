@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Kassa Producer Schema — Contracts C36, C37, C38
+  Kassa → CRM: user lifecycle (aanmaken, bijwerken, deactiveren)
+  Integration Project 2025/2026 | Groep 2
+
+  Versie 1.10.1 — April 2026
+  - C36: <KassaUserCreated>  (hernoemd van <UserCreated> in v1.10.0)
+  - C37: <KassaUserUpdated>  (hernoemd van <UserUpdated> in v1.10.0)
+  - C38: <UserDeactivated>   (ongewijzigd; veld is <id>, niet <userId>)
+
+  STANDALONE schema — niet via xs:include opgenomen in kassa-schema-v1.xsd
+  omdat <UserDeactivated> botst met Contract 22 in het master schema.
+
+  Gebruik: xml_validator.validate_kassa()
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="unqualified"
+           version="1.10.1">
+
+  <!-- ============================================================
+       GEDEELDE SIMPLE TYPES
+  ============================================================ -->
+
+  <xs:simpleType name="UUIDType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ISO8601DateTimeType">
+    <xs:restriction base="xs:dateTime"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmailType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@\s]+@[^@\s]+\.[^@\s]+"/>
+      <xs:maxLength value="254"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- NonEmptyStringType: xs:string met minLength=1 -->
+  <!-- Voorkomt lege <badgeCode/> die een IoT-gezette badge zou wipen (PR #121) -->
+  <xs:simpleType name="NonEmptyStringType">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="UserRoleType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="VISITOR"/>
+      <xs:enumeration value="COMPANY_CONTACT"/>
+      <xs:enumeration value="SPEAKER"/>
+      <xs:enumeration value="EVENT_MANAGER"/>
+      <xs:enumeration value="CASHIER"/>
+      <xs:enumeration value="BAR_STAFF"/>
+      <xs:enumeration value="ADMIN"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ============================================================
+       CONTRACT 36 — Kassa → CRM: user aanmaken
+       Queue:        crm.kassa.user.created
+       Routing key:  kassa.user.created
+       Exchange:     user.topic
+  ============================================================ -->
+  <xs:element name="KassaUserCreated">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="userId"    type="UUIDType"/>
+        <xs:element name="firstName" type="NonEmptyStringType"/>
+        <xs:element name="lastName"  type="NonEmptyStringType"/>
+        <xs:element name="email"     type="EmailType"/>
+        <xs:element name="companyId" type="UUIDType" minOccurs="0"/>
+        <xs:element name="badgeCode" type="NonEmptyStringType"/>
+        <xs:element name="role"      type="UserRoleType"/>
+        <xs:element name="createdAt" type="ISO8601DateTimeType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================================
+       CONTRACT 37 — Kassa → CRM: user bijwerken
+       Queue:        crm.kassa.user.updated
+       Routing key:  kassa.user.updated
+       Exchange:     user.topic
+  ============================================================ -->
+  <xs:element name="KassaUserUpdated">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="userId"    type="UUIDType"/>
+        <xs:element name="firstName" type="NonEmptyStringType"/>
+        <xs:element name="lastName"  type="NonEmptyStringType"/>
+        <xs:element name="email"     type="EmailType"/>
+        <xs:element name="companyId" type="UUIDType" minOccurs="0"/>
+        <xs:element name="badgeCode" type="NonEmptyStringType"/>
+        <xs:element name="role"      type="UserRoleType"/>
+        <xs:element name="updatedAt" type="ISO8601DateTimeType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================================
+       CONTRACT 38 — Kassa → CRM: user deactiveren
+       Queue:        crm.kassa.user.deactivated
+       Routing key:  kassa.user.deactivated
+       Exchange:     user.topic
+
+       Let op: root element is <UserDeactivated> (Kassa-producer keuze).
+       Veld is <id> (niet <userId>) — conform C38 producer-XSD.
+  ============================================================ -->
+  <xs:element name="UserDeactivated">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="id"            type="UUIDType"/>
+        <xs:element name="email"         type="EmailType"/>
+        <xs:element name="deactivatedAt" type="ISO8601DateTimeType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

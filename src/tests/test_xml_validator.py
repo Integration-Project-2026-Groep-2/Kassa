@@ -9,7 +9,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from xml_validator import validate_xml
+from xml_validator import validate_xml, validate_kassa
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -22,6 +22,16 @@ def valid(xml: str) -> None:
 def invalid(xml: str) -> None:
     ok, error = validate_xml(xml)
     assert not ok, "Verwacht ongeldig, maar werd geaccepteerd"
+
+
+def valid_kassa(xml: str) -> None:
+    ok, error = validate_kassa(xml)
+    assert ok, f"Verwacht geldig (kassa-user.xsd), maar fout: {error}"
+
+
+def invalid_kassa(xml: str) -> None:
+    ok, error = validate_kassa(xml)
+    assert not ok, "Verwacht ongeldig (kassa-user.xsd), maar werd geaccepteerd"
 
 
 # ── Contract 7 — Heartbeat ─────────────────────────────────────────────────────
@@ -412,3 +422,143 @@ def test_invoice_requested_missing_company_id():
             </item>
         </items>
     </InvoiceRequested>""")
+
+
+# ── Contract 36 — KassaUserCreated ────────────────────────────────────────────
+
+def test_kassa_user_created_valid():
+    valid_kassa("""<KassaUserCreated>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <firstName>Jan</firstName>
+        <lastName>Peeters</lastName>
+        <email>jan@example.com</email>
+        <badgeCode>BADGE001</badgeCode>
+        <role>VISITOR</role>
+        <createdAt>2026-04-18T10:00:00Z</createdAt>
+    </KassaUserCreated>""")
+
+
+def test_kassa_user_created_with_company():
+    valid_kassa("""<KassaUserCreated>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <firstName>Jan</firstName>
+        <lastName>Peeters</lastName>
+        <email>jan@example.com</email>
+        <companyId>550e8400-e29b-4ed4-a716-446655440001</companyId>
+        <badgeCode>BADGE001</badgeCode>
+        <role>COMPANY_CONTACT</role>
+        <createdAt>2026-04-18T10:00:00Z</createdAt>
+    </KassaUserCreated>""")
+
+
+def test_kassa_user_created_empty_badge_code():
+    """badgeCode mag niet leeg zijn (NonEmptyStringType, PR #121)."""
+    invalid_kassa("""<KassaUserCreated>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <firstName>Jan</firstName>
+        <lastName>Peeters</lastName>
+        <email>jan@example.com</email>
+        <badgeCode></badgeCode>
+        <role>VISITOR</role>
+        <createdAt>2026-04-18T10:00:00Z</createdAt>
+    </KassaUserCreated>""")
+
+
+def test_kassa_user_created_invalid_role():
+    invalid_kassa("""<KassaUserCreated>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <firstName>Jan</firstName>
+        <lastName>Peeters</lastName>
+        <email>jan@example.com</email>
+        <badgeCode>BADGE001</badgeCode>
+        <role>KLANT</role>
+        <createdAt>2026-04-18T10:00:00Z</createdAt>
+    </KassaUserCreated>""")
+
+
+def test_kassa_user_created_missing_created_at():
+    invalid_kassa("""<KassaUserCreated>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <firstName>Jan</firstName>
+        <lastName>Peeters</lastName>
+        <email>jan@example.com</email>
+        <badgeCode>BADGE001</badgeCode>
+        <role>VISITOR</role>
+    </KassaUserCreated>""")
+
+
+def test_kassa_user_created_invalid_uuid():
+    invalid_kassa("""<KassaUserCreated>
+        <userId>geen-uuid</userId>
+        <firstName>Jan</firstName>
+        <lastName>Peeters</lastName>
+        <email>jan@example.com</email>
+        <badgeCode>BADGE001</badgeCode>
+        <role>VISITOR</role>
+        <createdAt>2026-04-18T10:00:00Z</createdAt>
+    </KassaUserCreated>""")
+
+
+# ── Contract 37 — KassaUserUpdated ────────────────────────────────────────────
+
+def test_kassa_user_updated_valid():
+    valid_kassa("""<KassaUserUpdated>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <firstName>Jan</firstName>
+        <lastName>Peeters</lastName>
+        <email>jan@example.com</email>
+        <badgeCode>BADGE001</badgeCode>
+        <role>CASHIER</role>
+        <updatedAt>2026-04-18T10:00:00Z</updatedAt>
+    </KassaUserUpdated>""")
+
+
+def test_kassa_user_updated_missing_updated_at():
+    invalid_kassa("""<KassaUserUpdated>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <firstName>Jan</firstName>
+        <lastName>Peeters</lastName>
+        <email>jan@example.com</email>
+        <badgeCode>BADGE001</badgeCode>
+        <role>CASHIER</role>
+    </KassaUserUpdated>""")
+
+
+def test_kassa_user_updated_empty_first_name():
+    """firstName mag niet leeg zijn (NonEmptyStringType)."""
+    invalid_kassa("""<KassaUserUpdated>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <firstName></firstName>
+        <lastName>Peeters</lastName>
+        <email>jan@example.com</email>
+        <badgeCode>BADGE001</badgeCode>
+        <role>CASHIER</role>
+        <updatedAt>2026-04-18T10:00:00Z</updatedAt>
+    </KassaUserUpdated>""")
+
+
+# ── Contract 38 — UserDeactivated (Kassa producer) ────────────────────────────
+
+def test_kassa_user_deactivated_valid():
+    """C38 gebruikt <id> (niet <userId>) als sleutelveld."""
+    valid_kassa("""<UserDeactivated>
+        <id>550e8400-e29b-4ed4-a716-446655440000</id>
+        <email>jan@example.com</email>
+        <deactivatedAt>2026-04-18T10:00:00Z</deactivatedAt>
+    </UserDeactivated>""")
+
+
+def test_kassa_user_deactivated_missing_email():
+    invalid_kassa("""<UserDeactivated>
+        <id>550e8400-e29b-4ed4-a716-446655440000</id>
+        <deactivatedAt>2026-04-18T10:00:00Z</deactivatedAt>
+    </UserDeactivated>""")
+
+
+def test_kassa_user_deactivated_wrong_field_name():
+    """userId in plaats van id is fout voor C38."""
+    invalid_kassa("""<UserDeactivated>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <email>jan@example.com</email>
+        <deactivatedAt>2026-04-18T10:00:00Z</deactivatedAt>
+    </UserDeactivated>""")
