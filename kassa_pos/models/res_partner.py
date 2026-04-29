@@ -38,13 +38,23 @@ class ResPartner(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        import uuid
+        created_locally_indices = []
+        for i, vals in enumerate(vals_list):
+            if not vals.get('user_id_custom'):
+                vals['user_id_custom'] = str(uuid.uuid4())
+                created_locally_indices.append(i)
+                
         records = super().create(vals_list)
-        for record in records:
-            if record.user_id_custom:
-                record._publish_user_change('created')
+        for i in created_locally_indices:
+            records[i]._publish_user_change('created')
         return records
 
     def write(self, vals):
+        # We only publish an updated event if this write is initiated locally via Kassa POS UI.
+        # When contact_receiver updates via XML-RPC, it always passes 'user_id_custom'.
+        is_local_update = ('user_id_custom' not in vals)
+        
         result = super().write(vals)
 
         watched_fields = {
@@ -54,9 +64,8 @@ class ResPartner(models.Model):
             'badge_code',
             'role',
             'company_id_custom',
-            'user_id_custom',
         }
-        if watched_fields.intersection(vals.keys()):
+        if is_local_update and watched_fields.intersection(vals.keys()):
             for record in self:
                 if record.user_id_custom:
                     record._publish_user_change('updated')
@@ -86,11 +95,7 @@ class ResPartner(models.Model):
         if operation not in ('created', 'updated'):
             return
 
-        # For UserCreated: use Odoo's record ID (self.id)
-        # For UserUpdated: use user_id_custom (CRM Master UUID)
-        user_id_for_message = self.id if operation == 'created' else self.user_id_custom
-
-        user_data = self._build_user_data_dict(use_custom_id=(operation == 'updated'))
+        user_data = self._build_user_data_dict()
         operation_type = 'created' if operation == 'created' else 'updated'
 
         self._publish_with_fallback(
@@ -190,16 +195,13 @@ class ResPartner(models.Model):
                 str(queue_exc),
             )
 
-    def _build_user_data_dict(self, use_custom_id=False):
+    def _build_user_data_dict(self):
         self.ensure_one()
 
         first_name, last_name = self._split_name(self.name or '')
-        # For UserCreated: use self.id (Odoo record ID)
-        # For UserUpdated: use self.user_id_custom (CRM Master UUID)
-        user_id = self.user_id_custom if use_custom_id else str(self.id)
         
         return {
-            'userId': user_id,
+            'userId': self.user_id_custom,
             'firstName': first_name,
             'lastName': last_name,
             'email': self.email or '',
