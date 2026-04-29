@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
+    <data noupdate="1">
 
         <!-- Accounting Journals for Payment Methods -->
         <record id="account_journal_cash_kassa" model="account.journal">
