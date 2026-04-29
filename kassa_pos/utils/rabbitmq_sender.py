@@ -265,6 +265,86 @@ def _send_xml(
         return False
 
 
+def _build_batch_closed_xml(batch_data: dict) -> str:
+    """
+    Bouw een BatchClosed XML-bericht conform Contract K-02 (Kassa → Facturatie).
+    Alleen Invoice-orders van geïdentificeerde klanten, gegroepeerd per userId.
+    """
+    root = ET.Element('BatchClosed')
+
+    ET.SubElement(root, 'batchId').text = str(batch_data.get('batchId', ''))
+
+    closed_at = batch_data.get('closedAt') or _now_iso()
+    ET.SubElement(root, 'closedAt').text = str(closed_at)
+
+    ET.SubElement(root, 'currency').text = batch_data.get('currency', 'EUR')
+
+    if batch_data.get('users'):
+        users_el = ET.SubElement(root, 'users')
+        for user in batch_data['users']:
+            user_el = ET.SubElement(users_el, 'user')
+            ET.SubElement(user_el, 'userId').text = str(user.get('userId', ''))
+            if user.get('items'):
+                items_el = ET.SubElement(user_el, 'items')
+                for item in user['items']:
+                    item_el = ET.SubElement(items_el, 'item')
+                    ET.SubElement(item_el, 'productName').text = str(item.get('productName', ''))
+                    ET.SubElement(item_el, 'quantity').text = str(item.get('quantity', '0'))
+                    ET.SubElement(item_el, 'unitPrice').text = f"{float(item.get('unitPrice', 0)):.2f}"
+                    ET.SubElement(item_el, 'totalPrice').text = f"{float(item.get('totalPrice', 0)):.2f}"
+            ET.SubElement(user_el, 'totalAmount').text = f"{float(user.get('totalAmount', 0)):.2f}"
+
+    summary_el = ET.SubElement(root, 'summary')
+    ET.SubElement(summary_el, 'totalOrders').text = str(batch_data.get('totalOrders', 0))
+    ET.SubElement(summary_el, 'totalAmount').text = f"{float(batch_data.get('totalAmount', 0)):.2f}"
+    if batch_data.get('orderIds'):
+        order_ids_el = ET.SubElement(summary_el, 'orderIds')
+        for order_id in batch_data['orderIds']:
+            ET.SubElement(order_ids_el, 'orderId').text = str(order_id)
+
+    return ET.tostring(root, encoding='unicode')
+
+
+def _send_batch_to_exchange(xml_body: str) -> bool:
+    """
+    Publiceer BatchClosed naar exchange kassa.topic met routing key kassa.closed.
+    Geen queue_declare — Facturatie is verantwoordelijk voor hun eigen queue binding.
+    """
+    try:
+        import pika
+        params = _get_connection_params()
+        connection = pika.BlockingConnection(params)
+        channel = connection.channel()
+
+        channel.exchange_declare(exchange='kassa.topic', exchange_type='topic', durable=True)
+        channel.basic_publish(
+            exchange='kassa.topic',
+            routing_key='kassa.closed',
+            body=xml_body.encode('utf-8'),
+            properties=pika.BasicProperties(
+                delivery_mode=2,
+                content_type='application/xml',
+            ),
+        )
+        connection.close()
+        _logger.info("RabbitMQ: BatchClosed verstuurd naar kassa.topic [routing_key=kassa.closed]")
+        return True
+
+    except Exception as e:
+        _logger.error("RabbitMQ: verzenden BatchClosed mislukt: %s", e)
+        return False
+
+
+def send_batch_closed(batch_data: dict) -> bool:
+    """
+    Contract K-02 — Kassa → Facturatie: dagafsluiting batch.
+    Publiceert BatchClosed XML naar exchange kassa.topic, routing key kassa.closed.
+    Alleen Invoice-orders van klanten met een CRM UUID.
+    """
+    xml = _build_batch_closed_xml(batch_data)
+    return _send_batch_to_exchange(xml)
+
+
 def send_payment_confirmed(payment_data: dict) -> bool:
     """Contract 16 — Kassa → CRM: payment confirmed."""
     xml = _build_payment_confirmed_xml(payment_data)

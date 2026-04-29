@@ -1,10 +1,18 @@
 /** @odoo-module **/
 
+import { Component, xml } from '@odoo/owl';
 import { useService } from '@web/core/utils/hooks';
-import { Component } from '@odoo/owl';
 import { sprintf } from '@web/core/utils/strings';
+import { ProductScreen } from '@point_of_sale/app/screens/product_screen/product_screen';
 
-export class ClosingButton extends Component {
+class ClosingButton extends Component {
+    static template = xml`
+        <button class="button kassa-closing-btn" t-on-click="onClosingClick" title="Dagafsluiting versturen naar facturatie">
+            <i class="fa fa-save"/>
+            <span>Afsluitknop</span>
+        </button>
+    `;
+
     setup() {
         this.orm = useService('orm');
         this.notification = useService('notification');
@@ -12,80 +20,41 @@ export class ClosingButton extends Component {
 
     async onClosingClick() {
         try {
-            // Call the close_daily_batch method
-            const result = await this.orm.call(
-                'pos.order',
-                'close_daily_batch',
-                [],
-                {}
-            );
+            const result = await this.orm.call('pos.order', 'close_daily_batch', [], {});
 
             if (result.success) {
-                // Success notification
-                this.notification.add(
-                    result.message,
-                    {
-                        title: 'POS Batch Closed',
-                        type: 'success',
-                    }
-                );
-
-                // Log batch details
-                console.log('Batch Details:', {
-                    batchId: result.batch_id,
-                    ordersCount: result.orders_count,
-                    totalAmount: result.total_amount
+                this.notification.add(result.message, {
+                    title: 'Dagafsluiting verstuurd',
+                    type: 'success',
                 });
 
-                // Optional: trigger UI update or navigate
                 if (result.batch_id) {
-                    this._showBatchDetails(result);
+                    console.log('Batch gesloten:', sprintf(
+                        'Batch %s — %d orders — €%.2f',
+                        result.batch_id,
+                        result.orders_count,
+                        result.total_amount
+                    ));
                 }
             } else {
-                // Error notification
-                this.notification.add(
-                    result.message,
-                    {
-                        title: 'Error Closing Batch',
-                        type: 'danger',
-                    }
-                );
+                this.notification.add(result.message, {
+                    title: 'Fout bij dagafsluiting',
+                    type: 'danger',
+                });
             }
         } catch (error) {
-            console.error('Error closing batch:', error);
-            this.notification.add(
-                `Failed to close batch: ${error.message}`,
-                {
-                    title: 'System Error',
-                    type: 'danger',
-                }
-            );
+            console.error('Fout bij dagafsluiting:', error);
+            this.notification.add(`Fout: ${error.message}`, {
+                title: 'Systeemfout',
+                type: 'danger',
+            });
         }
     }
-
-    _showBatchDetails(result) {
-        const message = sprintf(
-            'Batch %s\nOrders: %d\nTotal: €%.2f',
-            result.batch_id,
-            result.orders_count,
-            result.total_amount
-        );
-
-        console.log('Batch closed successfully:', message);
-    }
-
-    static template = 'kassa_pos.ClosingButton';
 }
 
-// Template definition for OWL
-import { xml } from '@odoo/owl';
-
-ClosingButton.template = xml`
-    <div class="closing-button-container">
-        <button class="btn btn-lg btn-success closing-button" t-on-click="onClosingClick" title="Close daily session and send batch to facturatie">
-            <i class="fa fa-save"></i>
-            Afsluitknop
-        </button>
-    </div>
-`;
-
+ProductScreen.addControlButton({
+    component: ClosingButton,
+    condition: function () {
+        return true;
+    },
+});
