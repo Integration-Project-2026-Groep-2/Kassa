@@ -28,6 +28,7 @@
     ],
     'assets': {
         'point_of_sale._assets_pos': [
+            'kassa_pos/static/src/css/pos_theme.css',
             'kassa_pos/static/src/css/user_registration.css',
             'kassa_pos/static/src/js/UserRegistration.js',
             'kassa_pos/static/src/js/ProductScreenUserButton.js',
