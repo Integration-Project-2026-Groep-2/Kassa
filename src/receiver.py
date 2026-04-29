@@ -266,19 +266,11 @@ async def on_user_message(message: aio_pika.IncomingMessage) -> None:
 # (queue_name, durable, handler, routing_key)
 CONTACT_TOPIC_EXCHANGE = "contact.topic"
 QUEUE_HANDLERS = [
-    ("controlroom.warning.issued",      False, on_warning),
-    ("crm.person.lookup.responded",     False, on_person_lookup_response),
-    ("crm.user.confirmed",              True,  on_user_confirmed),
-    ("crm.company.confirmed",           True,  on_company_confirmed),
-    ("crm.unpaid.responded",            False, on_unpaid_response),
-    ("crm.user.updated",                True,  on_user_updated),
-    ("crm.company.updated",             True,  on_company_updated),
-    ("crm.user.deactivated",            True,  on_user_deactivated),
-    ("crm.company.deactivated",         True,  on_company_deactivated),
-    # Kassa User CRUD queues
-    ("kassa.user.created",              True,  on_user_message),
-    ("kassa.user.updated",              True,  on_user_message),
-    ("kassa.user.deleted",              True,  on_user_message),
+    ("kassa.person.lookup.responded",   False, on_person_lookup_response, "crm.person.lookup.responded"),
+    ("kassa.user.confirmed",            True,  on_user_confirmed,         "crm.user.confirmed"),
+    ("kassa.unpaid.responded",          False, on_unpaid_response,        "crm.unpaid.responded"),
+    ("kassa.user.updated",              True,  on_user_updated,           "crm.user.updated"),
+    ("kassa.user.deactivated",          True,  on_user_deactivated,       "crm.user.deactivated"),
 ]
 
 
@@ -334,6 +326,8 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
         queue = await channel.declare_queue(queue_name, durable=durable)
         if routing_key:
             await queue.bind(contact_exchange, routing_key=routing_key)
+        else:
+            await queue.bind(contact_exchange, routing_key=queue_name)
         await queue.consume(handler)
         logger.info("Luisteren op queue '%s'", queue_name)
 

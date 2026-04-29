@@ -89,78 +89,33 @@ class ResPartner(models.Model):
         if operation not in ('created', 'updated'):
             return
 
-        routing_key = f'kassa.user.{operation}'
         user_data = self._build_user_data_dict()
 
-        if operation == 'created':
-            queue_message_type = 'UserCreated'
-            payload = self._build_user_created_payload_xml(user_data)
-        else:
-            queue_message_type = 'UserUpdatedIntegration'
-            payload = self._build_user_updated_payload_xml(user_data)
-
-        # 1. Interne Kassa queue (local fallback)
         self._publish_with_fallback(
-            payload=payload,
             operation=operation,
             user_data=user_data,
-            routing_key=routing_key,
-            queue_message_type=queue_message_type,
             user_id_custom=self.user_id_custom,
         )
-
-        # 2. CRM user.topic exchange (C36 / C37)
-        self._publish_to_crm(operation, user_data)
 
     def _publish_user_deleted(self, user_id_custom, email=''):
         if not user_id_custom:
             return
 
-        # 1. Interne Kassa user queue (kassa.user.deleted)
-        payload = self._build_user_deleted_payload(user_id_custom)
-        self._publish_with_fallback(
-            payload=payload,
-            operation='deleted',
-            user_data={'userId': user_id_custom, 'email': email},
-            routing_key='kassa.user.deleted',
-            queue_message_type='UserDeleted',
+        self._publish_deactivated_with_fallback(
+            user_email=email,
             user_id_custom=user_id_custom,
         )
 
-        # 2. CRM user.topic exchange (C38 — UserDeactivated)
-        if email:
-            try:
-                from ..utils.rabbitmq_sender import send_kassa_user_deactivated
-                sent = send_kassa_user_deactivated(user_id_custom, email)
-                if not sent:
-                    _logger.warning(
-                        "C38 UserDeactivated niet verzonden naar CRM [user_id=%s]",
-                        user_id_custom,
-                    )
-            except Exception as exc:
-                _logger.warning(
-                    "C38 UserDeactivated: fout bij publiceren naar CRM [user_id=%s error=%s]",
-                    user_id_custom, str(exc),
-                )
-        else:
-            _logger.warning(
-                "C38 UserDeactivated: email ontbreekt, bericht niet verzonden naar CRM [user_id=%s]",
-                user_id_custom,
-            )
-
-    def _publish_with_fallback(self, payload, operation, user_data, routing_key, queue_message_type, user_id_custom):
+    def _publish_with_fallback(self, operation, user_data, user_id_custom):
         try:
-            # Try to publish via compat wrappers in rabbitmq_sender
-            from ..utils.rabbitmq_sender import send_user_created, send_user_updated, send_user_deactivated
+            from ..utils.rabbitmq_sender import send_user_created, send_user_updated
 
             if operation == 'created':
                 sent = send_user_created(user_data)
             elif operation == 'updated':
                 sent = send_user_updated(user_data)
-            elif operation == 'deleted':
-                sent = send_user_deactivated(user_data.get('email', ''), user_id_custom)
             else:
-                sent = False
+                return
 
             if not sent:
                 raise RuntimeError('RabbitMQ sender returned False')
@@ -178,7 +133,32 @@ class ResPartner(models.Model):
                 user_id_custom,
                 str(exc),
             )
+            queue_message_type = 'UserCreated' if operation == 'created' else 'UserUpdated'
+            payload = self._build_user_created_payload_xml(user_data) if operation == 'created' else self._build_user_updated_payload_xml(user_data)
             self._enqueue_user_message(user_id_custom, queue_message_type, payload, str(exc))
+
+    def _publish_deactivated_with_fallback(self, user_email, user_id_custom):
+        try:
+            from ..utils.rabbitmq_sender import send_user_deactivated
+
+            sent = send_user_deactivated(user_email, user_id_custom)
+
+            if not sent:
+                raise RuntimeError('RabbitMQ sender returned False')
+
+            _logger.info(
+                "User deactivated event published [user_id_custom=%s]",
+                user_id_custom,
+            )
+
+        except Exception as exc:
+            _logger.warning(
+                "Failed to publish user deactivated event, queueing locally [user_id_custom=%s error=%s]",
+                user_id_custom,
+                str(exc),
+            )
+            payload = self._build_user_deleted_payload(user_id_custom)
+            self._enqueue_user_message(user_id_custom, 'UserDeactivated', payload, str(exc))
 
     def _enqueue_user_message(self, user_id_custom, message_type, payload, error_message=''):
         try:

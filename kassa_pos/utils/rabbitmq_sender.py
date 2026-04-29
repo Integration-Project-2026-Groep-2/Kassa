@@ -504,9 +504,10 @@ def _publish_to_topic_exchange(routing_key: str, xml_body: str) -> bool:
 
     except Exception as e:
         _logger.error(
-            "RabbitMQ: publiceren mislukt [exchange=%s routing_key=%s]: %s",
+            "RabbitMQ: publiceren mislukt [exchange=%s routing_key=%s]: %r",
             USER_TOPIC_EXCHANGE, routing_key, e,
         )
+        raise e
         return False
 
 
