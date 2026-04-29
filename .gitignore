@@ -2,6 +2,9 @@
 .env.*
 !.env.example
 
+# Odoo config bevat credentials
+odoo.conf
+
 # Runtime data volumes (database, Odoo filestore, RabbitMQ, etc.)
 /data/
 /data/*
