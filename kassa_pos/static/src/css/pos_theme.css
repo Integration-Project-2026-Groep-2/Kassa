@@ -42,26 +42,51 @@ body.pos-kiosk-mobile {
     color: var(--k-text) !important;
 }
 
+body.pos .button,
+body.pos button,
+body.pos .btn,
+body.pos .control-button,
+body.pos .category-button,
+body.pos .category-simple-button,
 .o_pos .button,
 .o_pos button,
 .o_pos .btn,
 .o_pos .control-button,
 .o_pos .category-button,
-.o_pos .category-simple-button {
+.o_pos .category-simple-button,
+.pos .button,
+.pos button,
+.pos .btn,
+.pos .control-button,
+.pos .category-button,
+.pos .category-simple-button {
     background: var(--k-surface2) !important;
     color: var(--k-text) !important;
     border: 1px solid var(--k-border2) !important;
     border-radius: 10px !important;
     box-shadow: none !important;
+    font-weight: 600 !important;
     transition: background 0.2s ease, transform 0.15s ease, border-color 0.2s ease !important;
 }
 
+body.pos .button:hover,
+body.pos button:hover,
+body.pos .btn:hover,
+body.pos .control-button:hover,
+body.pos .category-button:hover,
+body.pos .category-simple-button:hover,
 .o_pos .button:hover,
 .o_pos button:hover,
 .o_pos .btn:hover,
 .o_pos .control-button:hover,
 .o_pos .category-button:hover,
-.o_pos .category-simple-button:hover {
+.o_pos .category-simple-button:hover,
+.pos .button:hover,
+.pos button:hover,
+.pos .btn:hover,
+.pos .control-button:hover,
+.pos .category-button:hover,
+.pos .category-simple-button:hover {
     background: var(--k-surface3) !important;
     border-color: rgba(79, 124, 255, 0.35) !important;
     transform: translateY(-1px) !important;
@@ -630,19 +655,24 @@ body.pos-kiosk-mobile {
 /* ============================================================
    KASSA ADD USER KNOP (jouw eigen component)
    ============================================================ */
+button.kassa-add-user-btn,
+.button.kassa-add-user-btn,
 .kassa-add-user-btn {
-    background: var(--k-accent) !important;
+    background: linear-gradient(135deg, var(--k-accent) 0%, var(--k-accent-hover) 100%) !important;
     color: #fff !important;
     border: none !important;
-    border-radius: 8px !important;
-    font-weight: 500 !important;
-    box-shadow: 0 4px 14px rgba(79, 124, 255, 0.3) !important;
-    transition: box-shadow 0.2s, transform 0.15s !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    padding: 0.95rem 1.35rem !important;
+    box-shadow: 0 12px 30px rgba(79, 124, 255, 0.22) !important;
+    transition: box-shadow 0.2s, transform 0.15s, background 0.2s !important;
 }
 
+button.kassa-add-user-btn:hover,
+.button.kassa-add-user-btn:hover,
 .kassa-add-user-btn:hover {
-    background: var(--k-accent-hover) !important;
-    box-shadow: 0 6px 20px rgba(79, 124, 255, 0.45) !important;
+    background: linear-gradient(135deg, #5f8cff 0%, #4f7cff 100%) !important;
+    box-shadow: 0 16px 36px rgba(79, 124, 255, 0.32) !important;
     transform: translateY(-1px) !important;
 }
 
