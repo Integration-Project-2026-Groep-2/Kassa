@@ -4,8 +4,6 @@
    Voeg toe aan manifest onder point_of_sale._assets_pos
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap');
-
 /* ============================================================
    ROOT VARIABELEN
    ============================================================ */
@@ -25,8 +23,8 @@
     --k-green:        #10b981;
     --k-red:          #ef4444;
     --k-amber:        #f59e0b;
-    --k-font:         'DM Sans', 'Segoe UI', sans-serif;
-    --k-mono:         'DM Mono', monospace;
+    --k-font:         'Segoe UI', 'Roboto', sans-serif;
+    --k-mono:         'Consolas', monospace;
     --k-gradient:     linear-gradient(135deg, #eef2ff 0%, #ffffff 100%);
 }
 
