@@ -22,9 +22,9 @@ Bij een foutief bericht: loggen als error, nooit crashen, POS-flow niet blokkere
 
 Queues (conform Docker-docs):
   R1: controlroom.warning.issued, crm.person.lookup.responded,
-      crm.user.confirmed, crm.company.confirmed, crm.unpaid.responded
-  R2: crm.user.updated, crm.company.updated
-  R3: crm.user.deactivated, crm.company.deactivated
+      crm.user.confirmed, kassa.company.confirmed, crm.unpaid.responded
+  R2: crm.user.updated, kassa.company.updated
+  R3: crm.user.deactivated, kassa.company.deactivated
 """
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')

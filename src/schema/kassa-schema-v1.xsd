@@ -250,7 +250,7 @@
 
   <!-- ============================================================
        CONTRACT 14 — CRM → Kassa: company confirmed
-       Queue: crm.company.confirmed | durable: true
+      Queue: kassa.company.confirmed | durable: true
   ============================================================ -->
   <xs:element name="CompanyConfirmed">
     <xs:complexType>
@@ -370,7 +370,7 @@
 
   <!-- ============================================================
        CONTRACT 19 — CRM → Kassa: company updated
-       Queue: crm.company.updated | durable: true
+      Queue: kassa.company.updated | durable: true
   ============================================================ -->
   <xs:element name="CompanyUpdated">
     <xs:complexType>
@@ -407,7 +407,7 @@
 
   <!-- ============================================================
        CONTRACT 23 — CRM → Kassa: company deactivated
-       Queue: crm.company.deactivated | durable: true
+      Queue: kassa.company.deactivated | durable: true
   ============================================================ -->
   <xs:element name="CompanyDeactivated">
     <xs:complexType>

@@ -67,9 +67,20 @@ INVOICE_REQUESTED_QUEUE = 'kassa.invoice.requested'
 WARNING_QUEUE = 'controlroom.warning.issued'
 PERSON_LOOKUP_RESPONSE_QUEUE = 'crm.person.lookup.responded'
 USER_CONFIRMED_QUEUE = 'kassa.user.confirmed'
-COMPANY_CONFIRMED_QUEUE = 'crm.company.confirmed'
+COMPANY_CONFIRMED_QUEUE = 'kassa.company.confirmed'
 UNPAID_RESPONSE_QUEUE = 'crm.unpaid.responded'
 USER_UPDATED_QUEUE = 'kassa.user.updated'
-COMPANY_UPDATED_QUEUE = 'crm.company.updated'
+COMPANY_UPDATED_QUEUE = 'kassa.company.updated'
 USER_DEACTIVATED_QUEUE = 'kassa.user.deactivated'
-COMPANY_DEACTIVATED_QUEUE = 'crm.company.deactivated'
+COMPANY_DEACTIVATED_QUEUE = 'kassa.company.deactivated'
+
+# Odoo connection settings (for Odoo persistence of CRM users)
+# We use None as a fallback so the app can handle missing config explicitly
+ODOO_URL = os.getenv('ODOO_URL', 'http://odoo:8069')
+ODOO_DB = os.getenv('ODOO_DB', 'kassa_db')
+ODOO_USER = os.getenv('ODOO_USER')
+ODOO_PASSWORD = os.getenv('ODOO_PASSWORD')
+
+if not ODOO_USER or not ODOO_PASSWORD:
+    # Optional: Log a warning or raise an error if these are required for startup
+    print("Warning: ODOO_USER or ODOO_PASSWORD environment variables are not set.")

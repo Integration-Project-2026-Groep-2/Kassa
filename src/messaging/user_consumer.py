@@ -14,9 +14,10 @@ Processes XML payloads, validates them, and stores user data.
 import logging
 import xml.etree.ElementTree as ET
 from typing import Optional, Callable
-from models.user import User, UserStore
+from models.user import User
 from messaging.message_builders import parse_user_xml
 from xml_validator import validate_xml
+from odoo.user_repository import OdooUserRepository
 
 logger = logging.getLogger(__name__)
 
@@ -31,15 +32,15 @@ class UserConsumer:
     - Deactivation operations (from CRM)
     """
 
-    def __init__(self, user_store: UserStore, on_error: Optional[Callable] = None):
+    def __init__(self, odoo_user_repo: OdooUserRepository, on_error: Optional[Callable] = None):
         """
         Initialize the user consumer.
         
         Args:
-            user_store: UserStore instance for CRUD operations
+            odoo_user_repo: OdooUserRepository instance for Odoo res.partner CRUD operations
             on_error: Optional callback function(message_type, error) for error handling
         """
-        self.user_store = user_store
+        self.odoo_user_repo = odoo_user_repo
         self.on_error = on_error
 
     def process_user_message(self, xml_payload: str) -> bool:
@@ -120,30 +121,16 @@ class UserConsumer:
                 self.on_error('User', error)
             return False
 
-        # Check if user exists to determine create vs update
-        existing_user = self.user_store.get_user_by_id(user.userId)
-        
-        if not existing_user:
-            # Create new user
-            success, error, created_user = self.user_store.create_user(user)
-            if not success:
-                logger.error("Failed to create user: %s", error)
-                if self.on_error:
-                    self.on_error('User', error)
-                return False
-            logger.info("User created via message: userId=%s", user.userId)
+        # Persist to Odoo (creates or updates via create_user idempotency)
+        try:
+            self.odoo_user_repo.create_user(user)
+            logger.info("User persisted to Odoo: userId=%s", user.userId)
             return True
-        else:
-            # Update existing user
-            updates = {k: v for k, v in user_data.items() if v is not None}
-            success, error, updated_user = self.user_store.update_user(user.userId, updates)
-            if not success:
-                logger.error("Failed to update user: %s", error)
-                if self.on_error:
-                    self.on_error('User', error)
-                return False
-            logger.info("User updated via message: userId=%s", user.userId)
-            return True
+        except Exception as e:
+            logger.error("Failed to persist user to Odoo: %s", str(e))
+            if self.on_error:
+                self.on_error('User', str(e))
+            return False
 
     def _handle_user_confirmed(self, root: ET.Element) -> bool:
         """
@@ -177,7 +164,7 @@ class UserConsumer:
         """
         Handle a UserDeactivated message from CRM.
         
-        Deletes/deactivates user from the store.
+        Soft-deletes user from Odoo (sets is_active=False).
         
         Args:
             root: XML Element of type UserDeactivated
@@ -187,22 +174,16 @@ class UserConsumer:
         """
         try:
             user_id = root.findtext('id', '').strip()
-            existing_user = self.user_store.get_user_by_id(user_id)
-
-            if not existing_user:
-                error = f"Cannot deactivate unknown user: {user_id}"
+            if not user_id:
+                error = "UserDeactivated missing required 'id' field"
                 logger.error(error)
                 if self.on_error:
                     self.on_error('UserDeactivated', error)
                 return False
-
-            existing_user.isActive = False
-            deactivated_at = root.findtext('deactivatedAt', '').strip()
-            if deactivated_at:
-                existing_user.updatedAt = deactivated_at
-                setattr(existing_user, 'deactivatedAt', deactivated_at)
-
-            logger.info("UserDeactivated processed: userId=%s (soft delete)", user_id)
+            
+            # Deactivate user in Odoo
+            self.odoo_user_repo.deactivate_user(user_id)
+            logger.info("User deactivated in Odoo: userId=%s", user_id)
             return True
 
         except Exception as e:
@@ -277,15 +258,13 @@ class UserConsumer:
             return False
 
     def _replace_user_snapshot(self, user: User) -> tuple[bool, Optional[str]]:
-        """Replace the stored user object without merging partial fields."""
-        existing_owner = self.user_store._badge_index.get(user.badgeCode)
-        if existing_owner and existing_owner != user.userId:
-            return False, f"badgeCode already in use: {user.badgeCode}"
+        """Replace the stored user object with a new one from CRM and persist to Odoo."""
+        try:
+            # Persist to Odoo (creates or updates)
+            self.odoo_user_repo.create_user(user)
+            logger.info("User snapshot replaced and persisted to Odoo: userId=%s", user.userId)
+            return True, None
+        except Exception as e:
+            logger.error("Failed to persist user snapshot to Odoo: %s", str(e))
+            return False, str(e)
 
-        existing_user = self.user_store._users.get(user.userId)
-        if existing_user and existing_user.badgeCode in self.user_store._badge_index:
-            del self.user_store._badge_index[existing_user.badgeCode]
-
-        self.user_store._users[user.userId] = user
-        self.user_store._badge_index[user.badgeCode] = user.userId
-        return True, None

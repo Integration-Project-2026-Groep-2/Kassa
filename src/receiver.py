@@ -14,19 +14,21 @@ Integreert ook:
 
 import asyncio
 import logging
+import os
 
 import aio_pika
 from aio_pika.abc import AbstractRobustConnection
 from lxml import etree
 
 from xml_validator import validate_xml
-from models.user import UserStore
 from messaging.user_consumer import UserConsumer
+from odoo.odoo_connection import OdooConnection
+from odoo.user_repository import OdooUserRepository
 
 logger = logging.getLogger(__name__)
 
-# Global user store and consumer (initialized in run_receiver)
-_user_store: UserStore | None = None
+# Global user consumer and odoo connection (initialized in run_receiver)
+_odoo_connection: OdooConnection | None = None
 _user_consumer: UserConsumer | None = None
 
 
@@ -230,9 +232,9 @@ QUEUE_HANDLERS = [
     ('kassa.user.deactivated',           True,  on_user_deactivated, "crm.user.deactivated"),
     
     # CRM → Kassa: Company lifecycle
-    ("crm.company.confirmed",           True,  on_company_confirmed, None),
-    ("crm.company.updated",             True,  on_company_updated, None),
-    ("crm.company.deactivated",         True,  on_company_deactivated, None),
+    ("kassa.company.confirmed",         True,  on_company_confirmed, None),
+    ("kassa.company.updated",           True,  on_company_updated, None),
+    ("kassa.company.deactivated",       True,  on_company_deactivated, None),
     
     # CRM → Kassa: Other
     ("crm.unpaid.responded",            False, on_unpaid_response, None),
@@ -246,17 +248,31 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
     Start de async receiver voor alle inkomende queues (R1–R3) en integratie service.
     Elke queue krijgt zijn eigen consumer. Draait voor altijd.
     
-    Initialiseert ook het UserStore en UserConsumer voor CRUD operations.
+    Initialiseert ook de OdooConnection en UserConsumer voor CRUD operations.
     """
-    global _user_store, _user_consumer
+    global _odoo_connection, _user_consumer
     
-    # Initialize user store and consumer
-    _user_store = UserStore()
+    # Initialize Odoo connection
+    odoo_url = os.getenv('ODOO_URL', 'http://odoo:8069')
+    odoo_db = os.getenv('ODOO_DB', 'odoo')
+    odoo_user = os.getenv('ODOO_USER')
+    odoo_password = os.getenv('ODOO_PASSWORD')
+    
+    _odoo_connection = OdooConnection(odoo_url, odoo_db, odoo_user, odoo_password)
+    
+    if not _odoo_connection.connect():
+        logger.error("Failed to connect to Odoo, receiver will not start")
+        raise RuntimeError("Cannot connect to Odoo instance")
+    
+    logger.info("Connected to Odoo [url=%s db=%s]", odoo_url, odoo_db)
+    
+    # Initialize user consumer with Odoo repository
+    odoo_user_repo = OdooUserRepository(_odoo_connection)
     _user_consumer = UserConsumer(
-        _user_store,
+        odoo_user_repo,
         on_error=lambda msg_type, error: logger.error(f"User {msg_type} error: {error}")
     )
-    logger.info("UserStore and UserConsumer initialized")
+    logger.info("OdooUserRepository and UserConsumer initialized")
     logger.info("Receiver task gestart — luistert op %d queues", len(QUEUE_HANDLERS))
 
     channel = await connection.channel()

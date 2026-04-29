@@ -3,8 +3,8 @@ services:
         image: postgres:15
         environment:
             POSTGRES_DB: ${POSTGRES_DB:-kassa_db}
-            POSTGRES_USER: ${POSTGRES_USER:-kassa}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kassa}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
         volumes:
             - postgres_data:/var/lib/postgresql/data
 
@@ -19,8 +19,8 @@ services:
             - "0.0.0.0:${RABBIT_PORT:-5672}:5672"
             - "0.0.0.0:${RABBIT_MANAGEMENT_PORT:-15672}:15672"
         environment:
-            RABBITMQ_DEFAULT_USER: ${RABBIT_USER:-guest}
-            RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:-guest}
+            RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD}
             RABBITMQ_DEFAULT_VHOST: ${RABBIT_VHOST:-/}
 
     odoo:
@@ -38,20 +38,20 @@ services:
             - odoo_data:/var/lib/odoo
         environment:
             HOST: ${DB_HOST:-db}
-            USER: ${POSTGRES_USER:-kassa}
-            PASSWORD: ${POSTGRES_PASSWORD:-kassa}
+            USER: ${POSTGRES_USER}
+            PASSWORD: ${POSTGRES_PASSWORD}
             DB_HOST: ${DB_HOST:-db}
             DB_PORT: ${DB_PORT:-5432}
             POSTGRES_DB: ${POSTGRES_DB:-kassa_db}
             RABBITMQ_HOST: ${RABBIT_HOST:-rabbitmq}
             RABBITMQ_PORT: ${RABBIT_PORT:-5672}
-            RABBITMQ_USER: ${RABBIT_USER:-guest}
-            RABBITMQ_PASS: ${RABBIT_PASSWORD:-guest}
+            RABBITMQ_USER: ${RABBIT_USER}
+            RABBITMQ_PASS: ${RABBIT_PASSWORD}
             RABBITMQ_VHOST: ${RABBIT_VHOST:-/}
             RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
             RABBIT_PORT: ${RABBIT_PORT:-5672}
-            RABBIT_USER: ${RABBIT_USER:-guest}
-            RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
+            RABBIT_USER: ${RABBIT_USER}
+            RABBIT_PASSWORD: ${RABBIT_PASSWORD}
             RABBIT_VHOST: ${RABBIT_VHOST:-/}
             HEARTBEAT_INTERVAL_SECONDS: ${HEARTBEAT_INTERVAL_SECONDS:-1}
             HEARTBEAT_EXCHANGE: ${HEARTBEAT_EXCHANGE:-heartbeat.direct}
@@ -74,9 +74,13 @@ services:
         environment:
             RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
             RABBIT_PORT: ${RABBIT_PORT:-5672}
-            RABBIT_USER: ${RABBIT_USER:-guest}
-            RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
+            RABBIT_USER: ${RABBIT_USER}
+            RABBIT_PASSWORD: ${RABBIT_PASSWORD}
             RABBIT_VHOST: ${RABBIT_VHOST:-/}
+            ODOO_URL: ${ODOO_URL:-http://odoo:8069}
+            ODOO_DB: ${POSTGRES_DB:-kassa_db}
+            ODOO_USER: ${ODOO_USER}
+            ODOO_PASSWORD: ${ODOO_PASSWORD}
             ENABLE_HEARTBEAT_IN_ODOO_IMAGE: "false"
         restart: unless-stopped
 
@@ -86,14 +90,20 @@ services:
         depends_on:
             rabbitmq:
                 condition: service_healthy
+            odoo:
+                condition: service_started
         working_dir: /app/src
         command: main.py
         environment:
             RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
             RABBIT_PORT: ${RABBIT_PORT:-5672}
-            RABBIT_USER: ${RABBIT_USER:-guest}
-            RABBIT_PASSWORD: ${RABBIT_PASSWORD:-guest}
+            RABBIT_USER: ${RABBIT_USER}
+            RABBIT_PASSWORD: ${RABBIT_PASSWORD}
             RABBIT_VHOST: ${RABBIT_VHOST:-/}
+            ODOO_URL: ${ODOO_URL:-http://odoo:8069}
+            ODOO_DB: ${POSTGRES_DB:-kassa_db}
+            ODOO_USER: ${ODOO_USER}
+            ODOO_PASSWORD: ${ODOO_PASSWORD}
             ENABLE_HEARTBEAT_IN_ODOO_IMAGE: "false"
         restart: unless-stopped
 

@@ -226,8 +226,10 @@ class PosSession(models.Model):
             'badge_code': user_data.get('badgeCode', ''),
             'role': role_map.get(user_data['role'], 'Customer'),
             'company_id_custom': user_data.get('companyId'),
-            'customer': True,
             'is_company': False,
+            'company_type': 'person',
+            'customer_rank': 1,
+            'active': True,
         }
         
         contact = ResPartner.create(contact_values)
