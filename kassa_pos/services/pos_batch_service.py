@@ -63,20 +63,11 @@ class PosOrderBatchService:
             # 4. Create batch record (for tracking and idempotency)
             batch_record = self._create_batch_record(session, filtered_orders, batch_data)
             
-            # 5. Build XML and validate
-            from src.messaging.message_builders import build_batch_closed_xml
-            from src.xml_validator import validate_xml_against_schema
-            
-            xml_payload = build_batch_closed_xml(batch_data)
+            # 5. Build XML
+            from ..utils.rabbitmq_sender import _build_batch_closed_xml
+            xml_payload = _build_batch_closed_xml(batch_data)
             batch_data['xml_payload'] = xml_payload
-            
-            # Validate XML
-            schema_path = '/mnt/extra-addons/kassa_pos/../../../src/schema/kassa-closed-batch.xsd'
-            is_valid, error_msg = validate_xml_against_schema(xml_payload, schema_path)
-            if not is_valid:
-                batch_record.action_mark_failed(f"XML validation failed: {error_msg}")
-                return False, f"XML validation failed: {error_msg}", None
-            
+
             # Store XML in batch record
             batch_record.write({'xml_payload': xml_payload})
             
@@ -111,11 +102,11 @@ class PosOrderBatchService:
             # Check 1: payment_type must be 'Invoice'
             if order.payment_type != 'Invoice':
                 continue
-            
-            # Check 2: must have order_id_custom (UUID for identified user)
-            if not order.order_id_custom:
+
+            # Check 2: partner must have a CRM UUID (identified user)
+            if not order.partner_id or not order.partner_id.user_id_custom:
                 continue
-            
+
             filtered.append(order)
         
         _logger.debug(f"Filtered {len(filtered)} orders (Invoice + identified user)")
@@ -226,48 +217,32 @@ class PosOrderBatchService:
     def publish_batch(self, batch_data: Dict, batch_record) -> Tuple[bool, Optional[str]]:
         """
         Publish batch to RabbitMQ.
-        
+
         Args:
-            batch_data: Batch data dictionary (with xml_payload)
+            batch_data: Batch data dictionary
             batch_record: PosOrderBatch record
-        
+
         Returns:
             (success: bool, error_msg: Optional[str])
         """
         try:
-            from src.messaging.producer import KassaProducer
-            import os
-            
-            # Get RabbitMQ connection details
-            rabbit_host = os.environ.get('RABBIT_HOST', 'rabbitmq')
-            rabbit_port = int(os.environ.get('RABBIT_PORT', 5672))
-            
-            # Create producer and publish
-            producer = KassaProducer(host=rabbit_host)
-            producer.connect()
-            
-            xml_payload = batch_data.get('xml_payload', '')
-            producer.publish(
-                payload=xml_payload,
-                routing_key='kassa.closed',
-                exchange='kassa.topic'
-            )
-            
-            producer.close()
-            
-            # Mark batch as sent
+            from ..utils.rabbitmq_sender import send_batch_closed
+
+            success = send_batch_closed(batch_data)
+
+            if not success:
+                error_msg = "RabbitMQ: send_batch_closed returned False"
+                batch_record.action_mark_failed(error_msg)
+                return False, error_msg
+
             batch_record.action_mark_sent()
-            
-            _logger.info(f"Batch {batch_record.name} published to RabbitMQ")
+            _logger.info("Batch %s published to RabbitMQ", batch_record.name)
             return True, None
-        
+
         except Exception as e:
             error_msg = f"Error publishing batch: {str(e)}"
             _logger.exception(error_msg)
-            
-            # Mark batch as failed
             batch_record.action_mark_failed(error_msg)
-            
             return False, error_msg
     
     def get_failed_batches(self) -> List:
