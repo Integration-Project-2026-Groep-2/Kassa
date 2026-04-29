@@ -1,0 +1,629 @@
+/* ============================================================
+   Kassa POS — Dark Theme Override
+   Odoo 16 Point of Sale
+   Voeg toe aan manifest onder point_of_sale._assets_pos
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap');
+
+/* ============================================================
+   ROOT VARIABELEN
+   ============================================================ */
+:root {
+    --k-bg:           #0f1117;
+    --k-surface:      #181c26;
+    --k-surface2:     #1e2333;
+    --k-surface3:     #252b3d;
+    --k-accent:       #4f7cff;
+    --k-accent-hover: #6b8fff;
+    --k-accent-glow:  rgba(79, 124, 255, 0.2);
+    --k-border:       rgba(255, 255, 255, 0.07);
+    --k-border2:      rgba(255, 255, 255, 0.13);
+    --k-text:         #e8eaf2;
+    --k-text2:        #8b90a7;
+    --k-text3:        #5a5f78;
+    --k-green:        #3ecf8e;
+    --k-red:          #ff5b5b;
+    --k-amber:        #f5a623;
+    --k-font:         'DM Sans', 'Segoe UI', sans-serif;
+    --k-mono:         'DM Mono', monospace;
+}
+
+/* ============================================================
+   GLOBAAL — BODY & WRAPPER
+   ============================================================ */
+.pos, .pos-content, body.pos-kiosk-mobile {
+    background: var(--k-bg) !important;
+    font-family: var(--k-font) !important;
+    color: var(--k-text) !important;
+}
+
+/* ============================================================
+   TOPBAR / HEADER
+   ============================================================ */
+.pos-topheader,
+.pos-top-bar,
+.navbar.o_main_navbar {
+    background: var(--k-surface) !important;
+    border-bottom: 1px solid var(--k-border2) !important;
+    box-shadow: none !important;
+    color: var(--k-text) !important;
+}
+
+.pos-topheader .pos-branding,
+.pos-topheader .header-button,
+.pos-top-bar .header-button {
+    color: var(--k-text2) !important;
+}
+
+.pos-topheader .header-button:hover,
+.pos-top-bar .header-button:hover {
+    background: var(--k-surface2) !important;
+    color: var(--k-text) !important;
+    border-radius: 8px !important;
+}
+
+/* ============================================================
+   PRODUCT SCREEN — LINKER PANEEL (order/winkelmandje)
+   ============================================================ */
+.product-screen,
+.leftpane,
+.left-content {
+    background: var(--k-surface) !important;
+    border-right: 1px solid var(--k-border2) !important;
+}
+
+/* Lege winkelwagen tekst */
+.order-empty {
+    color: var(--k-text3) !important;
+}
+
+.order-empty .start-text {
+    color: var(--k-text3) !important;
+}
+
+/* Orderlijnen */
+.order-container,
+.order .order-scroller {
+    background: var(--k-surface) !important;
+}
+
+.orderline,
+.order .orderline {
+    background: transparent !important;
+    border-bottom: 1px solid var(--k-border) !important;
+    color: var(--k-text) !important;
+    transition: background 0.15s ease !important;
+}
+
+.orderline:hover,
+.order .orderline:hover {
+    background: var(--k-surface2) !important;
+}
+
+.orderline.selected,
+.order .orderline.selected {
+    background: var(--k-surface3) !important;
+    border-left: 3px solid var(--k-accent) !important;
+}
+
+.orderline .product-name,
+.order .orderline .product-name {
+    color: var(--k-text) !important;
+    font-weight: 500 !important;
+}
+
+.orderline .price,
+.order .orderline .price {
+    color: var(--k-text) !important;
+}
+
+.orderline .price-display .price,
+.orderline .info-list .info {
+    color: var(--k-text2) !important;
+    font-size: 0.82rem !important;
+}
+
+/* Totaalbalk onderaan linker paneel */
+.order-summary,
+.payment-summary,
+.total-discount {
+    background: var(--k-surface2) !important;
+    border-top: 1px solid var(--k-border2) !important;
+    color: var(--k-text) !important;
+}
+
+.order-summary .total,
+.payment-summary .total {
+    color: var(--k-text) !important;
+    font-weight: 600 !important;
+}
+
+/* ============================================================
+   NUMPAD & CONTROL KNOPPEN
+   ============================================================ */
+.numpad,
+.numpad-wrapper {
+    background: var(--k-surface) !important;
+    border-top: 1px solid var(--k-border) !important;
+}
+
+.numpad .number-char,
+.numpad .mode-button,
+.numpad button {
+    background: var(--k-surface2) !important;
+    color: var(--k-text) !important;
+    border: 1px solid var(--k-border) !important;
+    border-radius: 8px !important;
+    font-family: var(--k-mono) !important;
+    font-size: 1rem !important;
+    transition: background 0.15s, transform 0.1s !important;
+}
+
+.numpad .number-char:hover,
+.numpad .mode-button:hover,
+.numpad button:hover {
+    background: var(--k-surface3) !important;
+    border-color: var(--k-border2) !important;
+}
+
+.numpad .number-char:active,
+.numpad button:active {
+    transform: scale(0.95) !important;
+    background: var(--k-accent-glow) !important;
+}
+
+.numpad .mode-button.selected-mode,
+.numpad .mode-button.active {
+    background: var(--k-accent) !important;
+    color: #fff !important;
+    border-color: var(--k-accent) !important;
+}
+
+/* Backspace knop */
+.numpad .numpad-backspace,
+.numpad .delete-button {
+    background: var(--k-surface2) !important;
+    color: var(--k-text2) !important;
+    border: 1px solid var(--k-border) !important;
+    border-radius: 8px !important;
+}
+
+/* Control buttons (Refund, Customer Note, Add User) */
+.control-buttons,
+.actionpad .control-buttons {
+    background: var(--k-surface) !important;
+    border-top: 1px solid var(--k-border) !important;
+    gap: 6px !important;
+    padding: 8px !important;
+}
+
+.control-button,
+.control-buttons .control-button {
+    background: var(--k-surface2) !important;
+    color: var(--k-text2) !important;
+    border: 1px solid var(--k-border2) !important;
+    border-radius: 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    transition: all 0.2s !important;
+}
+
+.control-button:hover,
+.control-buttons .control-button:hover {
+    background: var(--k-surface3) !important;
+    color: var(--k-text) !important;
+    border-color: rgba(79, 124, 255, 0.4) !important;
+}
+
+/* Customer knop links onder */
+.customer-button,
+.set-customer {
+    background: var(--k-surface2) !important;
+    color: var(--k-text2) !important;
+    border: 1px solid var(--k-border2) !important;
+    border-radius: 8px !important;
+}
+
+/* Payment knop — groot paars blok */
+.pay-order-button,
+.payment-button,
+.btn-switchpane.pay-order-button {
+    background: linear-gradient(135deg, var(--k-accent) 0%, #3d5fc4 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    box-shadow: 0 4px 16px rgba(79, 124, 255, 0.3) !important;
+    transition: box-shadow 0.2s, transform 0.15s !important;
+}
+
+.pay-order-button:hover,
+.payment-button:hover {
+    box-shadow: 0 6px 22px rgba(79, 124, 255, 0.45) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ============================================================
+   PRODUCT GRID — RECHTER PANEEL
+   ============================================================ */
+.rightpane,
+.right-content,
+.product-list-container {
+    background: var(--k-bg) !important;
+}
+
+/* Zoekbalk */
+.search-box,
+.products-widget-control .search-box {
+    background: var(--k-surface) !important;
+    border: 1px solid var(--k-border2) !important;
+    border-radius: 10px !important;
+    color: var(--k-text) !important;
+    padding: 0.5rem 1rem !important;
+}
+
+.search-box input,
+.search-box .search-input {
+    background: transparent !important;
+    color: var(--k-text) !important;
+    border: none !important;
+    outline: none !important;
+}
+
+.search-box input::placeholder {
+    color: var(--k-text3) !important;
+}
+
+.search-box .search-icon,
+.search-box i {
+    color: var(--k-text3) !important;
+}
+
+/* Product kaartjes */
+.product-list .product,
+.product-list .product-item {
+    background: var(--k-surface) !important;
+    border: 1px solid var(--k-border) !important;
+    border-radius: 10px !important;
+    color: var(--k-text) !important;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s !important;
+    overflow: hidden !important;
+}
+
+.product-list .product:hover,
+.product-list .product-item:hover {
+    background: var(--k-surface2) !important;
+    border-color: rgba(79, 124, 255, 0.45) !important;
+    transform: translateY(-2px) !important;
+}
+
+.product-list .product:active,
+.product-list .product-item:active {
+    transform: scale(0.97) !important;
+}
+
+/* Product naam */
+.product-list .product .product-name,
+.product-list .product-item .product-name {
+    color: var(--k-text) !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+}
+
+/* Product prijs */
+.product-list .product .price-tag,
+.product-list .product-item .price-tag,
+.product-list .product .product-price {
+    color: var(--k-accent) !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    font-family: var(--k-mono) !important;
+}
+
+/* Info icoontje op product kaart */
+.product-list .product .product-info-button,
+.product-list .product-item .info-tag {
+    color: var(--k-text3) !important;
+    opacity: 0.6 !important;
+}
+
+.product-list .product .product-info-button:hover {
+    opacity: 1 !important;
+    color: var(--k-text2) !important;
+}
+
+/* Categorie balk boven producten */
+.product-screen .subscreen-banner,
+.category-list,
+.products-widget-control {
+    background: var(--k-surface) !important;
+    border-bottom: 1px solid var(--k-border) !important;
+}
+
+.category-list .category-button,
+.category-simple-button {
+    background: transparent !important;
+    color: var(--k-text2) !important;
+    border: 1px solid var(--k-border) !important;
+    border-radius: 7px !important;
+    transition: all 0.2s !important;
+}
+
+.category-list .category-button:hover,
+.category-simple-button:hover {
+    background: var(--k-surface2) !important;
+    color: var(--k-text) !important;
+}
+
+.category-list .category-button.active,
+.category-simple-button.selected {
+    background: var(--k-accent) !important;
+    color: #fff !important;
+    border-color: var(--k-accent) !important;
+}
+
+/* Home / breadcrumb knop */
+.breadcrumb-home,
+.category-anchor {
+    background: var(--k-surface2) !important;
+    color: var(--k-text2) !important;
+    border: 1px solid var(--k-border) !important;
+    border-radius: 8px !important;
+}
+
+.breadcrumb-home:hover,
+.category-anchor:hover {
+    background: var(--k-surface3) !important;
+    color: var(--k-text) !important;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+.pos ::-webkit-scrollbar {
+    width: 5px !important;
+    height: 5px !important;
+}
+
+.pos ::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.pos ::-webkit-scrollbar-thumb {
+    background: var(--k-border2) !important;
+    border-radius: 999px !important;
+}
+
+.pos ::-webkit-scrollbar-thumb:hover {
+    background: var(--k-text3) !important;
+}
+
+/* ============================================================
+   POPUPS & MODALS (algemeen)
+   ============================================================ */
+.popup,
+.modal-dialog .modal-content,
+.o_dialog .o_dialog_content {
+    background: var(--k-surface) !important;
+    border: 1px solid var(--k-border2) !important;
+    border-radius: 16px !important;
+    color: var(--k-text) !important;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5) !important;
+}
+
+.popup .title,
+.modal-dialog .modal-header,
+.o_dialog .modal-header {
+    background: linear-gradient(135deg, #1a2040 0%, #141828 100%) !important;
+    color: #fff !important;
+    border-bottom: 1px solid var(--k-border) !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 1.25rem 1.5rem !important;
+}
+
+.popup .body,
+.modal-dialog .modal-body,
+.o_dialog .modal-body {
+    background: var(--k-surface) !important;
+    color: var(--k-text) !important;
+}
+
+.popup .footer,
+.modal-dialog .modal-footer,
+.o_dialog .modal-footer {
+    background: var(--k-surface) !important;
+    border-top: 1px solid var(--k-border) !important;
+}
+
+/* Popup knoppen */
+.popup .button.cancel,
+.modal-footer .btn-secondary {
+    background: var(--k-surface2) !important;
+    color: var(--k-text2) !important;
+    border: 1px solid var(--k-border2) !important;
+    border-radius: 8px !important;
+}
+
+.popup .button.confirm,
+.modal-footer .btn-primary {
+    background: var(--k-accent) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 14px rgba(79, 124, 255, 0.3) !important;
+}
+
+.popup .button.confirm:hover,
+.modal-footer .btn-primary:hover {
+    background: var(--k-accent-hover) !important;
+}
+
+/* Overlay achtergrond */
+.modal-backdrop,
+.o_dialog_container .o_overlay {
+    background: rgba(0, 0, 0, 0.65) !important;
+    backdrop-filter: blur(3px) !important;
+}
+
+/* ============================================================
+   INPUT VELDEN (in popups en formulieren)
+   ============================================================ */
+.pos input[type="text"],
+.pos input[type="email"],
+.pos input[type="number"],
+.pos input[type="password"],
+.pos select,
+.pos textarea {
+    background: var(--k-surface2) !important;
+    border: 1px solid var(--k-border2) !important;
+    border-radius: 8px !important;
+    color: var(--k-text) !important;
+    padding: 0.65rem 0.9rem !important;
+    font-family: var(--k-font) !important;
+    outline: none !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.pos input:focus,
+.pos select:focus,
+.pos textarea:focus {
+    border-color: rgba(79, 124, 255, 0.6) !important;
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.15) !important;
+}
+
+.pos input::placeholder {
+    color: var(--k-text3) !important;
+}
+
+/* ============================================================
+   PAYMENT SCREEN
+   ============================================================ */
+.payment-screen {
+    background: var(--k-bg) !important;
+}
+
+.payment-screen .payment-input-panel {
+    background: var(--k-surface) !important;
+    border-right: 1px solid var(--k-border2) !important;
+}
+
+.payment-screen .payment-method-list {
+    background: var(--k-surface) !important;
+}
+
+.payment-screen .payment-method {
+    background: var(--k-surface2) !important;
+    border: 1px solid var(--k-border) !important;
+    border-radius: 10px !important;
+    color: var(--k-text) !important;
+    transition: border-color 0.2s, background 0.2s !important;
+}
+
+.payment-screen .payment-method:hover {
+    border-color: rgba(79, 124, 255, 0.45) !important;
+    background: var(--k-surface3) !important;
+}
+
+.payment-screen .payment-method.selected {
+    border-color: var(--k-accent) !important;
+    background: var(--k-surface3) !important;
+}
+
+.payment-screen .payment-method .payment-name {
+    color: var(--k-text) !important;
+    font-weight: 500 !important;
+}
+
+.payment-screen .payment-method .payment-amount {
+    color: var(--k-accent) !important;
+    font-family: var(--k-mono) !important;
+}
+
+/* Validate knop op betaalscherm */
+.payment-screen .validate-button,
+.payment-screen .btn-primary {
+    background: linear-gradient(135deg, var(--k-green) 0%, #2ea87a 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 16px rgba(62, 207, 142, 0.3) !important;
+}
+
+.payment-screen .validate-button:hover {
+    box-shadow: 0 6px 22px rgba(62, 207, 142, 0.45) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ============================================================
+   RECEIPT SCREEN
+   ============================================================ */
+.receipt-screen {
+    background: var(--k-bg) !important;
+}
+
+.receipt-screen .pos-receipt {
+    background: var(--k-surface) !important;
+    border: 1px solid var(--k-border2) !important;
+    border-radius: 12px !important;
+    color: var(--k-text) !important;
+}
+
+/* ============================================================
+   NOTIFICATIES / TOASTS
+   ============================================================ */
+.notification,
+.o_notification {
+    background: var(--k-surface2) !important;
+    border: 1px solid var(--k-border2) !important;
+    border-radius: 10px !important;
+    color: var(--k-text) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.o_notification.o_notification_success {
+    border-left: 3px solid var(--k-green) !important;
+}
+
+.o_notification.o_notification_danger {
+    border-left: 3px solid var(--k-red) !important;
+}
+
+.o_notification.o_notification_warning {
+    border-left: 3px solid var(--k-amber) !important;
+}
+
+/* ============================================================
+   KASSA ADD USER KNOP (jouw eigen component)
+   ============================================================ */
+.kassa-add-user-btn {
+    background: var(--k-accent) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 4px 14px rgba(79, 124, 255, 0.3) !important;
+    transition: box-shadow 0.2s, transform 0.15s !important;
+}
+
+.kassa-add-user-btn:hover {
+    background: var(--k-accent-hover) !important;
+    box-shadow: 0 6px 20px rgba(79, 124, 255, 0.45) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET / TOUCH
+   ============================================================ */
+@media (max-width: 768px) {
+    .product-list .product,
+    .product-list .product-item {
+        border-radius: 8px !important;
+    }
+
+    .numpad button {
+        border-radius: 6px !important;
+    }
+}
