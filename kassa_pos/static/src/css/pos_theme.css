@@ -32,10 +32,39 @@
 /* ============================================================
    GLOBAAL — BODY & WRAPPER
    ============================================================ */
-.pos, .pos-content, body.pos-kiosk-mobile {
+body.o_pos,
+.o_pos,
+.pos,
+.pos-content,
+body.pos-kiosk-mobile {
     background: var(--k-bg) !important;
     font-family: var(--k-font) !important;
     color: var(--k-text) !important;
+}
+
+.o_pos .button,
+.o_pos button,
+.o_pos .btn,
+.o_pos .control-button,
+.o_pos .category-button,
+.o_pos .category-simple-button {
+    background: var(--k-surface2) !important;
+    color: var(--k-text) !important;
+    border: 1px solid var(--k-border2) !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    transition: background 0.2s ease, transform 0.15s ease, border-color 0.2s ease !important;
+}
+
+.o_pos .button:hover,
+.o_pos button:hover,
+.o_pos .btn:hover,
+.o_pos .control-button:hover,
+.o_pos .category-button:hover,
+.o_pos .category-simple-button:hover {
+    background: var(--k-surface3) !important;
+    border-color: rgba(79, 124, 255, 0.35) !important;
+    transform: translateY(-1px) !important;
 }
 
 /* ============================================================
@@ -192,6 +221,9 @@
 /* Control buttons (Refund, Customer Note, Add User) */
 .control-buttons,
 .actionpad .control-buttons {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
     background: var(--k-surface) !important;
     border-top: 1px solid var(--k-border) !important;
     gap: 6px !important;
