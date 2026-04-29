@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data>
 
         <!-- Accounting Journals for Payment Methods -->
         <record id="account_journal_cash_kassa" model="account.journal">
@@ -20,6 +20,7 @@
             <field name="name">Cash</field>
             <field name="journal_id" ref="account_journal_cash_kassa"/>
             <field name="company_id" ref="base.main_company"/>
+            <field name="is_cash_count" eval="True"/>
         </record>
 
         <record id="payment_method_card" model="pos.payment.method">
@@ -32,7 +33,7 @@
             <field name="name">Invoice</field>
             <field name="journal_id" ref="account_journal_bank_kassa"/>
             <field name="company_id" ref="base.main_company"/>
-            <field name="split_transactions">True</field>
+            <field name="split_transactions" eval="True"/>
         </record>
 
         <!-- POS Configuration -->
@@ -40,8 +41,8 @@
             <field name="name">Kassa Main</field>
             <field name="company_id" ref="base.main_company"/>
             <field name="payment_method_ids" eval="[(6, 0, [ref('payment_method_cash'), ref('payment_method_card'), ref('payment_method_invoice')])]"/>
-            <field name="module_pos_restaurant">False</field>
-            <field name="cash_control">True</field>
+            <field name="module_pos_restaurant" eval="False"/>
+            <field name="cash_control" eval="True"/>
         </record>
 
     </data>
