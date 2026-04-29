@@ -45,9 +45,15 @@ fi
 HEARTBEAT_ENABLED="${ENABLE_HEARTBEAT_IN_ODOO_IMAGE:-true}"
 HB_PID=""
 
+RECEIVER_ENABLED="${ENABLE_RECEIVER_IN_ODOO_IMAGE:-true}"
+REC_PID=""
+
 cleanup() {
   if [ -n "$HB_PID" ]; then
     kill "$HB_PID" 2>/dev/null || true
+  fi
+  if [ -n "$REC_PID" ]; then
+    kill "$REC_PID" 2>/dev/null || true
   fi
 }
 trap cleanup EXIT TERM INT
@@ -122,6 +128,15 @@ if [ "$HEARTBEAT_ENABLED" = "true" ]; then
   ) &
   HB_PID="$!"
   echo "[entrypoint] Heartbeat gestart in dezelfde container (PID: ${HB_PID})"
+fi
+
+if [ "$RECEIVER_ENABLED" = "true" ]; then
+  (
+    cd /app/src
+    python3 main.py
+  ) &
+  REC_PID="$!"
+  echo "[entrypoint] Contact receiver gestart in dezelfde container (PID: ${REC_PID})"
 fi
 
 echo "[entrypoint] Odoo starten met custom config en flags"
