@@ -9,67 +9,100 @@ class UserRegistrationModal extends Component {
     static components = { Dialog };
 
     static template = xml`
-        <Dialog title="'Register New User'" class="user-registration-modal-dialog">
+        <Dialog title="'Nieuwe gebruiker registreren'" class="user-registration-modal">
+            <div class="modal-header-panel">
+                <div>
+                    <h2>Nieuwe gebruiker registreren</h2>
+                    <p class="intro-text">Voeg snel een nieuwe POS-gebruiker toe met een professioneel en overzichtelijk registratieformulier.</p>
+                </div>
+                <span class="status-badge">Live registratie</span>
+            </div>
+
             <div class="modal-body">
                 <div t-if="uiState.hasError" class="alert alert-danger">
+                    <strong>Validatie mislukt:</strong>
                     <div class="alert-message">
                         <t t-esc="uiState.errorMessage"/>
                     </div>
                 </div>
-                <form class="user-registration-form">
+
+                <form class="user-registration-form" t-on-submit.prevent="onSubmit">
+                    <div class="form-row">
+                        <div class="form-column">
+                            <div class="form-group">
+                                <label for="firstName" class="form-label required">Voornaam</label>
+                                <input id="firstName" type="text" class="form-control" placeholder="Voornaam" t-model="formData.firstName" maxlength="80" required="required"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="email" class="form-label required">E-mail</label>
+                                <input id="email" type="email" class="form-control" placeholder="voorbeeld@bedrijf.com" t-model="formData.email" maxlength="254" required="required"/>
+                                <small class="helper-text">Deze e-mail wordt gebruikt voor systeemcommunicatie.</small>
+                            </div>
+                            <div class="form-group form-check">
+                                <input id="gdprConsent" type="checkbox" class="form-check-input" t-model="formData.gdprConsent" required="required"/>
+                                <label for="gdprConsent" class="form-check-label required">Ik ga akkoord met GDPR-verwerking</label>
+                            </div>
+                        </div>
+                        <div class="form-column">
+                            <div class="form-group">
+                                <label for="lastName" class="form-label required">Achternaam</label>
+                                <input id="lastName" type="text" class="form-control" placeholder="Achternaam" t-model="formData.lastName" maxlength="80" required="required"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="role" class="form-label required">Rol</label>
+                                <select id="role" class="form-control" t-model="formData.role" required="required">
+                                    <option value="">Selecteer rol</option>
+                                    <t t-foreach="roles" t-as="role" t-key="role.value">
+                                        <option t-att-value="role.value">
+                                            <t t-esc="role.label"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                            <div class="form-group form-check">
+                                <input id="isActive" type="checkbox" class="form-check-input" t-model="formData.isActive" checked="checked"/>
+                                <label for="isActive" class="form-check-label">Gebruiker actief</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-divider">
+                        <span>Extra informatie</span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-column">
+                            <div class="form-group">
+                                <label for="phone" class="form-label">Telefoon</label>
+                                <input id="phone" type="tel" class="form-control" placeholder="+32 123 456 789" t-model="formData.phone"/>
+                                <small class="helper-text">Optioneel voor support en communicatie.</small>
+                            </div>
+                        </div>
+                        <div class="form-column">
+                            <div class="form-group">
+                                <label for="companyId" class="form-label">Bedrijfs-ID</label>
+                                <input id="companyId" type="text" class="form-control" placeholder="UUID van bedrijf" t-model="formData.companyId"/>
+                                <small class="helper-text">Alleen invullen bij zakelijke koppelingen.</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label for="firstName" class="form-label required">First Name</label>
-                        <input id="firstName" type="text" class="form-control" placeholder="Enter first name" t-model="formData.firstName" maxlength="80" required="required"/>
-                    </div>
-                    <div class="form-group">
-                        <label for="lastName" class="form-label required">Last Name</label>
-                        <input id="lastName" type="text" class="form-control" placeholder="Enter last name" t-model="formData.lastName" maxlength="80" required="required"/>
-                    </div>
-                    <div class="form-group">
-                        <label for="email" class="form-label required">Email Address</label>
-                        <input id="email" type="email" class="form-control" placeholder="user@example.com" t-model="formData.email" maxlength="254" required="required"/>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone" class="form-label">Phone Number</label>
-                        <input id="phone" type="tel" class="form-control" placeholder="Enter phone number (optional)" t-model="formData.phone"/>
-                    </div>
-                    <div class="form-group">
-                        <label for="role" class="form-label required">Role</label>
-                        <select id="role" class="form-control" t-model="formData.role" required="required">
-                            <option value="">Select a role</option>
-                            <t t-foreach="roles" t-as="role" t-key="role.value">
-                                <option t-att-value="role.value">
-                                    <t t-esc="role.label"/>
-                                </option>
-                            </t>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="companyId" class="form-label">Company ID</label>
-                        <input id="companyId" type="text" class="form-control" placeholder="Company UUID (optional)" t-model="formData.companyId"/>
-                    </div>
-                    <div class="form-group">
-                        <label for="badgeCode" class="form-label">Badge Code</label>
-                        <input id="badgeCode" type="text" class="form-control" placeholder="QR code or badge ID (optional)" t-model="formData.badgeCode"/>
-                    </div>
-                    <div class="form-group form-check">
-                        <input id="gdprConsent" type="checkbox" class="form-check-input" t-model="formData.gdprConsent" required="required"/>
-                        <label for="gdprConsent" class="form-check-label required">I consent to GDPR data processing</label>
-                    </div>
-                    <div class="form-group form-check">
-                        <input id="isActive" type="checkbox" class="form-check-input" t-model="formData.isActive" checked="checked"/>
-                        <label for="isActive" class="form-check-label">User is active</label>
+                        <label for="badgeCode" class="form-label">Badge-code</label>
+                        <input id="badgeCode" type="text" class="form-control" placeholder="QR/barcode code (optioneel)" t-model="formData.badgeCode"/>
+                        <small class="helper-text">Gebruik alleen als scannen niet wil werken.</small>
                     </div>
                 </form>
             </div>
+
             <t t-set-slot="footer">
-                <button type="button" class="btn btn-secondary" t-on-click="closeModal" t-att-disabled="uiState.isLoading">Cancel</button>
-                <button type="button" class="btn btn-primary" t-on-click="onSubmit" t-att-disabled="uiState.isLoading">
+                <button type="button" class="btn btn-outline-secondary" t-on-click="closeModal" t-att-disabled="uiState.isLoading">Annuleren</button>
+                <button type="button" class="btn btn-primary btn-strong" t-on-click="onSubmit" t-att-disabled="uiState.isLoading">
                     <t t-if="uiState.isLoading">
                         <span class="spinner-border spinner-border-sm mr-2"/>
-                        Creating...
+                        Registreren...
                     </t>
-                    <t t-else="uiState.isLoading">Create User</t>
+                    <t t-else="uiState.isLoading">Gebruiker registreren</t>
                 </button>
             </t>
         </Dialog>
@@ -89,7 +122,7 @@ class UserRegistrationModal extends Component {
             lastName: '',
             email: '',
             phone: '',
-            role: 'Customer',  // Default role
+            role: 'VISITOR',
             companyId: '',
             badgeCode: '',
             gdprConsent: false,
@@ -105,11 +138,12 @@ class UserRegistrationModal extends Component {
         
         // Available roles for dropdown
         this.roles = [
-            { value: 'Customer', label: 'Customer' },
-            { value: 'Cashier', label: 'Cashier' },
-            { value: 'Speaker', label: 'Speaker' },
-            { value: 'EventManager', label: 'Event Manager' },
-            { value: 'Admin', label: 'Admin' },
+            { value: 'VISITOR', label: 'Bezoeker' },
+            { value: 'SPEAKER', label: 'Spreker' },
+            { value: 'CASHIER', label: 'Kassier' },
+            { value: 'EVENTMANAGER', label: 'Evenement Manager' },
+            { value: 'ADMIN', label: 'Administrator' },
+            { value: 'SPONSOR', label: 'Sponsor' },
         ];
     }
 
@@ -129,49 +163,49 @@ class UserRegistrationModal extends Component {
         
         // Check required fields
         if (!firstName.trim()) {
-            this.uiState.errorMessage = 'First Name is required';
+            this.uiState.errorMessage = 'Voornaam is verplicht';
             this.uiState.hasError = true;
             return false;
         }
         
         if (firstName.length > 80) {
-            this.uiState.errorMessage = 'First Name must be less than 80 characters';
+            this.uiState.errorMessage = 'Voornaam mag maximaal 80 tekens bevatten';
             this.uiState.hasError = true;
             return false;
         }
         
         if (!lastName.trim()) {
-            this.uiState.errorMessage = 'Last Name is required';
+            this.uiState.errorMessage = 'Achternaam is verplicht';
             this.uiState.hasError = true;
             return false;
         }
         
         if (lastName.length > 80) {
-            this.uiState.errorMessage = 'Last Name must be less than 80 characters';
+            this.uiState.errorMessage = 'Achternaam mag maximaal 80 tekens bevatten';
             this.uiState.hasError = true;
             return false;
         }
         
         if (!email.trim()) {
-            this.uiState.errorMessage = 'Email is required';
+            this.uiState.errorMessage = 'E-mail is verplicht';
             this.uiState.hasError = true;
             return false;
         }
         
         if (!this.isValidEmail(email)) {
-            this.uiState.errorMessage = 'Please enter a valid email address';
+            this.uiState.errorMessage = 'Voer een geldig e-mailadres in';
             this.uiState.hasError = true;
             return false;
         }
         
         if (!role) {
-            this.uiState.errorMessage = 'Role is required';
+            this.uiState.errorMessage = 'Rol is verplicht';
             this.uiState.hasError = true;
             return false;
         }
         
         if (!gdprConsent) {
-            this.uiState.errorMessage = 'GDPR consent is required';
+            this.uiState.errorMessage = 'GDPR-toestemming is verplicht';
             this.uiState.hasError = true;
             return false;
         }
@@ -232,7 +266,7 @@ class UserRegistrationModal extends Component {
             console.log('User created successfully with contact ID:', contactId);
 
             // Success notification
-            this.notification.add(`User ${userData.firstName} ${userData.lastName} created successfully!`, {
+            this.notification.add(`Gebruiker ${userData.firstName} ${userData.lastName} is succesvol aangemaakt.`, {
                 type: 'success',
             });
             
