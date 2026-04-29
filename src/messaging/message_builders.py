@@ -196,7 +196,7 @@ def parse_user_xml(xml_string: str) -> Tuple[bool, Optional[str], Optional[Dict]
 
 def build_user_created_message(user_data: Dict) -> str:
     """
-    Build a UserCreated event message for RabbitMQ (integration.user.created queue).
+    Build a UserCreated event message for RabbitMQ (kassa.user.created queue).
     Conforms to the <UserCreated> element in kassa-schema-v1.xsd.
 
     Verplichte velden: userId, firstName, lastName, email, badgeCode, role, createdAt
@@ -221,7 +221,7 @@ def build_user_created_message(user_data: Dict) -> str:
 
 def build_user_updated_message(user_data: Dict) -> str:
     """
-    Build a UserUpdatedIntegration event message for RabbitMQ (integration.user.updated queue).
+    Build a UserUpdatedIntegration event message for RabbitMQ (kassa.user.updated queue).
     Conforms to the <UserUpdatedIntegration> element in kassa-schema-v1.xsd.
 
     Verplichte velden: userId, firstName, lastName, email, badgeCode, role, updatedAt

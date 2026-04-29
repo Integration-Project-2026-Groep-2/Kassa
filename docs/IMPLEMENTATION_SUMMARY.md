@@ -156,9 +156,9 @@ updatedAt      ISO 8601    Auto      Generated
 
 | Queue | Durable | Purpose |
 |-------|---------|---------|
-| integration.user.created | Yes | New user creation |
-| integration.user.updated | Yes | User updates |
-| integration.user.deleted | Yes | User deletion |
+| kassa.user.created | Yes | New user creation |
+| kassa.user.updated | Yes | User updates |
+| kassa.user.deleted | Yes | User deletion |
 | crm.user.confirmed | Yes | CRM registration |
 | crm.user.updated | Yes | CRM changes |
 | crm.user.deactivated | Yes | GDPR deactivation |

@@ -231,10 +231,10 @@ QUEUE_HANDLERS = [
     ("crm.company.updated",             True,  on_company_updated),
     ("crm.user.deactivated",            True,  on_user_deactivated),
     ("crm.company.deactivated",         True,  on_company_deactivated),
-    # Integration Service User CRUD queues
-    ("integration.user.created",        True,  on_user_message),
-    ("integration.user.updated",        True,  on_user_message),
-    ("integration.user.deleted",        True,  on_user_message),
+    # Kassa User CRUD queues
+    ("kassa.user.created",              True,  on_user_message),
+    ("kassa.user.updated",              True,  on_user_message),
+    ("kassa.user.deleted",              True,  on_user_message),
 ]
 
 

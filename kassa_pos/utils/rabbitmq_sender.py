@@ -25,9 +25,9 @@ USER_TOPIC_EXCHANGE = os.environ.get('USER_TOPIC_EXCHANGE', 'user.topic')
 # Queue namen conform Team Kassa contractoverzicht
 QUEUE_PAYMENT_CONFIRMED = 'kassa.payment.confirmed'   # Contract 16 → CRM
 QUEUE_INVOICE_REQUESTED = 'kassa.invoice.requested'   # Contract K-01 → Facturatie
-QUEUE_USER_CREATED = 'integration.user.created'
-QUEUE_USER_UPDATED = 'integration.user.updated'
-QUEUE_USER_DELETED = 'integration.user.deleted'
+QUEUE_USER_CREATED = 'kassa.user.created'
+QUEUE_USER_UPDATED = 'kassa.user.updated'
+QUEUE_USER_DELETED = 'kassa.user.deleted'
 
 # Routing keys voor Kassa → CRM user sync (C36/C37/C38)
 # CRM declareert de consumer-queues zelf; Kassa publiceert via user.topic exchange.
@@ -354,7 +354,7 @@ def send_user_created(user_data: dict) -> bool:
         QUEUE_USER_CREATED,
         xml,
         exchange=USER_EVENTS_EXCHANGE,
-        routing_key='integration.user.created',
+        routing_key='kassa.user.created',
         exchange_type=USER_EVENTS_EXCHANGE_TYPE,
     )
 
@@ -365,7 +365,7 @@ def send_user_updated(user_data: dict) -> bool:
         QUEUE_USER_UPDATED,
         xml,
         exchange=USER_EVENTS_EXCHANGE,
-        routing_key='integration.user.updated',
+        routing_key='kassa.user.updated',
         exchange_type=USER_EVENTS_EXCHANGE_TYPE,
     )
 
@@ -376,7 +376,7 @@ def send_user_deleted(user_id: str) -> bool:
         QUEUE_USER_DELETED,
         xml,
         exchange=USER_EVENTS_EXCHANGE,
-        routing_key='integration.user.deleted',
+        routing_key='kassa.user.deleted',
         exchange_type=USER_EVENTS_EXCHANGE_TYPE,
     )
 

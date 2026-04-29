@@ -275,7 +275,7 @@ class PosSession(models.Model):
             producer.connect()
             
             try:
-                producer.publish(xml_message, routing_key='integration.user.created')
+                producer.publish(xml_message, routing_key='kassa.user.created')
                 logger.info("User message published [user_id=%s]", user_id)
                 return {
                     'sent': True,

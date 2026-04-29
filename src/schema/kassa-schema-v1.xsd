@@ -450,7 +450,7 @@
 
   <!-- ============================================================
        UserCreated Event — Emitted when a new user is created
-       Queue: integration.user.created | durable: true
+      Queue: kassa.user.created | durable: true
   ============================================================ -->
   <xs:element name="UserCreated">
     <xs:complexType>
@@ -469,7 +469,7 @@
 
   <!-- ============================================================
        UserUpdatedIntegration Event — Emitted when a user is updated
-       Queue: integration.user.updated | durable: true
+      Queue: kassa.user.updated | durable: true
   ============================================================ -->
   <xs:element name="UserUpdatedIntegration">
     <xs:complexType>
@@ -488,7 +488,7 @@
 
   <!-- ============================================================
        UserDeleted Event — Emitted when a user is deleted/deactivated
-       Queue: integration.user.deleted | durable: true
+      Queue: kassa.user.deleted | durable: true
   ============================================================ -->
   <xs:element name="UserDeleted">
     <xs:complexType>

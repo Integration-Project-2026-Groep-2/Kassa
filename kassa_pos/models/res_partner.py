@@ -89,7 +89,7 @@ class ResPartner(models.Model):
         if operation not in ('created', 'updated'):
             return
 
-        routing_key = f'integration.user.{operation}'
+        routing_key = f'kassa.user.{operation}'
         user_data = self._build_user_data_dict()
 
         if operation == 'created':
@@ -116,13 +116,13 @@ class ResPartner(models.Model):
         if not user_id_custom:
             return
 
-        # 1. Interne integration-service queue (integration.user.deleted)
+        # 1. Interne Kassa user queue (kassa.user.deleted)
         payload = self._build_user_deleted_payload(user_id_custom)
         self._publish_with_fallback(
             payload=payload,
             operation='deleted',
             user_data={'userId': user_id_custom},
-            routing_key='integration.user.deleted',
+            routing_key='kassa.user.deleted',
             queue_message_type='UserDeleted',
             user_id_custom=user_id_custom,
         )
