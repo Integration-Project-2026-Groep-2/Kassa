@@ -24,6 +24,7 @@ This file is loaded via the Odoo manifest and provides initial test data.
             <field name="user_id_custom">550e8400-e29b-41d4-a716-446655440000</field>
             <field name="badge_code">QR784512</field>
             <field name="role">Customer</field>
+            <field name="customer_rank">1</field>
             <field name="is_company" eval="False"/>
         </record>
 
@@ -34,6 +35,7 @@ This file is loaded via the Odoo manifest and provides initial test data.
             <field name="user_id_custom">660e8400-e29b-41d4-a716-446655440001</field>
             <field name="badge_code">QR123456</field>
             <field name="role">Cashier</field>
+            <field name="customer_rank">1</field>
             <field name="is_company" eval="False"/>
         </record>
 
@@ -44,6 +46,7 @@ This file is loaded via the Odoo manifest and provides initial test data.
             <field name="user_id_custom">770e8400-e29b-41d4-a716-446655440002</field>
             <field name="badge_code">QR999999</field>
             <field name="role">Admin</field>
+            <field name="customer_rank">1</field>
             <field name="is_company" eval="False"/>
         </record>
 
@@ -54,6 +57,7 @@ This file is loaded via the Odoo manifest and provides initial test data.
             <field name="user_id_custom">880e8400-e29b-41d4-a716-446655440003</field>
             <field name="badge_code">QR555555</field>
             <field name="role">Customer</field>
+            <field name="customer_rank">1</field>
             <field name="company_id_custom">9c21f4e1-8b2e-4d71-a7a2-6f8cbbf81c10</field>
             <field name="is_company" eval="False"/>
         </record>
@@ -65,6 +69,7 @@ This file is loaded via the Odoo manifest and provides initial test data.
             <field name="user_id_custom">990e8400-e29b-41d4-a716-446655440004</field>
             <field name="badge_code">QR777777</field>
             <field name="role">Customer</field>
+            <field name="customer_rank">1</field>
             <field name="is_company" eval="False"/>
         </record>
 

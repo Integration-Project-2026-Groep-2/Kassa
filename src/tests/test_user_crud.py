@@ -12,8 +12,58 @@ Tests cover:
 import unittest
 import uuid
 import xml.etree.ElementTree as ET
-from models.user import User, UserStore, UserRole
+from models.user import User, UserRole
 from messaging.message_builders import build_user_xml, parse_user_xml
+from odoo.user_repository import OdooUserRepository
+
+
+class DummyOdooConnection:
+    def __init__(self, existing_ids=None, read_response=None):
+        self.existing_ids = existing_ids or []
+        self.created_values = None
+        self.written_values = None
+        # Optional explicit read response to simulate Odoo read() results
+        self.read_response = read_response
+
+    def is_connected(self):
+        return True
+
+    def search(self, model, domain, **kwargs):
+        return list(self.existing_ids)
+
+    def create(self, model, values):
+        self.created_values = values
+        return 42
+
+    def read(self, model, ids, fields=None):
+        # If an explicit read_response is provided, return it (wrapped in a list)
+        if self.read_response is not None:
+            return [self.read_response]
+
+        # Use written_values if available (from update), otherwise use created_values
+        source_values = self.written_values or self.created_values
+        if source_values is None:
+            return []
+
+        record = {
+            'id': 42,
+            'name': source_values.get('name'),
+            'email': source_values.get('email'),
+            'active': source_values.get('active', True),
+            'customer_rank': source_values.get('customer_rank', 1),
+            'is_company': source_values.get('is_company', False),
+            'company_id': source_values.get('company_id', 1),
+            'user_id_custom': source_values.get('user_id_custom'),
+            'badge_code': source_values.get('badge_code'),
+        }
+        return [record]
+
+    def get_default_company_id(self):
+        return 1  # Simulate default company
+
+    def write(self, model, ids, values):
+        self.written_values = values
+        return True
 
 
 class TestUserModel(unittest.TestCase):
@@ -125,7 +175,7 @@ class TestUserModel(unittest.TestCase):
         
         valid, error = user.validate()
         self.assertFalse(valid)
-        self.assertIn("userId", error.lower())
+        self.assertIn("userid", error.lower())
 
     def test_user_to_xml_dict(self):
         """Test converting user to XML dictionary."""
@@ -145,261 +195,6 @@ class TestUserModel(unittest.TestCase):
         self.assertEqual(xml_dict['userId'], user_id)
         self.assertEqual(xml_dict['companyId'], company_id)
         self.assertEqual(xml_dict['firstName'], "Frank")
-
-
-class TestUserStore(unittest.TestCase):
-    """Tests for the UserStore CRUD operations."""
-
-    def setUp(self):
-        """Set up test fixtures."""
-        self.store = UserStore()
-        self.user_id = str(uuid.uuid4())
-        self.company_id = str(uuid.uuid4())
-        self.test_user = User(
-            userId=self.user_id,
-            firstName="Test",
-            lastName="User",
-            email="test@example.com",
-            badgeCode="QR_TEST_001",
-            role="VISITOR",
-            companyId=self.company_id
-        )
-
-    def tearDown(self):
-        """Clean up after tests."""
-        self.store.clear_all()
-
-    # ─────────────── CREATE TESTS ───────────────
-
-    def test_create_user_success(self):
-        """Test successful user creation."""
-        success, error, user = self.store.create_user(self.test_user)
-        
-        self.assertTrue(success)
-        self.assertIsNone(error)
-        self.assertIsNotNone(user)
-        self.assertEqual(user.userId, self.user_id)
-
-    def test_create_user_duplicate_user_id(self):
-        """Test creation fails with duplicate userId."""
-        self.store.create_user(self.test_user)
-        
-        # Try to create another user with same ID
-        duplicate = User(
-            userId=self.user_id,
-            firstName="Duplicate",
-            lastName="User",
-            email="duplicate@example.com",
-            badgeCode="QR_DUP_001",
-            role="VISITOR"
-        )
-        
-        success, error, user = self.store.create_user(duplicate)
-        self.assertFalse(success)
-        self.assertIsNotNone(error)
-        self.assertIn("already exists", error)
-
-    def test_create_user_duplicate_badge_code(self):
-        """Test creation fails with duplicate badgeCode."""
-        self.store.create_user(self.test_user)
-        
-        # Try to create another user with same badge code
-        duplicate_badge = User(
-            userId=str(uuid.uuid4()),
-            firstName="Another",
-            lastName="User",
-            email="another@example.com",
-            badgeCode="QR_TEST_001",  # Same as test_user
-            role="VISITOR"
-        )
-        
-        success, error, user = self.store.create_user(duplicate_badge)
-        self.assertFalse(success)
-        self.assertIn("badgeCode", error)
-
-    def test_create_user_invalid_data(self):
-        """Test creation fails with invalid user data."""
-        invalid_user = User(
-            userId=str(uuid.uuid4()),
-            firstName="",  # Empty
-            lastName="User",
-            email="invalid",  # Invalid email
-            badgeCode="QR_INV",
-            role="VISITOR"
-        )
-        
-        success, error, user = self.store.create_user(invalid_user)
-        self.assertFalse(success)
-        self.assertIsNotNone(error)
-
-    # ─────────────── READ TESTS ───────────────
-
-    def test_get_user_by_id_success(self):
-        """Test retrieving user by ID."""
-        self.store.create_user(self.test_user)
-        
-        found_user = self.store.get_user_by_id(self.user_id)
-        self.assertIsNotNone(found_user)
-        self.assertEqual(found_user.email, "test@example.com")
-
-    def test_get_user_by_id_not_found(self):
-        """Test retrieving non-existent user by ID."""
-        found_user = self.store.get_user_by_id(str(uuid.uuid4()))
-        self.assertIsNone(found_user)
-
-    def test_get_user_by_badge_success(self):
-        """Test retrieving user by badge code."""
-        self.store.create_user(self.test_user)
-        
-        found_user = self.store.get_user_by_badge("QR_TEST_001")
-        self.assertIsNotNone(found_user)
-        self.assertEqual(found_user.userId, self.user_id)
-
-    def test_get_user_by_badge_not_found(self):
-        """Test retrieving user with non-existent badge code."""
-        found_user = self.store.get_user_by_badge("QR_NONEXISTENT")
-        self.assertIsNone(found_user)
-
-    def test_get_user_by_email_success(self):
-        """Test retrieving user by email."""
-        self.store.create_user(self.test_user)
-        
-        found_user = self.store.get_user_by_email("test@example.com")
-        self.assertIsNotNone(found_user)
-        self.assertEqual(found_user.userId, self.user_id)
-
-    def test_get_all_users(self):
-        """Test retrieving all users."""
-        user1 = self.test_user
-        user2 = User(
-            userId=str(uuid.uuid4()),
-            firstName="Second",
-            lastName="User",
-            email="second@example.com",
-            badgeCode="QR_TEST_002",
-            role="CASHIER"
-        )
-        
-        self.store.create_user(user1)
-        self.store.create_user(user2)
-        
-        all_users = self.store.get_all_users()
-        self.assertEqual(len(all_users), 2)
-
-    # ─────────────── UPDATE TESTS ───────────────
-
-    def test_update_user_success(self):
-        """Test successful user update."""
-        self.store.create_user(self.test_user)
-        
-        updates = {
-            'firstName': 'Updated',
-            'email': 'updated@example.com'
-        }
-        
-        success, error, user = self.store.update_user(self.user_id, updates)
-        self.assertTrue(success)
-        self.assertIsNone(error)
-        self.assertEqual(user.firstName, 'Updated')
-        self.assertEqual(user.email, 'updated@example.com')
-
-    def test_update_user_not_found(self):
-        """Test update fails for non-existent user."""
-        nonexistent_id = str(uuid.uuid4())
-        
-        success, error, user = self.store.update_user(nonexistent_id, {'firstName': 'Test'})
-        self.assertFalse(success)
-        self.assertIn("not found", error)
-
-    def test_update_user_badge_code(self):
-        """Test updating badge code."""
-        self.store.create_user(self.test_user)
-        
-        success, error, user = self.store.update_user(self.user_id, {'badgeCode': 'QR_NEW'})
-        self.assertTrue(success)
-        self.assertEqual(user.badgeCode, 'QR_NEW')
-        
-        # Old badge should not be found
-        found = self.store.get_user_by_badge("QR_TEST_001")
-        self.assertIsNone(found)
-        
-        # New badge should be found
-        found = self.store.get_user_by_badge('QR_NEW')
-        self.assertIsNotNone(found)
-
-    def test_update_user_duplicate_badge_code(self):
-        """Test update fails with duplicate badge code."""
-        user1 = self.test_user
-        user2 = User(
-            userId=str(uuid.uuid4()),
-            firstName="Second",
-            lastName="User",
-            email="second@example.com",
-            badgeCode="QR_TEST_002",
-            role="VISITOR"
-        )
-        
-        self.store.create_user(user1)
-        self.store.create_user(user2)
-        
-        # Try to change user2's badge to user1's
-        success, error, user = self.store.update_user(user2.userId, {'badgeCode': "QR_TEST_001"})
-        self.assertFalse(success)
-        self.assertIn("already in use", error)
-
-    # ─────────────── DELETE TESTS ───────────────
-
-    def test_delete_user_success(self):
-        """Test successful user deletion."""
-        self.store.create_user(self.test_user)
-        
-        success, error = self.store.delete_user(self.user_id)
-        self.assertTrue(success)
-        self.assertIsNone(error)
-        
-        # Verify user is gone
-        found = self.store.get_user_by_id(self.user_id)
-        self.assertIsNone(found)
-
-    def test_delete_user_not_found(self):
-        """Test deletion fails for non-existent user."""
-        nonexistent_id = str(uuid.uuid4())
-        
-        success, error = self.store.delete_user(nonexistent_id)
-        self.assertFalse(success)
-        self.assertIn("not found", error)
-
-    def test_delete_user_removes_badge_index(self):
-        """Test that deletion also removes badge code index."""
-        self.store.create_user(self.test_user)
-        
-        # Verify badge can be found
-        found = self.store.get_user_by_badge("QR_TEST_001")
-        self.assertIsNotNone(found)
-        
-        # Delete user
-        self.store.delete_user(self.user_id)
-        
-        # Verify badge is no longer found
-        found = self.store.get_user_by_badge("QR_TEST_001")
-        self.assertIsNone(found)
-
-    # ─────────────── UTILITY TESTS ───────────────
-
-    def test_user_count(self):
-        """Test getting user count."""
-        self.assertEqual(self.store.get_user_count(), 0)
-        
-        self.store.create_user(self.test_user)
-        self.assertEqual(self.store.get_user_count(), 1)
-
-    def test_clear_all(self):
-        """Test clearing all users."""
-        self.store.create_user(self.test_user)
-        self.assertEqual(self.store.get_user_count(), 1)
-        
-        self.store.clear_all()
-        self.assertEqual(self.store.get_user_count(), 0)
 
 
 class TestUserXMLBuilders(unittest.TestCase):
@@ -472,6 +267,70 @@ class TestUserXMLBuilders(unittest.TestCase):
         self.assertEqual(parsed_data['userId'], original_data['userId'])
         self.assertEqual(parsed_data['firstName'], original_data['firstName'])
         self.assertEqual(parsed_data['companyId'], original_data['companyId'])
+
+
+class TestOdooUserRepository(unittest.TestCase):
+    def setUp(self):
+        self.user = User(
+            userId=str(uuid.uuid4()),
+            firstName='Emma',
+            lastName='Janssens',
+            email='emma@example.com',
+            badgeCode='BADGE-00123',
+            role='COMPANY_CONTACT',
+            companyId=str(uuid.uuid4()),
+        )
+
+    def test_create_user_sets_customer_visibility_flags(self):
+        repo = OdooUserRepository(DummyOdooConnection())
+
+        repo.create_user(self.user)
+
+        self.assertIsNotNone(repo.odoo.created_values)
+        self.assertEqual(repo.odoo.created_values['customer_rank'], 1)
+        self.assertFalse(repo.odoo.created_values['is_company'])
+        self.assertEqual(repo.odoo.created_values['company_type'], 'person')
+
+    def test_update_user_also_sets_customer_visibility_flags(self):
+        repo = OdooUserRepository(DummyOdooConnection(existing_ids=[99]))
+
+        repo.create_user(self.user)
+
+        self.assertIsNotNone(repo.odoo.written_values)
+        self.assertEqual(repo.odoo.written_values['customer_rank'], 1)
+        self.assertFalse(repo.odoo.written_values['is_company'])
+        self.assertEqual(repo.odoo.written_values['company_type'], 'person')
+
+    def test_create_user_sets_company_id(self):
+        """Test that create_user sets the standard Odoo company_id field."""
+        repo = OdooUserRepository(DummyOdooConnection())
+
+        repo.create_user(self.user)
+
+        self.assertIsNotNone(repo.odoo.created_values)
+        # Verify company_id is set to the default (1)
+        self.assertEqual(repo.odoo.created_values.get('company_id'), 1)
+        self.assertEqual(repo.odoo.created_values['customer_rank'], 1)
+        self.assertFalse(repo.odoo.created_values['is_company'])
+
+    def test_create_user_readback_visibility_check_fails(self):
+        # Simulate an Odoo read() returning a partner that is not visible
+        bad_read = {
+            'id': 99,
+            'name': 'Hidden User',
+            'email': 'hidden@example.com',
+            'active': False,
+            'customer_rank': 0,
+            'is_company': True,
+            'company_id': None,  # Missing company_id = not visible
+            'user_id_custom': self.user.userId,
+            'badge_code': self.user.badgeCode,
+        }
+
+        repo = OdooUserRepository(DummyOdooConnection(read_response=bad_read))
+
+        with self.assertRaises(RuntimeError):
+            repo.create_user(self.user)
 
 
 if __name__ == '__main__':

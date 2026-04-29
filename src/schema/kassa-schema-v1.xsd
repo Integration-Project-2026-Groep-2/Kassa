@@ -250,7 +250,7 @@
 
   <!-- ============================================================
        CONTRACT 14 — CRM → Kassa: company confirmed
-       Queue: crm.company.confirmed | durable: true
+      Queue: kassa.company.confirmed | durable: true
   ============================================================ -->
   <xs:element name="CompanyConfirmed">
     <xs:complexType>
@@ -370,7 +370,7 @@
 
   <!-- ============================================================
        CONTRACT 19 — CRM → Kassa: company updated
-       Queue: crm.company.updated | durable: true
+      Queue: kassa.company.updated | durable: true
   ============================================================ -->
   <xs:element name="CompanyUpdated">
     <xs:complexType>
@@ -407,7 +407,7 @@
 
   <!-- ============================================================
        CONTRACT 23 — CRM → Kassa: company deactivated
-       Queue: crm.company.deactivated | durable: true
+      Queue: kassa.company.deactivated | durable: true
   ============================================================ -->
   <xs:element name="CompanyDeactivated">
     <xs:complexType>
@@ -452,7 +452,7 @@
        UserCreated Event — Emitted when a new user is created
        Queue: integration.user.created | durable: true
   ============================================================ -->
-  <xs:element name="UserCreated">
+  <xs:element name="KassaUserCreated">
     <xs:complexType>
       <xs:sequence>
         <xs:element name="userId" type="UUIDType"/>
@@ -468,10 +468,10 @@
   </xs:element>
 
   <!-- ============================================================
-       UserUpdatedIntegration Event — Emitted when a user is updated
+       KassaUserUpdated Event — Emitted when a Kassa-side user is updated
        Queue: integration.user.updated | durable: true
   ============================================================ -->
-  <xs:element name="UserUpdatedIntegration">
+  <xs:element name="KassaUserUpdated">
     <xs:complexType>
       <xs:sequence>
         <xs:element name="userId" type="UUIDType"/>
@@ -482,19 +482,6 @@
         <xs:element name="badgeCode" type="xs:string"/>
         <xs:element name="role" type="UserRoleType"/>
         <xs:element name="updatedAt" type="ISO8601DateTimeType"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-
-  <!-- ============================================================
-       UserDeleted Event — Emitted when a user is deleted/deactivated
-       Queue: integration.user.deleted | durable: true
-  ============================================================ -->
-  <xs:element name="UserDeleted">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="userId" type="UUIDType"/>
-        <xs:element name="deletedAt" type="ISO8601DateTimeType"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

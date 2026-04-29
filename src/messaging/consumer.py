@@ -27,7 +27,14 @@ class KassaConsumer:
         """Open de verbinding en het kanaal."""
         self._manager.connect()
 
-    def start_listening(self, queue_name: str, callback, durable: bool = True):
+    def start_listening(
+        self,
+        queue_name: str,
+        callback,
+        durable: bool = True,
+        exchange: str | None = None,
+        routing_key: str | None = None,
+    ):
         """Bind aan `queue_name` en roep `callback(body)` aan voor elk bericht.
 
         durable=False voor tijdelijke queues (bv. kassa.heartbeat, controlroom.warning.issued).
@@ -35,6 +42,11 @@ class KassaConsumer:
         """
         channel = self._manager.channel
         channel.queue_declare(queue=queue_name, durable=durable)
+
+        if exchange:
+            channel.exchange_declare(exchange=exchange, exchange_type='topic', durable=True)
+            if routing_key:
+                channel.queue_bind(queue=queue_name, exchange=exchange, routing_key=routing_key)
 
         def _on_message(ch, method, properties, body):
             try:

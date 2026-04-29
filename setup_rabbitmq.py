@@ -7,16 +7,24 @@ Run this after docker-compose up to ensure exchanges exist.
 import pika
 import sys
 import time
+import os
+
+
+USER_QUEUE_BINDINGS = [
+    ("kassa.user.confirmed", "crm.user.confirmed"),
+    ("kassa.user.updated", "crm.user.updated"),
+    ("kassa.user.deactivated", "crm.user.deactivated"),
+]
 
 def create_exchanges():
     """Create all required exchanges for Kassa system."""
     
     # Connection parameters
-    rabbitmq_host = "localhost"
-    rabbitmq_port = 5672
-    rabbitmq_user = "guest"
-    rabbitmq_password = "guest"
-    rabbitmq_vhost = "/"
+    rabbitmq_host = os.getenv("RABBIT_HOST", "localhost")
+    rabbitmq_port = int(os.getenv("RABBIT_PORT", "5672"))
+    rabbitmq_user = os.getenv("RABBIT_USER", "guest")
+    rabbitmq_password = os.getenv("RABBIT_PASSWORD", "guest")
+    rabbitmq_vhost = os.getenv("RABBIT_VHOST", "/")
     
     # Retry logic for container startup
     max_retries = 30
@@ -49,10 +57,9 @@ def create_exchanges():
     exchanges = [
         ("kassa.topic", "topic", True),      # Batch closing messages
         ("kassa.direct", "direct", True),    # Other Kassa messages
-        ("user.direct", "direct", True),     # User CRUD events
-        ("user.dlx", "direct", True),        # User dead letter exchange
-        ("user.retry", "direct", True),      # User retry exchange
+        ("user.topic", "topic", True),       # User CRUD events
         ("heartbeat.direct", "direct", True), # Heartbeat messages
+        ("contact.topic", "topic", True),    # CRM -> Kassa inbound events
     ]
     
     try:
@@ -62,7 +69,8 @@ def create_exchanges():
                     exchange=exchange_name,
                     exchange_type=exchange_type,
                     durable=durable,
-                    auto_delete=False
+                    auto_delete=False,
+                    internal=False,
                 )
                 print(f"✓ Exchange '{exchange_name}' ({exchange_type}) created/verified")
             except pika.exceptions.ChannelClosedByBroker as e:
@@ -71,6 +79,17 @@ def create_exchanges():
                     print(f"⚠ Warning creating '{exchange_name}': {e}")
                 else:
                     print(f"✓ Exchange '{exchange_name}' already exists")
+
+        for queue_name, routing_key in USER_QUEUE_BINDINGS:
+            channel.queue_declare(queue=queue_name, durable=True, auto_delete=False)
+            channel.queue_bind(
+                queue=queue_name,
+                exchange="contact.topic",
+                routing_key=routing_key,
+            )
+            print(
+                f"✓ Queue '{queue_name}' bound to 'contact.topic' with routing key '{routing_key}'"
+            )
         
         connection.close()
         print("\n✓ All exchanges created successfully!")

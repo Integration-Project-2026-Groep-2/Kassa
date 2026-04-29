@@ -14,19 +14,21 @@ Integreert ook:
 
 import asyncio
 import logging
+import os
 
 import aio_pika
 from aio_pika.abc import AbstractRobustConnection
 from lxml import etree
 
 from xml_validator import validate_xml
-from models.user import UserStore
 from messaging.user_consumer import UserConsumer
+from odoo.odoo_connection import OdooConnection
+from odoo.user_repository import OdooUserRepository
 
 logger = logging.getLogger(__name__)
 
-# Global user store and consumer (initialized in run_receiver)
-_user_store: UserStore | None = None
+# Global user consumer and odoo connection (initialized in run_receiver)
+_odoo_connection: OdooConnection | None = None
 _user_consumer: UserConsumer | None = None
 
 
@@ -86,6 +88,20 @@ async def on_user_confirmed(message: aio_pika.IncomingMessage) -> None:
         root = _parse_and_validate(message.body, "Contract 13 UserConfirmed")
         if root is None:
             return
+        if _user_consumer is None:
+            logger.error("UserConsumer not initialized")
+            return
+
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("Contract 13 UserConfirmed: kon bericht niet decoderen als UTF-8")
+            return
+
+        if not _user_consumer.process_user_message(xml_string):
+            logger.error("Failed to process UserConfirmed message")
+            return
+
         user_id = root.findtext("id", "")
         email = root.findtext("email", "")
         role = root.findtext("role", "")
@@ -125,6 +141,20 @@ async def on_user_updated(message: aio_pika.IncomingMessage) -> None:
         root = _parse_and_validate(message.body, "Contract 18 UserUpdated")
         if root is None:
             return
+        if _user_consumer is None:
+            logger.error("UserConsumer not initialized")
+            return
+
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("Contract 18 UserUpdated: kon bericht niet decoderen als UTF-8")
+            return
+
+        if not _user_consumer.process_user_message(xml_string):
+            logger.error("Failed to process UserUpdated message")
+            return
+
         user_id = root.findtext("id", "")
         email = root.findtext("email", "")
         logger.info("UserUpdated ontvangen [id=%s email=%s] — lokale kopie vervangen", user_id, email)
@@ -149,6 +179,20 @@ async def on_user_deactivated(message: aio_pika.IncomingMessage) -> None:
         root = _parse_and_validate(message.body, "Contract 22 UserDeactivated")
         if root is None:
             return
+        if _user_consumer is None:
+            logger.error("UserConsumer not initialized")
+            return
+
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("Contract 22 UserDeactivated: kon bericht niet decoderen als UTF-8")
+            return
+
+        if not _user_consumer.process_user_message(xml_string):
+            logger.error("Failed to process UserDeactivated message")
+            return
+
         user_id = root.findtext("id", "")
         email = root.findtext("email", "")
         logger.info(
@@ -171,74 +215,29 @@ async def on_company_deactivated(message: aio_pika.IncomingMessage) -> None:
         )
 
 
-# ── User CRUD handlers ──────────────────────────────────────────────────────
-
-async def on_user_message(message: aio_pika.IncomingMessage) -> None:
-    """
-    Handle User, UserCreated, UserUpdated, or UserDeleted messages.
-    Uses the global UserConsumer to process and store user data.
-    """
-    async with message.process():
-        if _user_consumer is None:
-            logger.error("UserConsumer not initialized")
-            return
-        
-        try:
-            xml_string = message.body.decode('utf-8')
-        except UnicodeDecodeError:
-            logger.error("Integration User: could not decode message as UTF-8")
-            return
-        
-        success = _user_consumer.process_user_message(xml_string)
-        if not success:
-            logger.error("Failed to process user message")
-            return
-        
-        logger.info("User message processed successfully")
-
-
-async def on_user_confirmed_integration(message: aio_pika.IncomingMessage) -> None:
-    """
-    Handle UserConfirmed messages from CRM for integration service.
-    Updates or creates user in the local store.
-    """
-    async with message.process():
-        if _user_consumer is None:
-            logger.error("UserConsumer not initialized")
-            return
-        
-        try:
-            xml_string = message.body.decode('utf-8')
-        except UnicodeDecodeError:
-            logger.error("Integration UserConfirmed: could not decode message as UTF-8")
-            return
-        
-        success = _user_consumer.process_user_message(xml_string)
-        if not success:
-            logger.error("Failed to process UserConfirmed message")
-            return
-        
-        logger.info("UserConfirmed message processed for integration store")
-
-
 # ── Queue configuratie ─────────────────────────────────────────────────────────
 
-# (queue_name, durable, handler)
+# (queue_name, durable, handler, routing_key)
+CONTACT_TOPIC_EXCHANGE = "contact.topic"
 QUEUE_HANDLERS = [
-    ("controlroom.warning.issued",      False, on_warning),
-    ("crm.person.lookup.responded",     False, on_person_lookup_response),
-    ("crm.user.confirmed",              True,  on_user_confirmed),
-    ("crm.company.confirmed",           True,  on_company_confirmed),
-    ("crm.unpaid.responded",            False, on_unpaid_response),
-    ("crm.user.updated",                True,  on_user_updated),
-    ("crm.company.updated",             True,  on_company_updated),
-    ("crm.user.deactivated",            True,  on_user_deactivated),
-    ("crm.company.deactivated",         True,  on_company_deactivated),
-    # Integration Service User CRUD queues
-    ("integration.user.created",        True,  on_user_message),
-    ("integration.user.updated",        True,  on_user_message),
-    ("integration.user.deleted",        True,  on_user_message),
-    ("crm.user.confirmed",              True,  on_user_confirmed_integration),
+    # Controlroom warnings
+    ("controlroom.warning.issued",      False, on_warning, None),
+    
+    # CRM → Kassa: Person lookups
+    ("crm.person.lookup.responded",     False, on_person_lookup_response, None),
+    
+    # CRM → Kassa: User lifecycle (R1-R3) — Salesforce CRM integration
+    ('kassa.user.confirmed',             True,  on_user_confirmed, "crm.user.confirmed"),
+    ('kassa.user.updated',               True,  on_user_updated, "crm.user.updated"),
+    ('kassa.user.deactivated',           True,  on_user_deactivated, "crm.user.deactivated"),
+    
+    # CRM → Kassa: Company lifecycle
+    ("kassa.company.confirmed",         True,  on_company_confirmed, None),
+    ("kassa.company.updated",           True,  on_company_updated, None),
+    ("kassa.company.deactivated",       True,  on_company_deactivated, None),
+    
+    # CRM → Kassa: Other
+    ("crm.unpaid.responded",            False, on_unpaid_response, None),
 ]
 
 
@@ -249,24 +248,45 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
     Start de async receiver voor alle inkomende queues (R1–R3) en integratie service.
     Elke queue krijgt zijn eigen consumer. Draait voor altijd.
     
-    Initialiseert ook het UserStore en UserConsumer voor CRUD operations.
+    Initialiseert ook de OdooConnection en UserConsumer voor CRUD operations.
     """
-    global _user_store, _user_consumer
+    global _odoo_connection, _user_consumer
     
-    # Initialize user store and consumer
-    _user_store = UserStore()
+    # Initialize Odoo connection
+    odoo_url = os.getenv('ODOO_URL', 'http://odoo:8069')
+    odoo_db = os.getenv('ODOO_DB', 'odoo')
+    odoo_user = os.getenv('ODOO_USER')
+    odoo_password = os.getenv('ODOO_PASSWORD')
+    
+    _odoo_connection = OdooConnection(odoo_url, odoo_db, odoo_user, odoo_password)
+    
+    if not _odoo_connection.connect():
+        logger.error("Failed to connect to Odoo, receiver will not start")
+        raise RuntimeError("Cannot connect to Odoo instance")
+    
+    logger.info("Connected to Odoo [url=%s db=%s]", odoo_url, odoo_db)
+    
+    # Initialize user consumer with Odoo repository
+    odoo_user_repo = OdooUserRepository(_odoo_connection)
     _user_consumer = UserConsumer(
-        _user_store,
+        odoo_user_repo,
         on_error=lambda msg_type, error: logger.error(f"User {msg_type} error: {error}")
     )
-    logger.info("UserStore and UserConsumer initialized")
+    logger.info("OdooUserRepository and UserConsumer initialized")
     logger.info("Receiver task gestart — luistert op %d queues", len(QUEUE_HANDLERS))
 
     channel = await connection.channel()
     await channel.set_qos(prefetch_count=10)
+    contact_exchange = await channel.declare_exchange(
+        CONTACT_TOPIC_EXCHANGE,
+        aio_pika.ExchangeType.TOPIC,
+        durable=True,
+    )
 
-    for queue_name, durable, handler in QUEUE_HANDLERS:
+    for queue_name, durable, handler, routing_key in QUEUE_HANDLERS:
         queue = await channel.declare_queue(queue_name, durable=durable)
+        if routing_key:
+            await queue.bind(contact_exchange, routing_key=routing_key)
         await queue.consume(handler)
         logger.info("Luisteren op queue '%s'", queue_name)
 

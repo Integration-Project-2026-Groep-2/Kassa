@@ -1,4 +1,5 @@
 import datetime
+import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, Optional, Tuple
@@ -10,6 +11,8 @@ InvoiceRequested (Contract K-01), User (CRUD operations).
 """
 
 TEMPLATE_PATH = Path(__file__).resolve().parents[2] / 'templates' / 'Heartbeat.xml'
+
+logger = logging.getLogger(__name__)
 
 
 def _read_template_text(path: Path) -> str:
@@ -144,7 +147,15 @@ def build_user_xml(user_data: Dict) -> str:
     if user_data.get('updatedAt'):
         ET.SubElement(root, 'updatedAt').text = str(user_data['updatedAt'])
 
-    return ET.tostring(root, encoding='unicode')
+    xml_string = ET.tostring(root, encoding='unicode')
+    from xml_validator import validate_xml
+
+    valid, error = validate_xml(xml_string)
+    if not valid:
+        logger.error("Invalid User XML generated: %s", error)
+        raise ValueError(f"Invalid User XML generated: {error}")
+
+    return xml_string
 
 
 def parse_user_xml(xml_string: str) -> Tuple[bool, Optional[str], Optional[Dict]]:
