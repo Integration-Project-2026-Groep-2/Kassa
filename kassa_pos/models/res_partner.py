@@ -67,6 +67,7 @@ class ResPartner(models.Model):
         delete_candidates = [
             {
                 'user_id_custom': record.user_id_custom,
+                'email': record.email or '',
             }
             for record in self
             if record.user_id_custom
@@ -75,7 +76,10 @@ class ResPartner(models.Model):
         result = super().unlink()
 
         for candidate in delete_candidates:
-            self._publish_user_deleted(candidate['user_id_custom'])
+            self._publish_user_deleted(
+                candidate['user_id_custom'],
+                candidate['email'],
+            )
 
         return result
 
@@ -86,10 +90,16 @@ class ResPartner(models.Model):
             return
 
         routing_key = f'integration.user.{operation}'
-        queue_message_type = 'UserCreated' if operation == 'created' else 'UserUpdated'
         user_data = self._build_user_data_dict()
-        payload = self._build_user_payload_xml(user_data)
 
+        if operation == 'created':
+            queue_message_type = 'UserCreated'
+            payload = self._build_user_created_payload_xml(user_data)
+        else:
+            queue_message_type = 'UserUpdatedIntegration'
+            payload = self._build_user_updated_payload_xml(user_data)
+
+        # 1. Interne integration-service queue (integration.user.*)
         self._publish_with_fallback(
             payload=payload,
             operation=operation,
@@ -99,10 +109,14 @@ class ResPartner(models.Model):
             user_id_custom=self.user_id_custom,
         )
 
-    def _publish_user_deleted(self, user_id_custom):
+        # 2. CRM user.topic exchange (C36 / C37)
+        self._publish_to_crm(operation, user_data)
+
+    def _publish_user_deleted(self, user_id_custom, email=''):
         if not user_id_custom:
             return
 
+        # 1. Interne integration-service queue (integration.user.deleted)
         payload = self._build_user_deleted_payload(user_id_custom)
         self._publish_with_fallback(
             payload=payload,
@@ -112,6 +126,27 @@ class ResPartner(models.Model):
             queue_message_type='UserDeleted',
             user_id_custom=user_id_custom,
         )
+
+        # 2. CRM user.topic exchange (C38 — UserDeactivated)
+        if email:
+            try:
+                from ..utils.rabbitmq_sender import send_kassa_user_deactivated
+                sent = send_kassa_user_deactivated(user_id_custom, email)
+                if not sent:
+                    _logger.warning(
+                        "C38 UserDeactivated niet verzonden naar CRM [user_id=%s]",
+                        user_id_custom,
+                    )
+            except Exception as exc:
+                _logger.warning(
+                    "C38 UserDeactivated: fout bij publiceren naar CRM [user_id=%s error=%s]",
+                    user_id_custom, str(exc),
+                )
+        else:
+            _logger.warning(
+                "C38 UserDeactivated: email ontbreekt, bericht niet verzonden naar CRM [user_id=%s]",
+                user_id_custom,
+            )
 
     def _publish_with_fallback(self, payload, operation, user_data, routing_key, queue_message_type, user_id_custom):
         try:
@@ -141,6 +176,33 @@ class ResPartner(models.Model):
                 str(exc),
             )
             self._enqueue_user_message(user_id_custom, queue_message_type, payload, str(exc))
+
+    def _publish_to_crm(self, operation, user_data):
+        """
+        Publiceer een user CRUD event naar CRM via user.topic exchange.
+
+        operation='created' → C36 KassaUserCreated  (routing key: kassa.user.created)
+        operation='updated' → C37 KassaUserUpdated   (routing key: kassa.user.updated)
+        """
+        self.ensure_one()
+        try:
+            from ..utils.rabbitmq_sender import send_kassa_user_created, send_kassa_user_updated
+
+            if operation == 'created':
+                sent = send_kassa_user_created(user_data)
+            else:
+                sent = send_kassa_user_updated(user_data)
+
+            if not sent:
+                _logger.warning(
+                    "CRM user event niet verzonden [operation=%s user_id=%s]",
+                    operation, self.user_id_custom,
+                )
+        except Exception as exc:
+            _logger.warning(
+                "CRM user event: fout bij publiceren [operation=%s user_id=%s error=%s]",
+                operation, self.user_id_custom, str(exc),
+            )
 
     def _enqueue_user_message(self, user_id_custom, message_type, payload, error_message=''):
         try:
@@ -177,8 +239,9 @@ class ResPartner(models.Model):
         }
 
     @staticmethod
-    def _build_user_payload_xml(user_data):
-        root = ET.Element('User')
+    def _build_user_created_payload_xml(user_data):
+        """Bouw <UserCreated> XML conform kassa-schema-v1.xsd."""
+        root = ET.Element('UserCreated')
         ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
         ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
         ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
@@ -190,14 +253,30 @@ class ResPartner(models.Model):
 
         ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
         ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+        ET.SubElement(root, 'createdAt').text = str(
+            user_data.get('createdAt') or datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        )
 
-        created_at = user_data.get('createdAt')
-        if created_at:
-            ET.SubElement(root, 'createdAt').text = str(created_at)
+        return ET.tostring(root, encoding='unicode')
 
-        updated_at = user_data.get('updatedAt')
-        if updated_at:
-            ET.SubElement(root, 'updatedAt').text = str(updated_at)
+    @staticmethod
+    def _build_user_updated_payload_xml(user_data):
+        """Bouw <UserUpdatedIntegration> XML conform kassa-schema-v1.xsd."""
+        root = ET.Element('UserUpdatedIntegration')
+        ET.SubElement(root, 'userId').text = str(user_data.get('userId', ''))
+        ET.SubElement(root, 'firstName').text = str(user_data.get('firstName', ''))
+        ET.SubElement(root, 'lastName').text = str(user_data.get('lastName', ''))
+        ET.SubElement(root, 'email').text = str(user_data.get('email', ''))
+
+        company_id = user_data.get('companyId')
+        if company_id:
+            ET.SubElement(root, 'companyId').text = str(company_id)
+
+        ET.SubElement(root, 'badgeCode').text = str(user_data.get('badgeCode', ''))
+        ET.SubElement(root, 'role').text = str(user_data.get('role', ''))
+        ET.SubElement(root, 'updatedAt').text = str(
+            user_data.get('updatedAt') or datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        )
 
         return ET.tostring(root, encoding='unicode')
 
