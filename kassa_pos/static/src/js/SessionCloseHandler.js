@@ -17,12 +17,3 @@ export function patchSessionCloseAction() {
     // This function is called to patch any session close actions if needed
     console.log('[Afsluitknop] Session close action patched');
 }
-
-// Patch the POS session close functionality
-patchSessionCloseAction();
-
-// Export the initialization function
-export default {
-    initSessionCloseHandler,
-    patchSessionCloseAction,
-};

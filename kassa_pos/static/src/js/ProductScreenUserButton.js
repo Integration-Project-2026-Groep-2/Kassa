@@ -7,9 +7,9 @@ import { UserRegistrationModal } from "./UserRegistration";
 
 class AddUserButton extends Component {
     static template = xml`
-        <button class="button btn btn-primary btn-lg kassa-add-user-btn" t-on-click="openUserRegistration" title="Nieuwe gebruiker registreren">
+        <button class="button kassa-add-user-btn" t-on-click="openUserRegistration" title="Register a new user manually">
             <i class="fa fa-user-plus"/>
-            <span>Gebruiker toevoegen</span>
+            <span>Add User</span>
         </button>
     `;
 

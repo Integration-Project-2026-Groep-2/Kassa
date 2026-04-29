@@ -1,20 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <data>
-        <!-- Closing Button Template -->
-        <template id="kassa_pos_closing_button" name="Closing Button Template">
-            <div class="closing-button-container">
-                <button class="btn btn-lg btn-success closing-button" t-on-click="onClosingClick"
-                        title="Afsluitknop - Sluit dagelijkse sessie en verstuur batch naar facturatie"
-                        t-att-disabled="isLoading">
-                    <i class="fa fa-save"></i>
-                    <span t-if="isLoading">
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        Batch sluiten...
-                    </span>
-                    <span t-if="!isLoading">Afsluitknop</span>
-                </button>
-            </div>
-        </template>
-    </data>
+    <template id="ClosingButton" name="Closing Button Template">
+        <button class="btn btn-primary closing-button" t-on-click="onClosingClick">
+            <i class="fa fa-save"></i>
+            Afsluitknop (Close & Send Batch)
+        </button>
+    </template>
 </odoo>

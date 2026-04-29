@@ -1,74 +1,117 @@
 /* User Registration Modal Styles */
 
+:root {
+    --surface: #f3f6fb;
+    --surface-card: #ffffff;
+    --surface-strong: #e2e8f0;
+    --text-main: #111827;
+    --text-muted: #4b5563;
+    --primary: #2563eb;
+    --primary-soft: #dbeafe;
+    --primary-strong: #1d4ed8;
+    --border: #cbd5e1;
+    --border-soft: rgba(148, 163, 184, 0.28);
+    --radius: 1rem;
+    --radius-sm: 0.85rem;
+    --shadow-soft: 0 14px 35px rgba(15, 23, 42, 0.08);
+    --shadow-subtle: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
 .user-registration-modal {
-    min-width: 640px;
-    max-width: 820px;
+    min-width: 680px;
+    max-width: 900px;
     width: 100%;
-    border-radius: 1rem;
+    border-radius: var(--radius);
     overflow: hidden;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: transparent;
+    box-shadow: var(--shadow-soft);
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.user-registration-modal.o_dialog {
+    background: transparent;
+    border: none;
 }
 
 .user-registration-modal .modal-header-panel {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 1.75rem 2rem;
-    background: linear-gradient(135deg, #1545a4 0%, #2f7ef9 100%);
+    gap: 1.5rem;
+    padding: 2rem 2.25rem 1.75rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
     color: #ffffff;
-    gap: 1rem;
+    position: relative;
+}
+
+.user-registration-modal .modal-header-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 35%);
+    pointer-events: none;
+}
+
+.user-registration-modal .modal-header-panel h2,
+.user-registration-modal .modal-header-panel .intro-text,
+.user-registration-modal .modal-header-panel .status-chip {
+    position: relative;
+    z-index: 1;
 }
 
 .user-registration-modal .modal-header-panel h2 {
     margin: 0;
-    font-size: 1.6rem;
-    line-height: 1.2;
-}
-
-.user-registration-modal .intro-text {
-    margin-top: 0.5rem;
-    color: rgba(255, 255, 255, 0.92);
-    font-size: 0.95rem;
-    max-width: 42rem;
-}
-
-.user-registration-modal .status-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.55rem 1rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.18);
-    color: #ffffff;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 0.8rem;
+    font-size: 1.85rem;
+    line-height: 1.1;
     font-weight: 700;
 }
 
+.user-registration-modal .intro-text {
+    margin: 0.85rem 0 0;
+    max-width: 44rem;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.user-registration-modal .status-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.65rem 1rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 .user-registration-modal .modal-body {
-    padding: 1.75rem 2rem 2rem;
-    background: #f6f8fb;
+    background: var(--surface);
+    padding: 2rem 2.25rem 2.25rem;
 }
 
 .user-registration-modal .alert {
     margin-bottom: 1.5rem;
-    border-radius: 0.85rem;
-    border-width: 1px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(248, 113, 113, 0.22);
+    background: linear-gradient(135deg, rgba(254, 226, 226, 0.9), #fff5f5);
+    color: #991b1b;
 }
 
-.user-registration-modal .alert-danger {
-    background: #ffe9e9;
-    border-color: #f3c4c4;
-    color: #8a1f25;
+.user-registration-modal .alert-message {
+    font-size: 0.95rem;
+    line-height: 1.6;
 }
 
 .user-registration-modal .user-registration-form {
     display: grid;
-    gap: 1.3rem;
+    gap: 1.5rem;
 }
 
-.user-registration-modal .form-row {
+.user-registration-modal .form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.5rem;
@@ -76,76 +119,87 @@
 
 .user-registration-modal .form-column {
     display: grid;
-    gap: 1.3rem;
+    gap: 1.25rem;
 }
 
 .user-registration-modal .form-group {
     display: grid;
-    gap: 0.45rem;
+    gap: 0.55rem;
 }
 
 .user-registration-modal .form-label {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #1f2937;
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.96rem;
 }
 
 .user-registration-modal .form-label.required::after {
     content: ' *';
-    color: #e55353;
+    color: #ef4444;
 }
 
 .user-registration-modal .form-control,
-.user-registration-modal .form-check-input {
-    border: 1px solid #d9e2ec;
-    border-radius: 0.75rem;
-    padding: 0.9rem 1rem;
-    font-size: 0.95rem;
-    color: #1f2937;
+.user-registration-modal select {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.95rem 1.15rem;
+    font-size: 0.96rem;
+    color: var(--text-main);
     background: #ffffff;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
 }
 
-.user-registration-modal .form-control:focus {
-    border-color: #3b82f6;
+.user-registration-modal .form-control:focus,
+.user-registration-modal select:focus {
+    border-color: var(--primary);
     outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.18);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    transform: translateY(-1px);
+}
+
+.user-registration-modal select {
+    appearance: none;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%23343a40"><path d="M5.25 7.5L10 12.25L14.75 7.5H5.25Z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    padding-right: 3rem;
 }
 
 .user-registration-modal .form-check {
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: 0.85rem;
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: #ffffff;
 }
 
 .user-registration-modal .form-check-input {
     width: 1.1rem;
     height: 1.1rem;
-    margin-top: 0.2rem;
+    margin-top: 0.25rem;
+    accent-color: var(--primary);
 }
 
 .user-registration-modal .form-check-label {
-    font-size: 0.95rem;
-    color: #334155;
-    line-height: 1.5;
-}
-
-.user-registration-modal .helper-text {
-    color: #64748b;
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0;
 }
 
 .user-registration-modal .section-divider {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    margin: 1rem 0 0.5rem;
-    color: #475569;
+    margin: 1.75rem 0 1rem;
+    color: var(--text-muted);
     font-size: 0.88rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.12em;
+    position: relative;
 }
 
 .user-registration-modal .section-divider::before,
@@ -153,43 +207,50 @@
     content: '';
     flex: 1;
     height: 1px;
-    background: #cbd5e1;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
     margin: 0 1rem;
 }
 
 .user-registration-modal .btn {
-    border-radius: 0.75rem;
-    padding: 0.85rem 1.35rem;
+    border-radius: var(--radius-sm);
+    padding: 0.88rem 1.4rem;
     font-weight: 700;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .user-registration-modal .btn:hover:not(:disabled) {
     transform: translateY(-1px);
 }
 
-.user-registration-modal .btn-strong {
-    background: #1d4ed8;
-    color: #ffffff;
+.user-registration-modal .btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
+    color: white;
+    box-shadow: 0 16px 30px rgba(37, 99, 235, 0.18);
     border: none;
-    box-shadow: 0 12px 24px rgba(29, 78, 216, 0.18);
 }
 
-.user-registration-modal .btn-outline-secondary {
+.user-registration-modal .btn-secondary {
     background: #ffffff;
-    border: 1px solid #cbd5e1;
-    color: #475569;
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
 }
 
-.user-registration-modal .btn-outline-secondary:hover:not(:disabled) {
-    background: #f8fafc;
+.user-registration-modal .btn-secondary:hover:not(:disabled) {
+    background: var(--surface-card);
+}
+
+.user-registration-modal .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .user-registration-modal .spinner-border {
     display: inline-block;
     width: 1rem;
     height: 1rem;
-    border: 0.18em solid currentColor;
+    border: 0.2em solid currentColor;
     border-right-color: transparent;
     border-radius: 50%;
     animation: spinner-border 0.75s linear infinite;
@@ -209,23 +270,58 @@
 .kassa-add-user-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.65rem;
-    padding: 0.9rem 1.4rem;
-    border-radius: 0.85rem;
-    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-    color: #ffffff;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.95rem 1.5rem;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-soft) 100%);
+    color: white;
     border: none;
-    box-shadow: 0 16px 30px rgba(37, 99, 235, 0.18);
+    box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22);
     font-weight: 700;
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .kassa-add-user-btn:hover,
 .kassa-add-user-btn:focus {
-    transform: translateY(-1px);
-    box-shadow: 0 20px 34px rgba(37, 99, 235, 0.24);
+    transform: translateY(-2px);
+    box-shadow: 0 18px 34px rgba(37, 99, 235, 0.26);
 }
 
 .kassa-add-user-btn i {
     font-size: 1rem;
+}
+
+@media (max-width: 840px) {
+    .user-registration-modal {
+        min-width: 90vw;
+        max-width: 90vw;
+    }
+
+    .user-registration-modal .modal-header-panel,
+    .user-registration-modal .modal-body {
+        padding-left: 1.4rem;
+        padding-right: 1.4rem;
+    }
+
+    .user-registration-modal .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .user-registration-modal .modal-header-panel {
+        padding: 1.4rem 1.2rem 1.25rem;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .user-registration-modal .modal-body {
+        padding: 1.4rem 1.2rem 1.6rem;
+    }
+
+    .kassa-add-user-btn {
+        width: 100%;
+        justify-content: center;
+    }
 }

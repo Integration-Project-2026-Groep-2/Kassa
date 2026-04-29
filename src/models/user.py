@@ -19,7 +19,7 @@ import logging
 import re
 import uuid
 from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional, List, Dict, Tuple
 from enum import Enum
 
@@ -69,10 +69,10 @@ class User:
             self.userId = str(uuid.uuid4())
         
         if not self.createdAt:
-            self.createdAt = datetime.now(timezone.utc).isoformat() + 'Z'
+            self.createdAt = datetime.utcnow().isoformat() + 'Z'
         
         if not self.updatedAt:
-            self.updatedAt = datetime.now(timezone.utc).isoformat() + 'Z'
+            self.updatedAt = datetime.utcnow().isoformat() + 'Z'
 
     def validate(self) -> Tuple[bool, Optional[str]]:
         """
@@ -293,7 +293,7 @@ class UserStore:
                 setattr(user, key, value)
 
         # Update timestamp
-        user.updatedAt = datetime.now(timezone.utc).isoformat() + 'Z'
+        user.updatedAt = datetime.utcnow().isoformat() + 'Z'
 
         # Validate updated user
         valid, error = user.validate()

@@ -25,7 +25,6 @@
         'data/product_product_data.xml',
         'data/pos_config_data.xml',
         'views/kassa_pos_user_registration_view.xml',
-        'views/pos_ui_overrides.xml',
     ],
     'assets': {
         'point_of_sale._assets_pos': [
@@ -34,7 +33,6 @@
             'kassa_pos/static/src/js/ProductScreenUserButton.js',
             'kassa_pos/static/src/js/BadgeScanner.js',
             'kassa_pos/static/src/js/ClosingButton.js',
-            'kassa_pos/static/src/js/SessionCloseHandler.js',
         ],
     },
     'external_dependencies': {
