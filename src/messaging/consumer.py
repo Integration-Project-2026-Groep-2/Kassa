@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class KassaConsumer:
     """Eenvoudige consumer die een callback aanroept voor elk bericht."""
 
-    def __init__(self, host: str | None = None):
+    def __init__(self, host: str = 'localhost'):
         self.host = host or RABBIT_HOST
         self._manager = RabbitManager(
             host=self.host,
