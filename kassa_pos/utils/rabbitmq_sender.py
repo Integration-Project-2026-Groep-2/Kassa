@@ -8,16 +8,34 @@ from pathlib import Path
 
 _logger = logging.getLogger(__name__)
 
-# RabbitMQ connection settings from environment variables
-RABBITMQ_HOST = os.environ.get('RABBIT_HOST') or os.environ.get('RABBITMQ_HOST', 'localhost')
-RABBITMQ_PORT = int(os.environ.get('RABBIT_PORT') or os.environ.get('RABBITMQ_PORT', 5672))
-RABBITMQ_USER = os.environ.get('RABBIT_USER') or os.environ.get('RABBITMQ_USER', 'guest')
-RABBITMQ_PASS = os.environ.get('RABBIT_PASSWORD') or os.environ.get('RABBITMQ_PASS', 'guest')
-RABBITMQ_VHOST = os.environ.get('RABBIT_VHOST') or os.environ.get('RABBITMQ_VHOST', '/')
+# RabbitMQ connection settings — read lazily at connection time (not at import).
+# Reading at module level would snapshot the environment before Odoo fully
+# propagates container env-vars, causing the publisher to fall back to
+# 'localhost'/'guest' defaults on the VM.
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / 'src' / 'schema' / 'kassa-schema-v1.xsd'
 
 # user.topic exchange — gedeeld met CRM, Facturatie, Mailing, Planning
-USER_TOPIC_EXCHANGE = os.environ.get('USER_TOPIC_EXCHANGE', 'user.topic')
+USER_TOPIC_EXCHANGE = os.environ.get('USER_EVENTS_EXCHANGE') or os.environ.get('USER_TOPIC_EXCHANGE', 'user.topic')
+
+
+def _rabbit_host():
+    return os.environ.get('RABBIT_HOST') or os.environ.get('RABBITMQ_HOST', 'localhost')
+
+def _rabbit_port():
+    raw = os.environ.get('RABBIT_PORT') or os.environ.get('RABBITMQ_PORT', '5672')
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return 5672
+
+def _rabbit_user():
+    return os.environ.get('RABBIT_USER') or os.environ.get('RABBITMQ_USER', 'guest')
+
+def _rabbit_pass():
+    return os.environ.get('RABBIT_PASSWORD') or os.environ.get('RABBITMQ_PASS', 'guest')
+
+def _rabbit_vhost():
+    return os.environ.get('RABBIT_VHOST') or os.environ.get('RABBITMQ_VHOST', '/')
 
 # Queue namen conform Team Kassa contractoverzicht
 QUEUE_PAYMENT_CONFIRMED = 'kassa.payment.confirmed'   # Contract 16 → CRM
@@ -234,11 +252,20 @@ def _build_user_deactivated_xml(user_email: str, user_id: str) -> str:
 def _get_connection_params():
     try:
         import pika
-        credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
+        host = _rabbit_host()
+        port = _rabbit_port()
+        user = _rabbit_user()
+        password = _rabbit_pass()
+        vhost = _rabbit_vhost()
+        _logger.debug(
+            "RabbitMQ connection params [host=%s port=%s user=%s vhost=%s]",
+            host, port, user, vhost,
+        )
+        credentials = pika.PlainCredentials(user, password)
         return pika.ConnectionParameters(
-            host=RABBITMQ_HOST,
-            port=RABBITMQ_PORT,
-            virtual_host=RABBITMQ_VHOST,
+            host=host,
+            port=port,
+            virtual_host=vhost,
             credentials=credentials,
             connection_attempts=2,
             retry_delay=1,
