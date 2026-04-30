@@ -305,17 +305,19 @@ class UserConsumer:
     def _handle_crm_user_snapshot(self, root: ET.Element, message_type: str) -> bool:
         """Replace the local user snapshot from a CRM UserConfirmed/UserUpdated message."""
         try:
-            user_id = root.findtext('id', '').strip()
-            if not user_id:
+            crm_user_id = root.findtext('id', '').strip()
+            if not crm_user_id:
                 raise ValueError('id is required')
+            if not User._is_valid_uuid(crm_user_id):
+                raise ValueError(f'id must be a valid UUID: {crm_user_id}')
 
             badge_code = root.findtext('badgeCode', '').strip()
             if not badge_code:
-                badge_code = f"DEFAULT_{user_id}"
-                logger.warning("%s missing badgeCode, using fallback for userId=%s", message_type, user_id)
+                badge_code = f"DEFAULT_{crm_user_id}"
+                logger.warning("%s missing badgeCode, using fallback for crmUserId=%s", message_type, crm_user_id)
 
             user_data = {
-                'userId': user_id,
+                'userId': crm_user_id,
                 'firstName': root.findtext('firstName', '').strip(),
                 'lastName': root.findtext('lastName', '').strip(),
                 'email': root.findtext('email', '').strip(),
@@ -356,7 +358,7 @@ class UserConsumer:
                     self.on_error(message_type, error)
                 return False
 
-            logger.info("%s processed: userId=%s (full replace)", message_type, user.userId)
+            logger.info("%s processed: crmUserId=%s (full replace)", message_type, user.userId)
             return True
 
         except Exception as e:

@@ -38,11 +38,9 @@ class ResPartner(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        import uuid
         created_locally_indices = []
         for i, vals in enumerate(vals_list):
             if not vals.get('user_id_custom'):
-                vals['user_id_custom'] = str(uuid.uuid4())
                 created_locally_indices.append(i)
 
         records = super().create(vals_list)
@@ -53,15 +51,35 @@ class ResPartner(models.Model):
     def write(self, vals):
         # Only publish an updated event if this write is initiated locally via Kassa POS UI.
         is_local_update = ('user_id_custom' not in vals)
-
-        result = super().write(vals)
-
         watched_fields = {
             'name', 'email', 'phone', 'badge_code', 'role', 'company_id_custom',
         }
+
+        previous_values = {}
         if is_local_update and watched_fields.intersection(vals.keys()):
             for record in self:
-                if record.user_id_custom:
+                previous_values[record.id] = {
+                    field_name: record[field_name]
+                    for field_name in watched_fields
+                }
+
+        result = super().write(vals)
+
+        if is_local_update and watched_fields.intersection(vals.keys()):
+            for record in self:
+                # KassaUserUpdated must only be published after CRM confirms and
+                # stores the canonical UUID in user_id_custom.
+                if not record.user_id_custom:
+                    continue
+
+                before_values = previous_values.get(record.id, {})
+                changed = False
+                for field_name in watched_fields:
+                    if field_name in vals and before_values.get(field_name) != record[field_name]:
+                        changed = True
+                        break
+
+                if changed:
                     record._publish_user_change('updated')
 
         return result
@@ -90,6 +108,9 @@ class ResPartner(models.Model):
             return
 
         user_data = self._build_user_data_dict()
+        if operation == 'created':
+            # Contract 36 now uses local Odoo partner id for created events only.
+            user_data['userId'] = self.id
 
         self._publish_with_fallback(
             operation=operation,
@@ -157,7 +178,7 @@ class ResPartner(models.Model):
                 user_id_custom,
                 str(exc),
             )
-            payload = self._build_user_deleted_payload(user_id_custom)
+            payload = self._build_user_deactivated_payload(user_id_custom, user_email)
             self._enqueue_user_message(user_id_custom, 'UserDeactivated', payload, str(exc))
 
     def _enqueue_user_message(self, user_id_custom, message_type, payload, error_message=''):
@@ -238,10 +259,12 @@ class ResPartner(models.Model):
         return ET.tostring(root, encoding='unicode')
 
     @staticmethod
-    def _build_user_deleted_payload(user_id_custom):
-        root = ET.Element('UserDeleted')
-        ET.SubElement(root, 'userId').text = str(user_id_custom)
-        ET.SubElement(root, 'deletedAt').text = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    def _build_user_deactivated_payload(user_id_custom, email=''):
+        # Match Contract 38 payload shape for retry queue as well.
+        root = ET.Element('UserDeactivated')
+        ET.SubElement(root, 'id').text = str(user_id_custom)
+        ET.SubElement(root, 'email').text = str(email or '')
+        ET.SubElement(root, 'deactivatedAt').text = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         return ET.tostring(root, encoding='unicode')
 
     @staticmethod
