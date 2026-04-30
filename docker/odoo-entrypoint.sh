@@ -16,6 +16,15 @@ ODOO_DB_FILTER="${ODOO_DB_FILTER:-^${ODOO_DB_NAME}$}"
 ODOO_SYNC_MODULES="${ODOO_SYNC_MODULES:-}"
 ODOO_SKIP_MODULE_SYNC="${ODOO_SKIP_MODULE_SYNC:-false}"
 
+# kassa_pos is always required — merge it with any extra modules from ODOO_SYNC_MODULES.
+# This ensures the addon is installed/upgraded on every start, regardless of env config.
+CORE_MODULES="kassa_pos"
+if [ -n "$ODOO_SYNC_MODULES" ]; then
+  EFFECTIVE_SYNC_MODULES="${CORE_MODULES},${ODOO_SYNC_MODULES}"
+else
+  EFFECTIVE_SYNC_MODULES="${CORE_MODULES}"
+fi
+
 case "$ODOO_LOG_LEVEL" in
   info|debug_rpc|warn|test|critical|runbot|debug_sql|error|debug|debug_rpc_answer|notset)
     ;;
@@ -83,8 +92,8 @@ if [ -n "${ODOO_EXTRA_ARGS:-}" ]; then
   set -- "$@" ${ODOO_EXTRA_ARGS}
 fi
 
-if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_SYNC_MODULES" ] && [ -n "$ODOO_DB_NAME" ]; then
-  echo "[entrypoint] Modules synchroniseren: ${ODOO_SYNC_MODULES}"
+if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
+  echo "[entrypoint] Modules synchroniseren: ${EFFECTIVE_SYNC_MODULES}"
   SYNC_CMD=(
     odoo
     --config=/etc/odoo/odoo.conf
@@ -97,8 +106,8 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_SYNC_MODULES" ] && [ -n
     --proxy-mode
     --log-level="${ODOO_LOG_LEVEL}"
     -d "${ODOO_DB_NAME}"
-    -i "${ODOO_SYNC_MODULES}"
-    -u "${ODOO_SYNC_MODULES}"
+    -i "${EFFECTIVE_SYNC_MODULES}"
+    -u "${EFFECTIVE_SYNC_MODULES}"
     --stop-after-init
   )
 
