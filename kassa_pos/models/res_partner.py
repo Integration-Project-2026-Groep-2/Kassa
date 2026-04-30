@@ -54,15 +54,32 @@ class ResPartner(models.Model):
         # Only publish an updated event if this write is initiated locally via Kassa POS UI.
         is_local_update = ('user_id_custom' not in vals)
 
-        result = super().write(vals)
-
         watched_fields = {
             'name', 'email', 'phone', 'badge_code', 'role', 'company_id_custom',
         }
+
+        # Pre-check which records will actually change for the watched fields.
+        changed_records = []
         if is_local_update and watched_fields.intersection(vals.keys()):
             for record in self:
-                if record.user_id_custom:
-                    record._publish_user_change('updated')
+                if not record.user_id_custom:
+                    continue
+                for f in watched_fields:
+                    if f in vals:
+                        old = getattr(record, f)
+                        new = vals.get(f)
+                        if (old or '') != (new or ''):
+                            changed_records.append(record)
+                            break
+
+        result = super().write(vals)
+
+        # Publish only for records that truly changed.
+        for record in changed_records:
+            try:
+                record._publish_user_change('updated')
+            except Exception:
+                _logger.exception("Failed to publish update for user %s", record.user_id_custom)
 
         return result
 
