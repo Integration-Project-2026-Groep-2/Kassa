@@ -30,7 +30,11 @@ try:
 except ImportError:
     # lxml niet geïnstalleerd — validatie uitgeschakeld, geen crash
     _schema = None
-    logger.warning("lxml niet beschikbaar — XML-validatie uitgeschakeld")
+    logger.warning(
+        "lxml niet beschikbaar — XML-validatie uitgeschakeld [schema=%s kassa_schema=%s]",
+        SCHEMA_PATH,
+        KASSA_USER_SCHEMA_PATH,
+    )
 except FileNotFoundError:
     raise FileNotFoundError(
         f"Verplicht schema-bestand niet gevonden: {SCHEMA_PATH}\n"
@@ -53,7 +57,7 @@ except FileNotFoundError:
     )
 except Exception as exc:
     _kassa_schema = None
-    logger.warning("Kassa user schema kon niet geladen worden: %s", exc)
+    logger.warning("Kassa user schema kon niet geladen worden [%s]: %s", KASSA_USER_SCHEMA_PATH, exc)
 
 
 def validate_xml(xml_string: str) -> tuple[bool, str | None]:
@@ -72,8 +76,10 @@ def validate_xml(xml_string: str) -> tuple[bool, str | None]:
         _schema.assertValid(doc)
         return True, None
     except etree.DocumentInvalid as e:
+        logger.error("Master schema validation failed [schema=%s]: %s", SCHEMA_PATH, e)
         return False, str(e)
     except etree.XMLSyntaxError as e:
+        logger.error("Master XML syntax error [schema=%s]: %s", SCHEMA_PATH, e)
         return False, f"XML syntax fout: {e}"
 
 
@@ -98,8 +104,10 @@ def validate_kassa(xml_string: str) -> tuple[bool, str | None]:
         _kassa_schema.assertValid(doc)
         return True, None
     except etree.DocumentInvalid as e:
+        logger.error("Kassa user schema validation failed [schema=%s]: %s", KASSA_USER_SCHEMA_PATH, e)
         return False, str(e)
     except etree.XMLSyntaxError as e:
+        logger.error("Kassa user XML syntax error [schema=%s]: %s", KASSA_USER_SCHEMA_PATH, e)
         return False, f"XML syntax fout: {e}"
 
 
