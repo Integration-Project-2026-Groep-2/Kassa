@@ -25,9 +25,6 @@
         'data/product_product_data.xml',
         'views/kassa_pos_user_registration_view.xml',
     ],
-    'demo': [
-        'data/pos_config_data.xml',
-    ],
     'assets': {
         'point_of_sale._assets_pos': [
             'kassa_pos/static/src/css/user_registration.css',
