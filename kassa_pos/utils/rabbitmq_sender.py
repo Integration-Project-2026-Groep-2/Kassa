@@ -46,11 +46,7 @@ def _validate_xml_with_schema(xml_str: str, element_name: str) -> bool:
     try:
         from lxml import etree  # type: ignore[import-not-found]
     except ImportError:
-        _logger.warning(
-            "lxml not installed, skipping XSD validation for element=%s schema=%s. Install with: pip install lxml",
-            element_name,
-            SCHEMA_PATH,
-        )
+        _logger.warning("lxml not installed, skipping XSD validation. Install with: pip install lxml")
         return True
 
     try:
@@ -62,11 +58,7 @@ def _validate_xml_with_schema(xml_str: str, element_name: str) -> bool:
             schema_file = module_dir / SCHEMA_PATH
         
         if not os.path.exists(schema_file):
-            _logger.warning(
-                "Schema file not found at %s for element=%s, skipping validation",
-                schema_file,
-                element_name,
-            )
+            _logger.warning("Schema file not found at %s, skipping validation", schema_file)
             return True
         
         # Parse schema and XML
@@ -80,16 +72,11 @@ def _validate_xml_with_schema(xml_str: str, element_name: str) -> bool:
             _logger.debug("XML valid for element %s", element_name)
             return True
         else:
-            _logger.error(
-                "XSD validation failed for %s [schema=%s]: %s",
-                element_name,
-                schema_file,
-                schema.error_log,
-            )
+            _logger.error("XSD validation failed for %s: %s", element_name, schema.error_log)
             return False
             
     except Exception as e:
-        _logger.exception("XSD validation error for %s [schema=%s]", element_name, SCHEMA_PATH)
+        _logger.error("XSD validation error for %s: %s", element_name, e)
         return False
 
 
@@ -366,7 +353,7 @@ def _send_batch_to_exchange(xml_body: str) -> bool:
         return True
 
     except Exception as e:
-        _logger.exception("RabbitMQ: verzenden BatchClosed mislukt")
+        _logger.error("RabbitMQ: verzenden BatchClosed mislukt: %s", e)
         return False
 
 
@@ -517,12 +504,11 @@ def _publish_to_topic_exchange(routing_key: str, xml_body: str) -> bool:
         return True
 
     except Exception as e:
-        _logger.exception(
-            "RabbitMQ: publiceren mislukt [exchange=%s routing_key=%s element=%s]",
-            USER_TOPIC_EXCHANGE,
-            routing_key,
-            '',
+        _logger.error(
+            "RabbitMQ: publiceren mislukt [exchange=%s routing_key=%s]: %r",
+            USER_TOPIC_EXCHANGE, routing_key, e,
         )
+        raise e
         return False
 
 

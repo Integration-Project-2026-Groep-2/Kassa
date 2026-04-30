@@ -43,19 +43,8 @@ class ResPartner(models.Model):
             if not vals.get('user_id_custom'):
                 created_locally_indices.append(i)
 
-        _logger.info(
-            "res.partner create called [records=%d missing_user_id_custom=%d]",
-            len(vals_list),
-            len(created_locally_indices),
-        )
-
         records = super().create(vals_list)
         for i in created_locally_indices:
-            _logger.info(
-                "Publishing created user event [partner_id=%s user_id_custom=%s]",
-                records[i].id,
-                records[i].user_id_custom,
-            )
             records[i]._publish_user_change('created')
         return records
 
@@ -81,11 +70,6 @@ class ResPartner(models.Model):
                 # KassaUserUpdated must only be published after CRM confirms and
                 # stores the canonical UUID in user_id_custom.
                 if not record.user_id_custom:
-                    _logger.info(
-                        "Skipping update publish because user_id_custom is missing [partner_id=%s vals=%s]",
-                        record.id,
-                        sorted(vals.keys()),
-                    )
                     continue
 
                 before_values = previous_values.get(record.id, {})
@@ -96,20 +80,7 @@ class ResPartner(models.Model):
                         break
 
                 if changed:
-                    _logger.info(
-                        "Publishing updated user event [partner_id=%s user_id_custom=%s changed_fields=%s]",
-                        record.id,
-                        record.user_id_custom,
-                        [field_name for field_name in watched_fields if field_name in vals],
-                    )
                     record._publish_user_change('updated')
-                else:
-                    _logger.info(
-                        "Skipping update publish because watched values did not change [partner_id=%s user_id_custom=%s vals=%s]",
-                        record.id,
-                        record.user_id_custom,
-                        sorted(vals.keys()),
-                    )
 
         return result
 
@@ -126,11 +97,6 @@ class ResPartner(models.Model):
         result = super().unlink()
 
         for candidate in delete_candidates:
-            _logger.info(
-                "Publishing deactivated user event [user_id_custom=%s email=%s]",
-                candidate['user_id_custom'],
-                candidate['email'],
-            )
             self._publish_user_deleted(candidate['user_id_custom'], candidate['email'])
 
         return result
@@ -154,7 +120,6 @@ class ResPartner(models.Model):
 
     def _publish_user_deleted(self, user_id_custom, email=''):
         if not user_id_custom:
-            _logger.info("Skipping user deactivated publish because user_id_custom is missing")
             return
 
         self._publish_deactivated_with_fallback(
@@ -208,7 +173,7 @@ class ResPartner(models.Model):
             )
 
         except Exception as exc:
-            _logger.exception(
+            _logger.warning(
                 "Failed to publish user deactivated event, queueing locally [user_id_custom=%s error=%s]",
                 user_id_custom,
                 str(exc),
