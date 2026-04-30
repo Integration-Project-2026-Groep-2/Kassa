@@ -45,6 +45,21 @@ USER_UPDATED_XML = """<?xml version="1.0" encoding="UTF-8"?>
     <updatedAt>2026-03-28T10:15:30+00:00</updatedAt>
 </UserUpdated>"""
 
+USER_UPDATED_INVALID_ID_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<UserUpdated>
+    <id>81</id>
+    <email>company.contact@gmail.com</email>
+    <firstName>New</firstName>
+    <lastName>Updated</lastName>
+    <phone>+32471234567</phone>
+    <role>COMPANY_CONTACT</role>
+    <companyId>9a33a76e-2c43-407b-8eee-48d141b2de80</companyId>
+    <badgeCode>BADGE-00123</badgeCode>
+    <isActive>true</isActive>
+    <gdprConsent>true</gdprConsent>
+    <updatedAt>2026-03-28T10:15:30+00:00</updatedAt>
+</UserUpdated>"""
+
 USER_DEACTIVATED_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <UserDeactivated>
     <id>8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11</id>
@@ -93,6 +108,13 @@ class TestUserConsumer(unittest.TestCase):
         called_user = self.mock_odoo_repo.create_user.call_args[0][0]
         self.assertEqual(called_user.firstName, "New")
         self.assertEqual(called_user.lastName, "Updated")
+
+    def test_process_user_updated_message_rejects_non_uuid_id(self):
+        """Test that a numeric CRM id is rejected before persistence."""
+        success = self.consumer.process_user_message(USER_UPDATED_INVALID_ID_XML)
+
+        self.assertFalse(success)
+        self.mock_odoo_repo.create_user.assert_not_called()
 
     def test_process_user_deactivated_message_calls_deactivate_user(self):
         """Test that UserDeactivated message calls deactivate_user on OdooUserRepository."""

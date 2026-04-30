@@ -68,7 +68,7 @@
   <xs:element name="KassaUserCreated">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="userId"    type="UUIDType"/>
+        <xs:element name="userId"    type="xs:positiveInteger"/>
         <xs:element name="firstName" type="NonEmptyStringType"/>
         <xs:element name="lastName"  type="NonEmptyStringType"/>
         <xs:element name="email"     type="EmailType"/>

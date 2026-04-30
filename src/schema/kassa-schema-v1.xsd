@@ -455,7 +455,7 @@
   <xs:element name="KassaUserCreated">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="userId" type="UUIDType"/>
+        <xs:element name="userId" type="xs:positiveInteger"/>
         <xs:element name="firstName" type="NameType"/>
         <xs:element name="lastName" type="NameType"/>
         <xs:element name="email" type="EmailType"/>

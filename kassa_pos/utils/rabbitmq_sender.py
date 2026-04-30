@@ -408,7 +408,8 @@ def _build_kassa_user_created_xml(user_data: dict) -> str:
     """
     C36 — Bouw een KassaUserCreated XML conform kassa-user.xsd v1.10.1.
 
-    Verplichte velden: userId, firstName, lastName, email, badgeCode, role, createdAt
+    Verplichte velden: userId (lokale res.partner.id), firstName, lastName,
+    email, badgeCode, role, createdAt
     Optioneel: companyId
     """
     root = ET.Element('KassaUserCreated')
@@ -515,7 +516,7 @@ def send_kassa_user_created(user_data: dict) -> bool:
     """
     Contract 36 — Kassa → CRM: user aanmaken.
     Publiceert <KassaUserCreated> naar user.topic met routing key kassa.user.created.
-    CRM kent daarna een canonical CRM UUID toe en publiceert crm.user.confirmed.
+    userId is de lokale Odoo res.partner.id (niet de CRM UUID).
     """
     xml = _build_kassa_user_created_xml(user_data)
     return _publish_to_topic_exchange(ROUTING_KEY_KASSA_USER_CREATED, xml)
