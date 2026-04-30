@@ -120,7 +120,7 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
 
   if [ "$KASSA_INSTALLED" != "installed" ]; then
     echo "[entrypoint] kassa_pos not installed (state='${KASSA_INSTALLED}'), running install: ${EFFECTIVE_SYNC_MODULES}"
-    SYNC_CMD=("${BASE_SYNC_ARGS[@]}" -i "${EFFECTIVE_SYNC_MODULES}")
+    SYNC_CMD=("${BASE_SYNC_ARGS[@]}" -i "${EFFECTIVE_SYNC_MODULES}" --without-demo=all)
     if [ "$(id -u)" = "0" ]; then
       runuser -u odoo -- "${SYNC_CMD[@]}"
     else
