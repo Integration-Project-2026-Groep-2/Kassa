@@ -93,8 +93,17 @@ if [ -n "${ODOO_EXTRA_ARGS:-}" ]; then
 fi
 
 if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
-  echo "[entrypoint] Modules synchroniseren: ${EFFECTIVE_SYNC_MODULES}"
-  SYNC_CMD=(
+
+  # Check if kassa_pos is already installed in the database.
+  # If not → run -i (fresh install). If yes → only upgrade modules
+  # explicitly listed in ODOO_SYNC_MODULES (deliberate upgrades only).
+  # This prevents re-applying data files on every restart of an existing DB.
+  KASSA_INSTALLED=$(psql \
+    "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" \
+    -tAc "SELECT state FROM ir_module_module WHERE name='kassa_pos' LIMIT 1" \
+    2>/dev/null || echo "")
+
+  BASE_SYNC_ARGS=(
     odoo
     --config=/etc/odoo/odoo.conf
     --db_host="${ODOO_DB_HOST}"
@@ -106,15 +115,27 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
     --proxy-mode
     --log-level="${ODOO_LOG_LEVEL}"
     -d "${ODOO_DB_NAME}"
-    -i "${EFFECTIVE_SYNC_MODULES}"
-    -u "${EFFECTIVE_SYNC_MODULES}"
     --stop-after-init
   )
 
-  if [ "$(id -u)" = "0" ]; then
-    runuser -u odoo -- "${SYNC_CMD[@]}"
+  if [ "$KASSA_INSTALLED" != "installed" ]; then
+    echo "[entrypoint] kassa_pos not installed (state='${KASSA_INSTALLED}'), running install: ${EFFECTIVE_SYNC_MODULES}"
+    SYNC_CMD=("${BASE_SYNC_ARGS[@]}" -i "${EFFECTIVE_SYNC_MODULES}")
+    if [ "$(id -u)" = "0" ]; then
+      runuser -u odoo -- "${SYNC_CMD[@]}"
+    else
+      "${SYNC_CMD[@]}"
+    fi
+  elif [ -n "$ODOO_SYNC_MODULES" ]; then
+    echo "[entrypoint] kassa_pos already installed, upgrading explicitly listed modules: ${ODOO_SYNC_MODULES}"
+    SYNC_CMD=("${BASE_SYNC_ARGS[@]}" -u "${ODOO_SYNC_MODULES}")
+    if [ "$(id -u)" = "0" ]; then
+      runuser -u odoo -- "${SYNC_CMD[@]}"
+    else
+      "${SYNC_CMD[@]}"
+    fi
   else
-    "${SYNC_CMD[@]}"
+    echo "[entrypoint] kassa_pos already installed, no explicit upgrade requested — skipping module sync"
   fi
 fi
 

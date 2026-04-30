@@ -4,7 +4,9 @@ USER root
 
 # Installeer RabbitMQ- en XML-afhankelijkheden voor de receiver scripts
 COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install -r /tmp/requirements.txt || pip3 install --break-system-packages -r /tmp/requirements.txt
+RUN apt-get update -qq && apt-get install -y --no-install-recommends postgresql-client \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install -r /tmp/requirements.txt || pip3 install --break-system-packages -r /tmp/requirements.txt
 
 # Integreer custom code in de image zodat die zonder bind mounts kan draaien.
 COPY kassa_pos /mnt/extra-addons/kassa_pos

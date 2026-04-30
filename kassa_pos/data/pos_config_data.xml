@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="0">
-
-        <record id="base.main_company" model="res.company">
-            <field name="currency_id" ref="base.EUR"/>
-        </record>
+    <data noupdate="1">
 
         <!-- Pricelist in EUR -->
         <record id="pricelist_kassa_eur" model="product.pricelist">
@@ -13,15 +9,21 @@
             <field name="company_id" ref="base.main_company"/>
         </record>
 
-        <!-- Accounting Journals for Payment Methods -->
-        <record id="account_journal_cash_kassa" model="account.journal" forcecreate="False">
+        <!-- Accounting Journals for Payment Methods.
+             type is required for creation on a fresh DB.
+             noupdate="1" above means these are only created once and never overwritten. -->
+        <record id="account_journal_cash_kassa" model="account.journal">
             <field name="name">Kassa Cash</field>
+            <field name="type">cash</field>
             <field name="code">KCASH</field>
+            <field name="company_id" ref="base.main_company"/>
         </record>
 
-        <record id="account_journal_bank_kassa" model="account.journal" forcecreate="False">
+        <record id="account_journal_bank_kassa" model="account.journal">
             <field name="name">Kassa Bank</field>
+            <field name="type">bank</field>
             <field name="code">KBANK</field>
+            <field name="company_id" ref="base.main_company"/>
         </record>
 
         <!-- Payment Methods -->
