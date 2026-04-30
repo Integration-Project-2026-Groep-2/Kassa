@@ -38,14 +38,14 @@ class ResPartner(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        _logger.warning(
+        _logger.info(
             "res.partner create called [records=%d]",
             len(vals_list),
         )
 
         records = super().create(vals_list)
         for record in records:
-            _logger.warning(
+            _logger.info(
                 "Publishing created user event [partner_id=%s user_id_custom=%s]",
                 record.id,
                 record.user_id_custom,
@@ -181,7 +181,7 @@ class ResPartner(models.Model):
             if not sent:
                 raise RuntimeError('RabbitMQ sender returned False')
 
-            _logger.warning(
+            _logger.info(
                 "User event published [operation=%s user_id_custom=%s]",
                 operation,
                 user_id_custom,
