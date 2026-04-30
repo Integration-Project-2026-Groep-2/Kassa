@@ -428,7 +428,7 @@ def test_invoice_requested_missing_company_id():
 
 def test_kassa_user_created_valid():
     valid_kassa("""<KassaUserCreated>
-        <userId>81</userId>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
         <firstName>Jan</firstName>
         <lastName>Peeters</lastName>
         <email>jan@example.com</email>
@@ -440,7 +440,7 @@ def test_kassa_user_created_valid():
 
 def test_kassa_user_created_with_company():
     valid_kassa("""<KassaUserCreated>
-        <userId>82</userId>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
         <firstName>Jan</firstName>
         <lastName>Peeters</lastName>
         <email>jan@example.com</email>
@@ -454,7 +454,7 @@ def test_kassa_user_created_with_company():
 def test_kassa_user_created_empty_badge_code():
     """badgeCode mag niet leeg zijn (NonEmptyStringType, PR #121)."""
     invalid_kassa("""<KassaUserCreated>
-        <userId>81</userId>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
         <firstName>Jan</firstName>
         <lastName>Peeters</lastName>
         <email>jan@example.com</email>
@@ -466,7 +466,7 @@ def test_kassa_user_created_empty_badge_code():
 
 def test_kassa_user_created_invalid_role():
     invalid_kassa("""<KassaUserCreated>
-        <userId>81</userId>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
         <firstName>Jan</firstName>
         <lastName>Peeters</lastName>
         <email>jan@example.com</email>
@@ -478,7 +478,7 @@ def test_kassa_user_created_invalid_role():
 
 def test_kassa_user_created_missing_created_at():
     invalid_kassa("""<KassaUserCreated>
-        <userId>81</userId>
+        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
         <firstName>Jan</firstName>
         <lastName>Peeters</lastName>
         <email>jan@example.com</email>
@@ -487,9 +487,9 @@ def test_kassa_user_created_missing_created_at():
     </KassaUserCreated>""")
 
 
-def test_kassa_user_created_invalid_user_id_format():
+def test_kassa_user_created_invalid_uuid():
     invalid_kassa("""<KassaUserCreated>
-        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <userId>geen-uuid</userId>
         <firstName>Jan</firstName>
         <lastName>Peeters</lastName>
         <email>jan@example.com</email>
