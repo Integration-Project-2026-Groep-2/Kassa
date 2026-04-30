@@ -107,13 +107,6 @@ async def on_user_confirmed(message: aio_pika.IncomingMessage) -> None:
         role = root.findtext("role", "")
         logger.info("UserConfirmed ontvangen [id=%s email=%s role=%s]", user_id, email, role)
 
-        if _user_consumer is not None:
-            try:
-                xml_string = message.body.decode('utf-8')
-                _user_consumer.process_user_message(xml_string)
-            except Exception as exc:
-                logger.error("UserConfirmed: fout bij opslaan in store: %s", exc)
-
 
 async def on_company_confirmed(message: aio_pika.IncomingMessage) -> None:
     """Contract 14 — CRM → Kassa: company confirmed."""
@@ -165,13 +158,6 @@ async def on_user_updated(message: aio_pika.IncomingMessage) -> None:
         user_id = root.findtext("id", "")
         email = root.findtext("email", "")
         logger.info("UserUpdated ontvangen [id=%s email=%s] — lokale kopie vervangen", user_id, email)
-
-        if _user_consumer is not None:
-            try:
-                xml_string = message.body.decode('utf-8')
-                _user_consumer.process_user_message(xml_string)
-            except Exception as exc:
-                logger.error("UserUpdated: fout bij opslaan in store: %s", exc)
 
 
 async def on_company_updated(message: aio_pika.IncomingMessage) -> None:

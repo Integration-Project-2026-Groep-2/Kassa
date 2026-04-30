@@ -372,7 +372,7 @@ class OdooUserRepository:
         
         Args:
             user: User dataclass instance
-            is_update: If True, don't set creation-only fields
+            is_update: If True, don't set creation-only fields and exclude immutable user_id_custom
         
         Returns:
             Dictionary of field values for Odoo create/write
@@ -381,7 +381,6 @@ class OdooUserRepository:
             'name': f"{user.firstName} {user.lastName}",
             'email': user.email,
             'badge_code': user.badgeCode,
-            'user_id_custom': user.userId,
             'role': self.ROLE_MAP.get(user.role, 'Customer'),
             'active': True,
             'is_company': False,
@@ -389,6 +388,11 @@ class OdooUserRepository:
             'customer_rank': 1,
             'company_id': False,  # False means visible across all Odoo companies
         }
+        
+        # Only include user_id_custom for creates, never for updates
+        # (updates should never change the CRM UUID identity)
+        if not is_update:
+            values['user_id_custom'] = user.userId
         
         # Optional fields
         if user.companyId:
