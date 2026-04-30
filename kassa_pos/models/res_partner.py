@@ -38,19 +38,25 @@ class ResPartner(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        created_locally_indices = []
+        for i, vals in enumerate(vals_list):
+            if not vals.get('user_id_custom'):
+                created_locally_indices.append(i)
+
         _logger.info(
-            "res.partner create called [records=%d]",
+            "res.partner create called [records=%d missing_user_id_custom=%d]",
             len(vals_list),
+            len(created_locally_indices),
         )
 
         records = super().create(vals_list)
-        for record in records:
+        for i in created_locally_indices:
             _logger.info(
                 "Publishing created user event [partner_id=%s user_id_custom=%s]",
-                record.id,
-                record.user_id_custom,
+                records[i].id,
+                records[i].user_id_custom,
             )
-            record._publish_user_change('created')
+            records[i]._publish_user_change('created')
         return records
 
     def write(self, vals):
@@ -136,7 +142,6 @@ class ResPartner(models.Model):
             return
 
         user_data = self._build_user_data_dict()
-        publish_identity = str(self.id) if operation == 'created' else self.user_id_custom
         if operation == 'created':
             # Contract 36 now uses local Odoo partner id for created events only.
             user_data['userId'] = self.id
@@ -144,7 +149,7 @@ class ResPartner(models.Model):
         self._publish_with_fallback(
             operation=operation,
             user_data=user_data,
-            user_id_custom=publish_identity,
+            user_id_custom=self.user_id_custom,
         )
 
     def _publish_user_deleted(self, user_id_custom, email=''):
@@ -162,18 +167,8 @@ class ResPartner(models.Model):
             from ..utils.rabbitmq_sender import send_user_created, send_user_updated
 
             if operation == 'created':
-                _logger.info(
-                    "Creating KassaUserCreated payload [partner_id=%s publish_identity=%s]",
-                    self.id,
-                    user_id_custom,
-                )
                 sent = send_user_created(user_data)
             elif operation == 'updated':
-                _logger.info(
-                    "Creating KassaUserUpdated payload [partner_id=%s user_id_custom=%s]",
-                    self.id,
-                    user_id_custom,
-                )
                 sent = send_user_updated(user_data)
             else:
                 return
