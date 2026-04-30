@@ -75,7 +75,7 @@ class UserMessageQueue(models.Model):
             from src.messaging.producer import KassaProducer
             
             for message in self:
-                producer = KassaProducer(host='localhost')
+                producer = KassaProducer()
                 producer.connect()
                 
                 try:
@@ -251,7 +251,7 @@ class PosSession(models.Model):
         try:
             from src.messaging.producer import KassaProducer
             
-            producer = KassaProducer(host='localhost')
+            producer = KassaProducer()
             producer.connect()
             
             try:

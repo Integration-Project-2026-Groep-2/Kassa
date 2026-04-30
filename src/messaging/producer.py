@@ -20,7 +20,7 @@ class KassaProducer:
     - `close()` sluit de verbinding.
     """
 
-    def __init__(self, host: str = 'localhost'):
+    def __init__(self, host: str | None = None):
         self.host = host or RABBIT_HOST
         self._manager = RabbitManager(
             host=self.host,

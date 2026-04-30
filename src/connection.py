@@ -1,7 +1,7 @@
 import pika
 import time
 import logging
-from config import RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
+from config import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
 
 
 logger = logging.getLogger(__name__)
@@ -15,9 +15,9 @@ class RabbitManager:
     minimale wrapper rond `pika.BlockingConnection`.
     """
 
-    def __init__(self, host='localhost', port=RABBIT_PORT, user=RABBIT_USER, password=RABBIT_PASSWORD, vhost=RABBIT_VHOST):
-        # Hostnaam of IP-adres van de RabbitMQ-server (standaard 'localhost')
-        self.host = host
+    def __init__(self, host=None, port=RABBIT_PORT, user=RABBIT_USER, password=RABBIT_PASSWORD, vhost=RABBIT_VHOST):
+        # Gebruik de geconfigureerde RabbitMQ-host als er geen expliciete host is meegegeven.
+        self.host = host or RABBIT_HOST
         self.port = port
         self.user = user
         self.password = password
