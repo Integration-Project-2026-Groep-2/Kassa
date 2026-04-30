@@ -54,17 +54,16 @@ class ResPartner(models.Model):
         return records
 
     def write(self, vals):
-        # Safeguard: NEVER publish user updates if user_id_custom is in vals.
-        # This indicates the update came from CRM (via update_user()) and MUST NOT
-        # trigger a republish, as it would create an infinite loop:
-        # Kassa publishes → CRM responds → Kassa receives & updates → (must NOT republish)
-        is_local_update = ('user_id_custom' not in vals)
+        # Extract and remove CRM sync marker before processing
+        # This prevents CRM-originated updates from triggering republish
+        skip_publish = vals.pop('__crm_sync_skip_publish__', None) == 'true'
+        
         watched_fields = {
             'name', 'email', 'phone', 'badge_code', 'role', 'company_id_custom',
         }
 
         previous_values = {}
-        if is_local_update and watched_fields.intersection(vals.keys()):
+        if not skip_publish and watched_fields.intersection(vals.keys()):
             for record in self:
                 previous_values[record.id] = {
                     field_name: record[field_name]
@@ -73,7 +72,7 @@ class ResPartner(models.Model):
 
         result = super().write(vals)
 
-        if is_local_update and watched_fields.intersection(vals.keys()):
+        if not skip_publish and watched_fields.intersection(vals.keys()):
             for record in self:
                 # KassaUserUpdated must only be published after CRM confirms and
                 # stores the canonical UUID in user_id_custom.
@@ -107,13 +106,13 @@ class ResPartner(models.Model):
                         record.user_id_custom,
                         sorted(vals.keys()),
                     )
-        elif 'user_id_custom' in vals:
-            # CRM update detected - log for traceability but DO NOT publish
+        elif skip_publish:
+            # CRM-originated sync detected - log for traceability but DO NOT publish
             for record in self:
                 _logger.info(
-                    "Skipping publish for CRM-originated update [partner_id=%s user_id_custom=%s changed_fields=%s]",
+                    "Skipping user republish for CRM-originated sync [partner_id=%s user_id_custom=%s changed_fields=%s]",
                     record.id,
-                    vals.get('user_id_custom', 'N/A'),
+                    record.user_id_custom,
                     [f for f in vals.keys() if f in watched_fields],
                 )
 

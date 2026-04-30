@@ -174,6 +174,9 @@ class OdooUserRepository:
         partner_id = partner_ids[0]
         values = self._map_user_to_partner_values(user, is_update=True)
         
+        # Mark this as a CRM-originated update so write hook doesn't republish
+        values['__crm_sync_skip_publish__'] = 'true'
+        
         try:
             self.odoo.write(self.MODEL_NAME, [partner_id], values)
             
