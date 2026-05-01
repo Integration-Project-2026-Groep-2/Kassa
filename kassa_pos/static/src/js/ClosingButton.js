@@ -16,11 +16,16 @@ class ClosingButton extends Component {
     setup() {
         this.orm = useService('orm');
         this.notification = useService('notification');
+        this.pos = useService('pos');
     }
 
     async onClosingClick() {
         try {
-            const result = await this.orm.call('pos.order', 'close_daily_batch', [], {});
+            // Pass the current session ID to ensure we process the correct register
+            const sessionId = this.pos.pos_session.id;
+            const result = await this.orm.call('pos.order', 'close_daily_batch', [], {
+                session_id: sessionId
+            });
 
             if (result.success) {
                 this.notification.add(result.message, {

@@ -13,9 +13,19 @@ _logger = logging.getLogger(__name__)
 # propagates container env-vars, causing the publisher to fall back to
 # 'localhost'/'guest' defaults on the VM.
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / 'src' / 'schema' / 'kassa-schema-v1.xsd'
+if not SCHEMA_PATH.exists():
+    SCHEMA_PATH = Path('/app/src/schema/kassa-schema-v1.xsd')
+
+# Authoritative schema for Contract K-02 (BatchClosed)
+BATCH_SCHEMA_PATH = Path(__file__).resolve().parents[2] / 'src' / 'schema' / 'kassa_batch_contract.xsd'
+if not BATCH_SCHEMA_PATH.exists():
+    BATCH_SCHEMA_PATH = Path('/app/src/schema/kassa_batch_contract.xsd')
 
 # user.topic exchange — gedeeld met CRM, Facturatie, Mailing, Planning
 USER_TOPIC_EXCHANGE = os.environ.get('USER_EVENTS_EXCHANGE') or os.environ.get('USER_TOPIC_EXCHANGE', 'user.topic')
+
+# kassa.topic exchange — specifiek voor Kassa/POS events
+KASSA_TOPIC_EXCHANGE = 'kassa.topic'
 
 
 def _rabbit_host():
@@ -330,7 +340,24 @@ def _send_xml(
 def _build_batch_closed_xml(batch_data: dict) -> str:
     """
     Bouw een BatchClosed XML-bericht conform Contract K-02 (Kassa → Facturatie).
-    Alleen Invoice-orders van geïdentificeerde klanten, gegroepeerd per userId.
+    Schema: kassa_batch_contract.xsd
+
+    Structuur:
+      <BatchClosed>
+        <batchId>    — UUID v4 (idempotency key)
+        <closedAt>   — ISO8601 UTC timestamp
+        <currency>   — altijd EUR
+        <users>      — optioneel: afwezig als er geen invoice-orders zijn
+          <user>*
+            <userId>     — CRM UUID van de klant (partner.user_id_custom)
+            <items>      — verplicht; minstens 1 item
+              <item>*
+                <productName>, <quantity>, <unitPrice>, <totalPrice>
+            <totalAmount>
+        <summary>    — altijd aanwezig
+          <totalOrders>, <totalAmount>
+          <orderIds>   — optioneel
+            <orderId>*
     """
     root = ET.Element('BatchClosed')
 
@@ -341,21 +368,26 @@ def _build_batch_closed_xml(batch_data: dict) -> str:
 
     ET.SubElement(root, 'currency').text = batch_data.get('currency', 'EUR')
 
+    # <users> — optional wrapper; only emitted when there are qualifying users
     if batch_data.get('users'):
         users_el = ET.SubElement(root, 'users')
         for user in batch_data['users']:
             user_el = ET.SubElement(users_el, 'user')
+
             ET.SubElement(user_el, 'userId').text = str(user.get('userId', ''))
-            if user.get('items'):
-                items_el = ET.SubElement(user_el, 'items')
-                for item in user['items']:
-                    item_el = ET.SubElement(items_el, 'item')
-                    ET.SubElement(item_el, 'productName').text = str(item.get('productName', ''))
-                    ET.SubElement(item_el, 'quantity').text = str(item.get('quantity', '0'))
-                    ET.SubElement(item_el, 'unitPrice').text = f"{float(item.get('unitPrice', 0)):.2f}"
-                    ET.SubElement(item_el, 'totalPrice').text = f"{float(item.get('totalPrice', 0)):.2f}"
+
+            # <items> is REQUIRED per contract (minOccurs defaults to 1)
+            items_el = ET.SubElement(user_el, 'items')
+            for item in user.get('items', []):
+                item_el = ET.SubElement(items_el, 'item')
+                ET.SubElement(item_el, 'productName').text = str(item.get('productName', ''))
+                ET.SubElement(item_el, 'quantity').text = str(item.get('quantity', '1'))
+                ET.SubElement(item_el, 'unitPrice').text = f"{float(item.get('unitPrice', 0)):.2f}"
+                ET.SubElement(item_el, 'totalPrice').text = f"{float(item.get('totalPrice', 0)):.2f}"
+
             ET.SubElement(user_el, 'totalAmount').text = f"{float(user.get('totalAmount', 0)):.2f}"
 
+    # <summary> is always present
     summary_el = ET.SubElement(root, 'summary')
     ET.SubElement(summary_el, 'totalOrders').text = str(batch_data.get('totalOrders', 0))
     ET.SubElement(summary_el, 'totalAmount').text = f"{float(batch_data.get('totalAmount', 0)):.2f}"
@@ -378,9 +410,9 @@ def _send_batch_to_exchange(xml_body: str) -> bool:
         connection = pika.BlockingConnection(params)
         channel = connection.channel()
 
-        channel.exchange_declare(exchange='kassa.topic', exchange_type='topic', durable=True)
+        channel.exchange_declare(exchange=KASSA_TOPIC_EXCHANGE, exchange_type='topic', durable=True)
         channel.basic_publish(
-            exchange='kassa.topic',
+            exchange=KASSA_TOPIC_EXCHANGE,
             routing_key='kassa.closed',
             body=xml_body.encode('utf-8'),
             properties=pika.BasicProperties(
@@ -389,7 +421,7 @@ def _send_batch_to_exchange(xml_body: str) -> bool:
             ),
         )
         connection.close()
-        _logger.info("RabbitMQ: BatchClosed verstuurd naar kassa.topic [routing_key=kassa.closed]")
+        _logger.info("RabbitMQ: BatchClosed verstuurd naar %s [routing_key=kassa.closed]", KASSA_TOPIC_EXCHANGE)
         return True
 
     except Exception as e:
@@ -400,23 +432,47 @@ def _send_batch_to_exchange(xml_body: str) -> bool:
 def send_batch_closed(batch_data: dict) -> bool:
     """
     Contract K-02 — Kassa → Facturatie: dagafsluiting batch.
-    Publiceert BatchClosed XML naar exchange kassa.topic, routing key kassa.closed.
-    Alleen Invoice-orders van klanten met een CRM UUID.
+    Bouwt en valideert de BatchClosed XML tegen kassa_batch_contract.xsd,
+    daarna publiceren naar kassa.topic exchange met routing key kassa.closed.
     """
     xml = _build_batch_closed_xml(batch_data)
+
+    # Validate against the authoritative contract schema before publishing
+    try:
+        from lxml import etree  # type: ignore[import-not-found]
+        if BATCH_SCHEMA_PATH.exists():
+            schema_doc = etree.parse(str(BATCH_SCHEMA_PATH))
+            schema = etree.XMLSchema(schema_doc)
+            xml_doc = etree.fromstring(xml.encode('utf-8'))
+            if not schema.validate(xml_doc):
+                _logger.error(
+                    "BatchClosed XML failed XSD validation [schema=%s]: %s",
+                    BATCH_SCHEMA_PATH,
+                    schema.error_log,
+                )
+                return False
+            _logger.debug("BatchClosed XML passed XSD validation")
+        else:
+            _logger.warning("Batch schema not found at %s, skipping validation", BATCH_SCHEMA_PATH)
+    except ImportError:
+        _logger.warning("lxml not installed, skipping XSD validation for BatchClosed. Install with: pip install lxml")
+    except Exception:
+        _logger.exception("Unexpected error during BatchClosed XSD validation")
+        return False
+
     return _send_batch_to_exchange(xml)
 
 
 def send_payment_confirmed(payment_data: dict) -> bool:
     """Contract 16 — Kassa → CRM: payment confirmed."""
     xml = _build_payment_confirmed_xml(payment_data)
-    return _send_xml(xml, '', QUEUE_PAYMENT_CONFIRMED, exchange_type='direct', element_name='PaymentConfirmed')
+    return _send_xml(xml, KASSA_TOPIC_EXCHANGE, QUEUE_PAYMENT_CONFIRMED, exchange_type='topic', element_name='PaymentConfirmed')
 
 
 def send_invoice_requested(invoice_data: dict) -> bool:
     """Contract K-01 — Kassa → Facturatie: invoice request."""
     xml = _build_invoice_requested_xml(invoice_data)
-    return _send_xml(xml, '', QUEUE_INVOICE_REQUESTED, exchange_type='direct', element_name='InvoiceRequested')
+    return _send_xml(xml, KASSA_TOPIC_EXCHANGE, QUEUE_INVOICE_REQUESTED, exchange_type='topic', element_name='InvoiceRequested')
 
 
 def send_user_created(user_data: dict) -> bool:

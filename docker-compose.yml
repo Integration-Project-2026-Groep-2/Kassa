@@ -68,28 +68,26 @@ services:
             ODOO_PASSWORD: ${ODOO_PASSWORD}
             ENABLE_RECEIVER_IN_ODOO_IMAGE: ${ENABLE_RECEIVER_IN_ODOO_IMAGE:-true}
 
-    pos_receiver:
-        build: .
-        entrypoint: ["python3"]
-        depends_on:
-            rabbitmq:
-                condition: service_healthy
-        working_dir: /app/src
-        command: main_pos_receiver.py
-        environment:
-            RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
-            RABBIT_PORT: ${RABBIT_PORT:-5672}
-            RABBIT_USER: ${RABBIT_USER}
-            RABBIT_PASSWORD: ${RABBIT_PASSWORD}
-            RABBIT_VHOST: ${RABBIT_VHOST:-/}
-            ODOO_URL: ${ODOO_URL:-http://odoo:8069}
-            ODOO_DB: ${POSTGRES_DB:-kassa_db}
-            ODOO_USER: ${ODOO_USER}
-            ODOO_PASSWORD: ${ODOO_PASSWORD}
-            ENABLE_HEARTBEAT_IN_ODOO_IMAGE: "false"
-        restart: unless-stopped
-
-
+    # pos_receiver:
+    #     build: .
+    #     entrypoint: ["python3"]
+    #     depends_on:
+    #         rabbitmq:
+    #             condition: service_healthy
+    #     working_dir: /app/src
+    #     command: main_pos_receiver.py
+    #     environment:
+    #         RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
+    #         RABBIT_PORT: ${RABBIT_PORT:-5672}
+    #         RABBIT_USER: ${RABBIT_USER}
+    #         RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+    #         RABBIT_VHOST: ${RABBIT_VHOST:-/}
+    #         ODOO_URL: ${ODOO_URL:-http://odoo:8069}
+    #         ODOO_DB: ${POSTGRES_DB:-kassa_db}
+    #         ODOO_USER: ${ODOO_USER}
+    #         ODOO_PASSWORD: ${ODOO_PASSWORD}
+    #         ENABLE_HEARTBEAT_IN_ODOO_IMAGE: "false"
+    #     restart: unless-stopped
 
 volumes:
     postgres_data:

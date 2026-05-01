@@ -79,12 +79,29 @@ class PosOrderBatchService:
             return False, error_msg, None
     
     def _get_orders_for_session(self, session) -> List:
-        """Get all orders for a POS session."""
-        orders = self.PosOrder.search([
-            ('session_id', '=', session.id),
-            ('state', 'in', ['paid', 'invoiced'])  # Only completed orders
+        """
+        Get all orders for a POS session that have not been batched yet.
+        
+        Args:
+            session: pos.session record
+            
+        Returns:
+            List of pos.order records not yet in a batch
+        """
+        # Find orders already in a batch for this session
+        existing_batches = self.PosOrderBatch.search([
+            ('pos_session_id', '=', session.id)
         ])
-        _logger.debug(f"Found {len(orders)} completed orders for session {session.id}")
+        batched_order_ids = existing_batches.mapped('order_ids').ids
+        
+        domain = [
+            ('session_id', '=', session.id),
+            ('state', 'in', ['paid', 'invoiced']),
+            ('id', 'not in', batched_order_ids)
+        ]
+        
+        orders = self.PosOrder.search(domain)
+        _logger.debug(f"Found {len(orders)} unbatched orders for session {session.id}")
         return orders
     
     def _filter_orders(self, orders: List) -> List:
@@ -97,19 +114,31 @@ class PosOrderBatchService:
         Returns:
             Filtered list of qualifying orders
         """
+        unfiltered_count = len(orders)
         filtered = []
         for order in orders:
             # Check 1: payment_type must be 'Invoice'
             if order.payment_type != 'Invoice':
+                _logger.info("Skipping order %s: payment_type is %s (only Invoice allowed)", order.name, order.payment_type)
                 continue
 
             # Check 2: partner must have a CRM UUID (identified user)
             if not order.partner_id or not order.partner_id.user_id_custom:
+                _logger.info("Skipping order %s: missing partner or CRM UUID", order.name)
+                continue
+
+            # Check 3: ONLY include company-linked orders in the batch (K-02)
+            # Individual visitors are handled real-time (K-01 / K-16).
+            if not order.partner_id.company_id_custom:
+                _logger.info("Skipping order %s: visitor (handled real-time)", order.name)
                 continue
 
             filtered.append(order)
         
-        _logger.debug(f"Filtered {len(filtered)} orders (Invoice + identified user)")
+        _logger.info(
+            "Batch Filter: %d orders found, %d kept (Company Contacts), %d rejected", 
+            unfiltered_count, len(filtered), unfiltered_count - len(filtered)
+        )
         return filtered
     
     def _build_batch_data(self, orders: List, session) -> Dict:
@@ -151,26 +180,31 @@ class PosOrderBatchService:
         order_ids = []
         
         for order in orders:
-            user_id = order.order_id_custom
-            
+            # Group by CRM user UUID (user_id_custom on the partner),
+            # NOT by the order UUID — the contract requires items grouped per user.
+            user_id = order.partner_id.user_id_custom
+
             if user_id not in users_dict:
                 users_dict[user_id] = {
                     'userId': user_id,
                     'items': [],
                     'totalAmount': 0.0
                 }
-            
-            # Add order lines as items
+
+            # Add order lines as items (qty must be positive per schema)
             for line in order.lines:
+                qty = int(line.qty)
+                if qty <= 0:
+                    continue  # skip refund lines / zero-qty lines
                 item = {
                     'productName': line.product_id.name or 'Unknown',
-                    'quantity': int(line.qty),
+                    'quantity': qty,
                     'unitPrice': float(line.price_unit),
-                    'totalPrice': float(line.price_subtotal)
+                    'totalPrice': float(line.price_subtotal_incl)
                 }
                 users_dict[user_id]['items'].append(item)
                 users_dict[user_id]['totalAmount'] += item['totalPrice']
-            
+
             total_amount += order.amount_total
             order_ids.append(order.order_id_custom)
         
@@ -214,7 +248,7 @@ class PosOrderBatchService:
         })
         
         # Link orders to batch
-        batch_record.write({'order_ids': [(6, 0, orders.ids)]})
+        batch_record.write({'order_ids': [(6, 0, [o.id for o in orders])]})
         
         _logger.info(f"Created batch record {batch_record.name}")
         return batch_record
