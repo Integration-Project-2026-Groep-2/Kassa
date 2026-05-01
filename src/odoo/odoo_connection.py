@@ -188,7 +188,7 @@ class OdooConnection:
         """
         return self.execute(model, 'create', values)
     
-    def write(self, model: str, ids: list, values: dict) -> bool:
+    def write(self, model: str, ids: list, values: dict, context: Optional[dict] = None) -> bool:
         """
         Write (update) records in a model.
         
@@ -196,11 +196,15 @@ class OdooConnection:
             model: Model name
             ids: List of record IDs to update
             values: Dictionary of field values to update
+            context: Optional Odoo context values
         
         Returns:
             True if write succeeded
         """
-        return self.execute(model, 'write', ids, values)
+        kwargs = {}
+        if context:
+            kwargs['context'] = context
+        return self.execute(model, 'write', ids, values, **kwargs)
     
     def unlink(self, model: str, ids: list) -> bool:
         """

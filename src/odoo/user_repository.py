@@ -174,11 +174,13 @@ class OdooUserRepository:
         partner_id = partner_ids[0]
         values = self._map_user_to_partner_values(user, is_update=True)
         
-        # Mark this as a CRM-originated update so write hook doesn't republish
-        values['__crm_sync_skip_publish__'] = 'true'
-        
         try:
-            self.odoo.write(self.MODEL_NAME, [partner_id], values)
+            self.odoo.write(
+                self.MODEL_NAME,
+                [partner_id],
+                values,
+                context={'crm_sync_skip_publish': True},
+            )
             
             # Read-back to verify standard visibility fields are correctly set
             try:
@@ -392,10 +394,10 @@ class OdooUserRepository:
             'company_id': False,  # False means visible across all Odoo companies
         }
         
-        # Only include user_id_custom for creates, never for updates
-        # (updates should never change the CRM UUID identity)
-        if not is_update:
-            values['user_id_custom'] = user.userId
+        # Always include user_id_custom. CRM is the source of truth for the UUID.
+        # This ensures that if Odoo created the user without a UUID (e.g. standard UI),
+        # it is correctly linked when the CRM confirms it.
+        values['user_id_custom'] = user.userId
         
         # Optional fields
         if user.companyId:

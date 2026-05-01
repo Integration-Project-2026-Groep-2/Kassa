@@ -56,7 +56,9 @@ class ResPartner(models.Model):
     def write(self, vals):
         # Extract and remove CRM sync marker before processing
         # This prevents CRM-originated updates from triggering republish
-        skip_publish = vals.pop('__crm_sync_skip_publish__', None) == 'true'
+        skip_publish = bool(self.env.context.get('crm_sync_skip_publish'))
+        skip_publish = vals.pop('__crm_sync_skip_publish__', None) == 'true' or skip_publish
+        vals.pop('crm_sync_skip_publish', None)
         
         watched_fields = {
             'name', 'email', 'phone', 'badge_code', 'role', 'company_id_custom',
