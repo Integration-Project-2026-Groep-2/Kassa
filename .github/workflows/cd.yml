@@ -33,12 +33,20 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to VM via SSH
+      - name: SSH Pull
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
-          # We use the exact syntax from Team Infra. 
-          # On this VM, 'kassa' is a custom command that handles the deployment.
-          script: ${{ env.SERVICE_NAME }}
+          # We use a bare subcommand. The VM wrapper adds 'docker-compose'
+          script: pull kassa
+
+      - name: SSH Up
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          # We use a bare subcommand. The VM wrapper adds 'docker-compose'
+          script: up -d kassa
