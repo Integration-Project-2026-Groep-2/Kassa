@@ -27,15 +27,24 @@ class RabbitManager:
         # Placeholder voor het kanaal (channel) dat gebruikt wordt om berichten te publiceren/consumeren
         self.channel = None
 
-    def connect(self):
-        """Maak een blocking verbinding met RabbitMQ en open een kanaal."""
+    def connect(self, max_retries: int | None = None):
+        """Maak een blocking verbinding met RabbitMQ en open een kanaal.
+
+        Args:
+            max_retries: Maximum aantal pogingen voor het verbinden met RabbitMQ.
+                         None (standaard) = oneindig (voor achtergrond services).
+                         Gebruik max_retries=1 voor éénmalige callers (bijv. Odoo worker)
+                         zodat de HTTP worker niet geblokkeerd wordt.
+        """
         credentials = pika.PlainCredentials(self.user, self.password)
         candidate_hosts = [self.host]
         if self.host in {'localhost', 'rabbitmq'}:
             candidate_hosts.append('127.0.0.1')
 
+        attempt = 0
         # Retry loop: RabbitMQ container kan al "healthy" zijn terwijl AMQP nog opstart.
         while True:
+            attempt += 1
             last_error = None
             for resolved_host in candidate_hosts:
                 try:
@@ -51,6 +60,9 @@ class RabbitManager:
                     return
                 except Exception as exc:
                     last_error = exc
+
+            if max_retries is not None and attempt >= max_retries:
+                raise last_error or Exception("RabbitMQ connectie mislukt")
 
             logger.warning(
                 "RabbitMQ connectie mislukt (hosts=%s, port=%s, user=%s, vhost=%s). Opnieuw proberen in 2s...",

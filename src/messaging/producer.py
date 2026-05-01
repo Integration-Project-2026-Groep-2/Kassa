@@ -30,9 +30,15 @@ class KassaProducer:
             vhost=RABBIT_VHOST,
         )
 
-    def connect(self):
-        """Open de verbinding en het kanaal."""
-        self._manager.connect()
+    def connect(self, max_retries: int | None = None):
+        """Open de verbinding en het kanaal.
+
+        Args:
+            max_retries: Doorgegeven aan RabbitManager.connect().
+                         None = oneindig (achtergrond services).
+                         1 = fail fast (Odoo worker, één poging).
+        """
+        self._manager.connect(max_retries=max_retries)
 
     def publish(
         self,
