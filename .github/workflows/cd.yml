@@ -39,7 +39,11 @@ jobs:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
-          # On this VM, SSH automatically runs 'docker-compose up -d'.
-          # By passing 'kassa --pull always', the final command becomes:
-          # 'docker-compose up -d kassa --pull always', which forces an image update.
-          script: kassa --pull always
+          # This is the 'Gold Standard' deploy script. 
+          # It requires the SSH key to be UNRESTRICTED on the VM.
+          script: |
+            cd ~/Kassa || cd ~/kassa
+            git pull
+            docker compose pull kassa
+            docker compose up -d kassa
+            docker exec kassa_service grep -c "rabbitmq_sender" /mnt/extra-addons/kassa_pos/models/user_registration.py
