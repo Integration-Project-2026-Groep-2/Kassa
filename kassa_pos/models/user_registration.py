@@ -155,15 +155,24 @@ class PosSession(models.Model):
             dict: Result with contact_id and message_sent flag
         """
         try:
+            logger.error(
+                "[DIAG] create_and_publish_user called [user_id=%s email=%s]",
+                user_data.get('userId'), user_data.get('email')
+            )
             self._validate_user_data(user_data)
+            logger.error("[DIAG] validation passed")
 
             contact = self._create_contact(user_data)
-            logger.info(
-                "Contact created [id=%d user_id=%s email=%s]",
+            logger.error(
+                "[DIAG] contact created [id=%d user_id=%s email=%s]",
                 contact.id, user_data['userId'], user_data['email']
             )
 
             message_result = self._publish_user_message(user_data)
+            logger.error(
+                "[DIAG] publish result: sent=%s queued=%s",
+                message_result.get('sent'), message_result.get('queued')
+            )
 
             return {
                 'contact_id': contact.id,
@@ -173,6 +182,7 @@ class PosSession(models.Model):
             }
 
         except ValidationError:
+
             raise
         except Exception as e:
             logger.error("Error in create_and_publish_user: %s", str(e), exc_info=True)

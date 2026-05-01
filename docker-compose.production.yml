@@ -69,12 +69,12 @@ services:
         networks:
             - kassa-network
 
-    # Odoo POS Application
-    odoo:
+    # Odoo POS Application (Match Team Infra Naming)
+    kassa:
         build:
             context: .
             dockerfile: Dockerfile
-        image: ${ODOO_IMAGE:-ghcr.io/integration-project-2026-groep-2/odoo-kassa:17}
+        image: ${ODOO_IMAGE:-ghcr.io/integration-project-2026-groep-2/kassa:latest-dev}
         container_name: kassa-odoo
         restart: unless-stopped
         depends_on:
