@@ -72,6 +72,10 @@ class UserMessageQueue(models.Model):
     def action_send(self):
         """Send message to RabbitMQ."""
         try:
+            import sys
+            _src_path = '/app/src'
+            if _src_path not in sys.path:
+                sys.path.append(_src_path)
             from src.messaging.producer import KassaProducer
             
             for message in self:
@@ -183,6 +187,10 @@ class PosSession(models.Model):
     
     def _validate_user_data(self, user_data):
         """Validate user data from registration form."""
+        import sys
+        _src_path = '/app/src'
+        if _src_path not in sys.path:
+            sys.path.insert(0, _src_path)
         from src.models.user import User
         
         required_fields = ['userId', 'firstName', 'lastName', 'email', 'role', 'badgeCode']
@@ -237,6 +245,10 @@ class PosSession(models.Model):
     
     def _build_user_xml(self, user_data):
         """Build XML User message."""
+        import sys
+        _src_path = '/app/src'
+        if _src_path not in sys.path:
+            sys.path.insert(0, _src_path)
         from src.messaging.message_builders import build_user_xml
         
         xml = build_user_xml(user_data)
@@ -249,6 +261,14 @@ class PosSession(models.Model):
         If Integration Service is offline, queue the message for retry.
         """
         try:
+            import sys
+            # producer.py and its dependencies (connection.py, config.py) use bare
+            # imports that only resolve when /app/src is on sys.path.  Odoo worker
+            # processes do NOT have /app/src on sys.path by default, so we add it
+            # here before importing the producer.
+            _src_path = '/app/src'
+            if _src_path not in sys.path:
+                sys.path.append(_src_path)
             from src.messaging.producer import KassaProducer
             
             producer = KassaProducer()
