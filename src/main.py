@@ -47,7 +47,7 @@ async def main() -> None:
 
     # Status en receiver draaien samen in dit proces.
     await asyncio.gather(
-        run_status(connection),
+        # run_status(connection),
         run_receiver(connection),
     )
 

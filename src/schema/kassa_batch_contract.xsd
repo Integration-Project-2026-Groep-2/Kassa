@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Kassa Batch Contract Schema — Contract K-02
+  Integration Project 2025/2026 | Groep 2
+
+  Bron: Team Kassa contractoverzicht (BatchClosed)
+  Exchange:    kassa.topic
+  Routing key: kassa.closed
+  Queue:       facturatie.kassa.batch.closed (consumer-side)
+
+  Dit schema valideert het <BatchClosed> bericht dat Kassa stuurt
+  bij het afsluiten van een POS-sessie (dagafsluiting).
+  Deduplicatiesleutel: batchId
+
+  Businessregels:
+  - Alleen orders met paymentType=Invoice en geïdentificeerde klant zitten in de batch
+  - users is optioneel: lege batch (geen invoice-orders) is geldig
+  - summary is altijd aanwezig
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="unqualified"
+           version="1.0">
+
+  <!-- ============================================================
+       GEDEELDE SIMPLE TYPES (overgenomen van kassa_contract.xsd)
+  ============================================================ -->
+
+  <xs:simpleType name="UUIDType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ISO8601DateTimeType">
+    <xs:restriction base="xs:dateTime"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="CurrencyType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="EUR"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="NonNegativeAmountType">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ============================================================
+       GEDEELDE COMPLEX TYPES
+  ============================================================ -->
+
+  <!-- Bestellijn met totalPrice (uitbreiding van kassa_contract OrderItemType) -->
+  <xs:complexType name="BatchItemType">
+    <xs:sequence>
+      <xs:element name="productName" type="xs:string"/>
+      <xs:element name="quantity"    type="xs:positiveInteger"/>
+      <xs:element name="unitPrice"   type="NonNegativeAmountType"/>
+      <xs:element name="totalPrice"  type="NonNegativeAmountType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ============================================================
+       CONTRACT K-02 — Kassa → Facturatie: dagafsluitbatch
+       Exchange:    kassa.topic
+       Routing key: kassa.closed
+       Root:        <BatchClosed>
+  ============================================================ -->
+  <xs:element name="BatchClosed">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="batchId"   type="UUIDType"/>
+        <xs:element name="closedAt"  type="ISO8601DateTimeType"/>
+        <xs:element name="currency"  type="CurrencyType"/>
+
+        <!-- Gegroepeerde orders per gebruiker — optioneel bij lege batch -->
+        <xs:element name="users" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="user" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <!-- CRM user UUID — komt overeen met het 'aid' veld in de client tabel -->
+                    <xs:element name="userId" type="UUIDType"/>
+                    <xs:element name="items">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="item" type="BatchItemType" minOccurs="1" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="totalAmount" type="NonNegativeAmountType"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+        <!-- Samenvatting van de batch — altijd aanwezig -->
+        <xs:element name="summary">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="totalOrders" type="xs:nonNegativeInteger"/>
+              <xs:element name="totalAmount" type="NonNegativeAmountType"/>
+              <xs:element name="orderIds" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="orderId" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

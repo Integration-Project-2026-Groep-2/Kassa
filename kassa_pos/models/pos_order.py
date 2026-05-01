@@ -126,57 +126,46 @@ class PosOrder(models.Model):
         - Alleen bij Invoice + bedrijfskoppeling:
           InvoiceRequested → kassa.invoice.requested (Contract K-01, naar Facturatie)
         """
-        # Contract 16 — altijd versturen bij betaalde order
+        # Contract 16 — alleen versturen voor bezoekers (NIET gelinkt aan bedrijf)
+        # Bedrijven worden nu via de dagelijkse Batch (K-02) verwerkt.
         payment_data = order._build_payment_confirmed_data()
-        if payment_data.get('email'):
+        if payment_data.get('email') and not order.partner_id.company_id_custom:
             rabbitmq_sender.send_payment_confirmed(payment_data)
 
-        # Contract K-01 — alleen bij Invoice-betaling gelinkt aan een bedrijf
-        if order.payment_type == 'Invoice' and order.partner_id and order.partner_id.company_id_custom:
+        # Contract K-01 — alleen bij Invoice-betaling voor bezoekers (NIET gelinkt aan bedrijf)
+        # Bedrijven worden nu via de dagelijkse Batch (K-02) verwerkt.
+        if order.payment_type == 'Invoice' and order.partner_id and not order.partner_id.company_id_custom:
             invoice_data = order._build_invoice_requested_data()
             rabbitmq_sender.send_invoice_requested(invoice_data)
 
     @api.model
-    def close_daily_batch(self, session=None) -> dict:
+    def close_daily_batch(self, session=None, session_id=None) -> dict:
         """
         Afsluitknop: Collect today's transactions and send to facturatie.
         
-        This is called when the POS manager closes the daily session.
-        It aggregates all orders with:
-        - paymentType = 'Invoice'
-        - Identified customer (UUID in order_id_custom)
-        
-        And sends them as a BatchClosed message to RabbitMQ.
-        
         Args:
-            session: Optional pos.session record to close.
-                    If not provided, uses the current active session.
-        
-        Returns:
-            {
-                'success': bool,
-                'message': str,
-                'batch_id': Optional[str],
-                'orders_count': int,
-                'total_amount': float
-            }
+            session: Optional pos.session record
+            session_id: Optional ID of the session (passed from JS UI)
         """
         import logging
         _logger = logging.getLogger(__name__)
         
         try:
-            # Get the session to close
-            if not session:
-                # Try to find the current active session
-                PosSession = self.env['pos.session']
-                session = PosSession.search([
-                    ('state', '=', 'opened')
-                ], limit=1)
+            # Resolve session
+            if not session and session_id:
+                session = self.env['pos.session'].browse(session_id)
             
             if not session:
+                # Fallback: try to find the current active session for this user
+                session = self.env['pos.session'].search([
+                    ('state', 'in', ['opened', 'closing_control']),
+                    ('user_id', '=', self.env.uid)
+                ], limit=1)
+            
+            if not session or not session.exists():
                 return {
                     'success': False,
-                    'message': 'No active POS session found',
+                    'message': 'Geen actieve POS sessie gevonden voor deze gebruiker. Controleer of de kassa open staat.',
                     'batch_id': None,
                     'orders_count': 0,
                     'total_amount': 0.0

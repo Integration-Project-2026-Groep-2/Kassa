@@ -69,8 +69,8 @@ services:
         networks:
             - kassa-network
 
-    # Odoo POS Application (Match Team Infra Naming)
-    kassa:
+    # Odoo POS Application
+    odoo:
         build:
             context: .
             dockerfile: Dockerfile
@@ -154,50 +154,48 @@ services:
             start_period: 60s
 
     # POS Message Receiver Service
-    pos_receiver:
-        build:
-            context: .
-            dockerfile: Dockerfile
-        container_name: kassa-pos-receiver
-        restart: unless-stopped
-        entrypoint: ["python3"]
-        depends_on:
-            rabbitmq:
-                condition: service_healthy
-        working_dir: /app/src
+    # pos_receiver:
+    #     build:
+    #         context: .
+    #         dockerfile: Dockerfile
+    #     container_name: kassa-pos-receiver
+    #     restart: unless-stopped
+    #     entrypoint: ["python3"]
+    #     depends_on:
+    #         rabbitmq:
+    #             condition: service_healthy
+    #     working_dir: /app/src
 
-        # Service definition for Python receiver script
-        command: main_pos_receiver.py
+    #     # Service definition for Python receiver script
+    #     command: main_pos_receiver.py
 
-        environment:
-            # ========== RABBITMQ CONFIGURATION ==========
-            # Connect to RabbitMQ for consuming POS messages
-            RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
-            RABBIT_PORT: ${RABBIT_PORT:-5672}
-            RABBIT_USER: ${RABBIT_USER}
-            RABBIT_PASSWORD: ${RABBIT_PASSWORD}
-            RABBIT_VHOST: ${RABBIT_VHOST:-/}
-            ENABLE_HEARTBEAT_IN_ODOO_IMAGE: "false"
+    #     environment:
+    #         # ========== RABBITMQ CONFIGURATION ==========
+    #         # Connect to RabbitMQ for consuming POS messages
+    #         RABBIT_HOST: ${RABBIT_HOST:-rabbitmq}
+    #         RABBIT_PORT: ${RABBIT_PORT:-5672}
+    #         RABBIT_USER: ${RABBIT_USER}
+    #         RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+    #         RABBIT_VHOST: ${RABBIT_VHOST:-/}
+    #         ENABLE_HEARTBEAT_IN_ODOO_IMAGE: "false"
 
-            # Message queue configuration (override in .env if needed)
-            POS_EXCHANGE: ${POS_EXCHANGE:-pos.events} # RabbitMQ exchange
-            POS_ROUTING_KEY: ${POS_ROUTING_KEY:-pos.#} # Routing key pattern
-            POS_QUEUE: ${POS_QUEUE:-pos_messages} # Queue name
+    #         # Message queue configuration (override in .env if needed)
+    #         POS_EXCHANGE: ${POS_EXCHANGE:-pos.events} # RabbitMQ exchange
+    #         POS_ROUTING_KEY: ${POS_ROUTING_KEY:-pos.#} # Routing key pattern
+    #         POS_QUEUE: ${POS_QUEUE:-pos_messages} # Queue name
 
-            # ========== LOGGING ==========
-            LOG_LEVEL: ${LOG_LEVEL:-info}
+    #         # ========== LOGGING ==========
+    #         LOG_LEVEL: ${LOG_LEVEL:-info}
 
-        networks:
-            - kassa-network
+    #     networks:
+    #         - kassa-network
 
-        # Auto-restart service if it crashes
-        deploy:
-            restart_policy:
-                condition: on-failure
-                delay: 5s
-                max_attempts: 5
-
-
+    #     # Auto-restart service if it crashes
+    #     deploy:
+    #         restart_policy:
+    #             condition: on-failure
+    #             delay: 5s
+    #             max_attempts: 5
 
 # ============================================================
 # VOLUMES - Persistent Data Storage
