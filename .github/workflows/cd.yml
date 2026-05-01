@@ -40,17 +40,16 @@ jobs:
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
           script: |
-            set -e
-            # Try both possible paths
-            cd ~/Kassa || cd ~/kassa
-
-            # Pull the fresh image we just pushed
-            # We use the service name 'kassa' as defined in infra compose
-            docker compose pull kassa || docker-compose pull kassa
-
-            # Restart the service
-            docker compose up -d kassa || docker-compose up -d kassa
-
-            # Verification
-            echo "Verifying new code is present..."
-            docker exec kassa_service grep -c "rabbitmq_sender" /mnt/extra-addons/kassa_pos/models/user_registration.py || echo "Warning: Code still looks old!"
+            cd ~/Kassa || cd ~/kassa || exit 1
+            
+            echo "Current directory: $(pwd)"
+            
+            # 1. Pull latest images for all services in the file
+            docker compose pull || docker-compose pull
+            
+            # 2. Restart all services (this will update whichever service uses the image)
+            docker compose up -d || docker-compose up -d
+            
+            # 3. Verification - check the container we know exists
+            echo "Verifying new code in kassa_service..."
+            docker exec kassa_service grep -c "rabbitmq_sender" /mnt/extra-addons/kassa_pos/models/user_registration.py || echo "Verification failed: kassa_service not found or code is old."
