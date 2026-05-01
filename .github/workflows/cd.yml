@@ -39,7 +39,6 @@ jobs:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
-          # We omit 'docker compose' because your VM adds it automatically.
-          script: |
-            pull kassa
-            up -d kassa
+          # We use the exact syntax from Team Infra. 
+          # On this VM, 'kassa' is a custom command that handles the deployment.
+          script: ${{ env.SERVICE_NAME }}
