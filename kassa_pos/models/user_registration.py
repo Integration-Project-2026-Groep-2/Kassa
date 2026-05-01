@@ -4,26 +4,31 @@ User creation handler for POS User Registration feature.
 
 Handles form submissions from the POS "Add User" modal and:
 1. Creates contacts in Odoo
-2. Publishes User messages to RabbitMQ
+2. Publishes KassaUserCreated messages to RabbitMQ via kassa_pos.utils.rabbitmq_sender
 3. Implements fallback queue for offline scenarios
+
+Architecture note
+-----------------
+Publishing is done via kassa_pos/utils/rabbitmq_sender.py which is fully
+self-contained inside this Odoo addon (only depends on pika and env vars).
+We intentionally do NOT import from src.* here because src is a separate
+Python package that lives outside the Odoo addon tree and is not reliably on
+sys.path in all deployment environments (local dev vs. VM container).
 """
 
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 import logging
-import uuid as uuid_lib
-import xml.etree.ElementTree as ET
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 
 class UserMessageQueue(models.Model):
-    """Queue for storing pending user messages when Integration Service is offline."""
-    
+    """Queue for storing pending user messages when RabbitMQ is offline."""
+
     _name = 'user.message.queue'
     _description = 'User Message Queue'
-    
+
     user_id_custom = fields.Char(
         string='User ID',
         help='UUID of the user',
@@ -34,108 +39,104 @@ class UserMessageQueue(models.Model):
         ('UserUpdated', 'User Updated'),
         ('UserDeleted', 'User Deleted'),
     ], string='Message Type', required=True)
-    
+
     payload = fields.Text(
         string='Message Payload',
         help='JSON or XML payload',
         required=True
     )
-    
+
     status = fields.Selection([
         ('pending', 'Pending'),
         ('sent', 'Sent'),
         ('failed', 'Failed'),
     ], string='Status', default='pending', required=True)
-    
+
     retry_count = fields.Integer(
         string='Retry Count',
         default=0,
         help='Number of failed attempts'
     )
-    
+
     created_at = fields.Datetime(
         string='Created At',
         default=fields.Datetime.now
     )
-    
+
     last_error = fields.Text(
         string='Last Error',
         help='Error message from last failed attempt'
     )
-    
+
     def action_retry_all_pending(self):
         """Manually retry all pending messages."""
         pending_messages = self.search([('status', '=', 'pending')])
         for message in pending_messages:
             message.action_send()
-    
-    def action_send(self):
-        """Send message to RabbitMQ."""
-        try:
-            import sys
-            # /app  → makes 'src' importable as a package (from src.messaging.producer import ...)
-            # /app/src → makes bare imports inside producer.py resolve (from connection import ...)
-            for _p in ['/app', '/app/src']:
-                if _p not in sys.path:
-                    sys.path.append(_p)
-            from src.messaging.producer import KassaProducer
-            
-            for message in self:
-                producer = KassaProducer()
-                producer.connect()
-                
-                try:
-                    # Send based on message type using new user.topic exchange (Salesforce CRM integration)
-                    routing_key_map = {
-                        'UserCreated': 'kassa.user.created',
-                        'UserUpdated': 'kassa.user.updated',
-                        'UserDeactivated': 'kassa.user.deactivated',
-                    }
-                    routing_key = routing_key_map.get(message.message_type)
-                    if not routing_key:
-                        raise ValidationError(
-                            f"Unsupported user message type for RabbitMQ publish: {message.message_type}"
-                        )
 
-                    producer.publish(message.payload, routing_key=routing_key, exchange='user.topic')
-                    
-                    message.write({
-                        'status': 'sent',
-                        'last_error': '',
-                    })
-                    logger.info(
-                        "User message sent successfully [user_id=%s type=%s]",
-                        message.user_id_custom, message.message_type
+    def action_send(self):
+        """Re-send a queued message to RabbitMQ."""
+        from kassa_pos.utils.rabbitmq_sender import send_kassa_user_created
+
+        for message in self:
+            try:
+                if message.message_type == 'UserCreated':
+                    # payload is the raw XML string — wrap it in a dict so the
+                    # sender can rebuild it.  Simpler: call _publish_to_topic_exchange
+                    # directly with the stored XML.
+                    from kassa_pos.utils.rabbitmq_sender import (
+                        _publish_to_topic_exchange,
+                        ROUTING_KEY_KASSA_USER_CREATED,
                     )
-                except Exception as e:
+                    ok = _publish_to_topic_exchange(
+                        ROUTING_KEY_KASSA_USER_CREATED, message.payload
+                    )
+                else:
+                    logger.warning(
+                        "action_send: unsupported message type '%s' [id=%d]",
+                        message.message_type, message.id
+                    )
+                    continue
+
+                if ok:
+                    message.write({'status': 'sent', 'last_error': ''})
+                    logger.info(
+                        "Queued message sent successfully [id=%d user_id=%s type=%s]",
+                        message.id, message.user_id_custom, message.message_type
+                    )
+                else:
                     message.retry_count += 1
                     message.write({
                         'status': 'failed',
-                        'last_error': str(e),
+                        'last_error': 'publish returned False',
+                        'retry_count': message.retry_count,
                     })
-                    logger.error(
-                        "Failed to send user message [user_id=%s retry=%d error=%s]",
-                        message.user_id_custom, message.retry_count, str(e)
-                    )
-                finally:
-                    producer.close()
-        
-        except ImportError:
-            logger.warning("RabbitMQ producer not available - message queued locally")
+
+            except Exception as e:
+                message.retry_count += 1
+                message.write({
+                    'status': 'failed',
+                    'last_error': str(e),
+                    'retry_count': message.retry_count,
+                })
+                logger.error(
+                    "Failed to send queued message [id=%d user_id=%s error=%s]",
+                    message.id, message.user_id_custom, str(e)
+                )
 
 
 class PosSession(models.Model):
-    """Extend POS Session to handle user creation."""
-    
+    """Extend POS Session to handle user creation and RabbitMQ publishing."""
+
     _inherit = 'pos.session'
-    
+
     @api.model
     def create_and_publish_user(self, user_data):
         """
-        Create a new user (contact) and publish to RabbitMQ.
-        
-        Called from frontend when user registration form is submitted.
-        
+        Create a new contact and publish a KassaUserCreated message to RabbitMQ.
+
+        Called from the POS frontend when the user registration form is submitted.
+
         Args:
             user_data (dict): User information from the registration form
                 - userId: UUID
@@ -149,75 +150,51 @@ class PosSession(models.Model):
                 - gdprConsent: Boolean
                 - isActive: Boolean
                 - confirmedAt: ISO timestamp
-        
+
         Returns:
-            dict: Result with contact_id and message_id
-        
-        Raises:
-            ValidationError: If validation fails
+            dict: Result with contact_id and message_sent flag
         """
         try:
-            # Validate required fields
             self._validate_user_data(user_data)
-            
-            # Create contact in Odoo
+
             contact = self._create_contact(user_data)
             logger.info(
                 "Contact created [id=%d user_id=%s email=%s]",
                 contact.id, user_data['userId'], user_data['email']
             )
-            
-            # Build and publish User message
-            xml_message = self._build_user_xml(user_data)
-            message_result = self._publish_user_message(
-                user_data['userId'],
-                xml_message
-            )
-            
+
+            message_result = self._publish_user_message(user_data)
+
             return {
                 'contact_id': contact.id,
                 'user_id': user_data['userId'],
                 'message_sent': message_result['sent'],
                 'message_id': message_result.get('message_id'),
             }
-        
+
         except ValidationError:
             raise
         except Exception as e:
-            logger.error("Error creating and publishing user: %s", str(e))
+            logger.error("Error in create_and_publish_user: %s", str(e), exc_info=True)
             raise ValidationError(f"Error creating user: {str(e)}")
-    
+
     def _validate_user_data(self, user_data):
-        """Validate user data from registration form."""
-        import sys
-        for _p in ['/app', '/app/src']:
-            if _p not in sys.path:
-                sys.path.append(_p)
-        from src.models.user import User
-        
+        """Validate required fields on the incoming user_data dict."""
         required_fields = ['userId', 'firstName', 'lastName', 'email', 'role', 'badgeCode']
         for field in required_fields:
             if not user_data.get(field):
                 raise ValidationError(f"{field} is required")
-        
-        # Use User model validation
-        user = User(**user_data)
-        valid, error = user.validate()
-        if not valid:
-            raise ValidationError(error)
-    
+
     def _create_contact(self, user_data):
-        """Create a contact in Odoo."""
+        """Create a res.partner contact in Odoo."""
         ResPartner = self.env['res.partner']
-        
-        # Check for duplicate email
+
         existing = ResPartner.search([('email', '=', user_data['email'])])
         if existing:
             raise ValidationError(
                 f"Contact with email '{user_data['email']}' already exists"
             )
-        
-        # Map role to Odoo value
+
         role_map = {
             'VISITOR': 'Customer',
             'COMPANY_CONTACT': 'Customer',
@@ -227,7 +204,7 @@ class PosSession(models.Model):
             'BAR_STAFF': 'Customer',
             'ADMIN': 'Admin',
         }
-        
+
         contact_values = {
             'name': f"{user_data['firstName']} {user_data['lastName']}",
             'email': user_data['email'],
@@ -241,94 +218,80 @@ class PosSession(models.Model):
             'customer_rank': 1,
             'active': True,
         }
-        
-        contact = ResPartner.create(contact_values)
-        return contact
-    
-    def _build_user_xml(self, user_data):
-        """Build XML User message."""
-        import sys
-        for _p in ['/app', '/app/src']:
-            if _p not in sys.path:
-                sys.path.append(_p)
-        from src.messaging.message_builders import build_user_xml
-        
-        xml = build_user_xml(user_data)
-        return xml
-    
-    def _publish_user_message(self, user_id, xml_message):
+
+        return ResPartner.create(contact_values)
+
+    def _publish_user_message(self, user_data):
         """
-        Publish User message to RabbitMQ.
-        
-        If Integration Service is offline, queue the message for retry.
+        Publish a KassaUserCreated message to the user.topic RabbitMQ exchange.
+
+        Uses kassa_pos.utils.rabbitmq_sender which is self-contained inside the
+        Odoo addon and only requires pika + environment variables.  Falls back to
+        the user.message.queue model if RabbitMQ is unreachable.
         """
         try:
-            import sys
-            # /app  → makes 'src' importable as a package (from src.messaging.producer import ...)
-            # /app/src → makes bare imports inside producer.py resolve (from connection import ...)
-            for _p in ['/app', '/app/src']:
-                if _p not in sys.path:
-                    sys.path.append(_p)
-            from src.messaging.producer import KassaProducer
-            
-            producer = KassaProducer()
-            # max_retries=1: fail fast so the Odoo HTTP worker is never blocked.
-            # If RabbitMQ is unreachable, the except block below queues the message.
-            producer.connect(max_retries=1)
-            
-            try:
-                producer.publish(xml_message, routing_key='kassa.user.created')
-                logger.info("User message published [user_id=%s]", user_id)
-                return {
-                    'sent': True,
-                    'message_id': user_id,
-                }
-            finally:
-                producer.close()
-        
+            from kassa_pos.utils.rabbitmq_sender import send_kassa_user_created
+
+            logger.debug(
+                "Publishing KassaUserCreated for user_id=%s", user_data['userId']
+            )
+            ok = send_kassa_user_created(user_data)
+
+            if ok:
+                logger.info(
+                    "KassaUserCreated published [user_id=%s email=%s]",
+                    user_data['userId'], user_data['email']
+                )
+                return {'sent': True, 'message_id': user_data['userId']}
+            else:
+                raise RuntimeError("send_kassa_user_created returned False")
+
         except Exception as e:
             logger.warning(
-                "Failed to publish user message, queuing for retry [user_id=%s error=%s]",
-                user_id, str(e)
+                "Failed to publish KassaUserCreated, queuing for retry "
+                "[user_id=%s error=%s]",
+                user_data['userId'], str(e)
             )
-            
-            # Queue message for later retry
-            try:
-                self.env['user.message.queue'].create({
-                    'user_id_custom': user_id,
-                    'message_type': 'UserCreated',
-                    'payload': xml_message,
-                    'status': 'pending',
-                    'retry_count': 0,
-                })
-            except Exception as queue_error:
-                logger.error("Failed to queue message: %s", str(queue_error))
-            
-            # Still return success - message will be retried later
-            return {
-                'sent': False,
-                'message_id': user_id,
-                'queued': True,
-            }
+            self._queue_user_message(user_data, str(e))
+            return {'sent': False, 'message_id': user_data['userId'], 'queued': True}
+
+    def _queue_user_message(self, user_data, error_msg):
+        """Store a failed publish in user.message.queue for later retry."""
+        from kassa_pos.utils.rabbitmq_sender import _build_kassa_user_created_xml
+        try:
+            xml_payload = _build_kassa_user_created_xml(user_data)
+            self.env['user.message.queue'].create({
+                'user_id_custom': user_data['userId'],
+                'message_type': 'UserCreated',
+                'payload': xml_payload,
+                'status': 'pending',
+                'retry_count': 0,
+                'last_error': error_msg,
+            })
+            logger.info(
+                "KassaUserCreated queued for retry [user_id=%s]", user_data['userId']
+            )
+        except Exception as queue_error:
+            logger.error("Failed to queue message: %s", str(queue_error))
 
 
 class PosConfig(models.Model):
     """Extend POS Config for user registration settings."""
-    
+
     _inherit = 'pos.config'
-    
+
     enable_user_registration = fields.Boolean(
         string='Enable User Registration',
         default=True,
         help='Show "Add User" button in POS'
     )
-    
+
     user_registration_requires_approval = fields.Boolean(
         string='Require Approval',
         default=False,
         help='Require manager approval before user can be used'
     )
-    
+
     user_registration_notify_crm = fields.Boolean(
         string='Notify CRM',
         default=True,
