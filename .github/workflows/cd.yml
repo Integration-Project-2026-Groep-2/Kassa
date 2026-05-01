@@ -6,7 +6,7 @@ on:
 
 env:
   IMAGE_NAME: ghcr.io/integration-project-2026-groep-2/kassa
-  SERVICE_NAME: Kassa
+  SERVICE_NAME: kassa
 
 jobs:
   build-and-push:
@@ -39,17 +39,6 @@ jobs:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
-          script: |
-            cd ~/Kassa || cd ~/kassa || exit 1
-            
-            echo "Current directory: $(pwd)"
-            
-            # 1. Pull latest images for all services in the file
-            docker compose pull || docker-compose pull
-            
-            # 2. Restart all services (this will update whichever service uses the image)
-            docker compose up -d || docker-compose up -d
-            
-            # 3. Verification - check the container we know exists
-            echo "Verifying new code in kassa_service..."
-            docker exec kassa_service grep -c "rabbitmq_sender" /mnt/extra-addons/kassa_pos/models/user_registration.py || echo "Verification failed: kassa_service not found or code is old."
+          # We use a single-line string to avoid parsing issues on restricted shells.
+          # We also use the service name 'kassa' directly.
+          script: docker compose pull kassa && docker compose up -d kassa && docker exec kassa_service grep -c "rabbitmq_sender" /mnt/extra-addons/kassa_pos/models/user_registration.py
