@@ -33,20 +33,13 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: SSH Pull
+      - name: Deploy to VM via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
-          # We use a bare subcommand. The VM wrapper adds 'docker-compose'
-          script: pull kassa
-
-      - name: SSH Up
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          # We use a bare subcommand. The VM wrapper adds 'docker-compose'
-          script: up -d kassa
+          # On this VM, SSH automatically runs 'docker-compose up -d'.
+          # By passing 'kassa --pull always', the final command becomes:
+          # 'docker-compose up -d kassa --pull always', which forces an image update.
+          script: kassa --pull always
