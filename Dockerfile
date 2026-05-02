@@ -9,7 +9,7 @@ RUN apt-get update -qq && apt-get install -y --no-install-recommends postgresql-
     && pip3 install -r /tmp/requirements.txt || pip3 install --break-system-packages -r /tmp/requirements.txt
 
 # Integreer custom code in de image zodat die zonder bind mounts kan draaien.
-COPY kassa_pos /mnt/extra-addons/kassa_pos
+COPY kassa_pos /tmp/kassa_pos
 COPY src /app/src
 COPY setup_rabbitmq.py /app/setup_rabbitmq.py
 COPY templates /app/templates
