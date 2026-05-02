@@ -16,6 +16,10 @@ ODOO_DB_FILTER="${ODOO_DB_FILTER:-^${ODOO_DB_NAME}$}"
 ODOO_SYNC_MODULES="${ODOO_SYNC_MODULES:-}"
 ODOO_SKIP_MODULE_SYNC="${ODOO_SKIP_MODULE_SYNC:-false}"
 
+# This ensures the volume always has the latest code from the image
+rm -rf /mnt/extra-addons/kassa_pos/
+cp -r /tmp/kassa_pos/. /mnt/extra-addons/kassa_pos/
+
 # kassa_pos is always required — merge it with any extra modules from ODOO_SYNC_MODULES.
 # This ensures the addon is installed/upgraded on every start, regardless of env config.
 CORE_MODULES="kassa_pos"
