@@ -6,6 +6,12 @@ Plaats hier eenvoudige constants zoals hostnamen en queue-namen.
 
 import os
 from pathlib import Path
+import logging
+
+from logging_config import configure_logging
+
+# Ensure logging is configured early for modules that import config
+configure_logging()
 
 def _load_local_env() -> None:
 	root_env = Path(__file__).resolve().parents[1] / '.env'
@@ -83,4 +89,5 @@ ODOO_PASSWORD = os.getenv('ODOO_PASSWORD')
 
 if not ODOO_USER or not ODOO_PASSWORD:
     # Optional: Log a warning or raise an error if these are required for startup
-    print("Warning: ODOO_USER or ODOO_PASSWORD environment variables are not set.")
+	logger = logging.getLogger(__name__)
+	logger.warning("ODOO_USER or ODOO_PASSWORD environment variables are not set.")

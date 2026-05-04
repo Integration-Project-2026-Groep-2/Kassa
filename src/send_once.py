@@ -1,6 +1,8 @@
 from messaging.producer import KassaProducer
 from messaging.message_builders import build_heartbeat_xml
 from config import RABBIT_HOST, HEARTBEAT_EXCHANGE, HEARTBEAT_ROUTING_KEY
+import logging
+
 
 if __name__ == '__main__':
     p = KassaProducer(host=RABBIT_HOST)
@@ -13,4 +15,4 @@ if __name__ == '__main__':
         durable=False,
     )
     p.close()
-    print('Sent one heartbeat')
+    logging.getLogger(__name__).info('Sent one heartbeat')

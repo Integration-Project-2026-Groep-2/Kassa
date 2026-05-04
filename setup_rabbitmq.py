@@ -9,6 +9,12 @@ import os
 import pika
 import sys
 import time
+import logging
+
+from src.logging_config import configure_logging
+
+# Configure logging for this script
+configure_logging()
 
 
 USER_QUEUE_BINDINGS = [
@@ -37,13 +43,13 @@ def create_exchanges():
             )
             connection = pika.BlockingConnection(parameters)
             channel    = connection.channel()
-            print(f"✓ Verbonden met RabbitMQ op {host}:{port}")
+            logging.getLogger(__name__).info("✓ Verbonden met RabbitMQ op %s:%s", host, port)
             break
         except pika.exceptions.AMQPConnectionError:
-            print(f"Wachten op RabbitMQ... ({attempt}/30)")
+            logging.getLogger(__name__).info("Wachten op RabbitMQ... (%d/30)", attempt)
             time.sleep(2)
     else:
-        print("✗ RabbitMQ niet bereikbaar na 30 pogingen")
+        logging.getLogger(__name__).error("✗ RabbitMQ niet bereikbaar na 30 pogingen")
         sys.exit(1)
 
     exchanges = [
@@ -65,12 +71,12 @@ def create_exchanges():
                 durable=durable,
                 auto_delete=False,
             )
-            print(f"✓ Exchange '{name}' ({kind}) aangemaakt/geverifieerd")
+            logging.getLogger(__name__).info("✓ Exchange '%s' (%s) aangemaakt/geverifieerd", name, kind)
         except Exception as exc:
-            print(f"⚠  Waarschuwing voor '{name}': {exc}")
+            logging.getLogger(__name__).warning("⚠  Waarschuwing voor '%s': %s", name, exc)
 
     connection.close()
-    print("\n✓ Alle exchanges zijn klaar.")
+    logging.getLogger(__name__).info("\n✓ Alle exchanges zijn klaar.")
     return 0
 
 

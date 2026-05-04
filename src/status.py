@@ -14,7 +14,7 @@ from xml_validator import validate
 
 logger = logging.getLogger(__name__)
 
-STATUS_INTERVAL_SECONDS = int(os.environ.get('STATUS_INTERVAL_SECONDS', 30))
+STATUS_INTERVAL_SECONDS = int(os.environ.get('STATUS_INTERVAL_SECONDS', 120))
 
 # Tijdstip waarop de service gestart is, voor uptime berekening
 _START_TIME = time.monotonic()
