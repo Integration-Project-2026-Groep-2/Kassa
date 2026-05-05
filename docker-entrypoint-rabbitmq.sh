@@ -21,9 +21,6 @@ RABBITMQADMIN=(rabbitmqadmin -V "${RABBITMQ_DEFAULT_VHOST:-/}" -u "${RABBITMQ_DE
 # Create kassa.topic exchange (for batch closing messages)
 "${RABBITMQADMIN[@]}" declare exchange name=kassa.topic type=topic durable=true auto_delete=false || echo "Exchange kassa.topic already exists"
 
-# Create kassa.direct exchange (for other Kassa messages)
-"${RABBITMQADMIN[@]}" declare exchange name=kassa.direct type=direct durable=true auto_delete=false || echo "Exchange kassa.direct already exists"
-
 # Create user events exchange (Salesforce CRM integration - topic-based routing)
 "${RABBITMQADMIN[@]}" declare exchange name=user.topic type=topic durable=true auto_delete=false || echo "Exchange user.topic already exists"
 

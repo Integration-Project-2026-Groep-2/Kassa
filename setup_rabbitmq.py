@@ -55,7 +55,6 @@ def create_exchanges():
     exchanges = [
         # naam                 type      durable
         ("kassa.topic",        "topic",  True),   # batch closing (Afsluitknop)
-        ("kassa.direct",       "direct", True),   # overige Kassa-berichten
         ("user.direct",        "direct", True),   # interne user CRUD (integration service)
         ("user.dlx",           "direct", True),   # dead letter exchange
         ("user.retry",         "direct", True),   # retry exchange
