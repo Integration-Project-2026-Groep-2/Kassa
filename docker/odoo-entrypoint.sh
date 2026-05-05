@@ -16,9 +16,13 @@ ODOO_DB_FILTER="${ODOO_DB_FILTER:-^${ODOO_DB_NAME}$}"
 ODOO_SYNC_MODULES="${ODOO_SYNC_MODULES:-}"
 ODOO_SKIP_MODULE_SYNC="${ODOO_SKIP_MODULE_SYNC:-false}"
 
-# This ensures the volume always has the latest code from the image
-rm -rf /mnt/extra-addons/kassa_pos/
-cp -r /tmp/kassa_pos/. /mnt/extra-addons/kassa_pos/
+# This ensures the volume always has the latest code from the image.
+# We check if it's a mountpoint to avoid "Device or resource busy" errors with bind mounts.
+if ! mountpoint -q /mnt/extra-addons/kassa_pos/; then
+  rm -rf /mnt/extra-addons/kassa_pos/
+  mkdir -p /mnt/extra-addons/kassa_pos/
+  cp -r /tmp/kassa_pos/. /mnt/extra-addons/kassa_pos/
+fi
 chown -R odoo:odoo /mnt/extra-addons/kassa_pos/
 
 # kassa_pos is always required — merge it with any extra modules from ODOO_SYNC_MODULES.

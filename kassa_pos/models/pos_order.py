@@ -72,13 +72,32 @@ class PosOrder(models.Model):
     def _build_invoice_requested_data(self):
         """
         Bouw het data-dict voor Contract K-01 (InvoiceRequested → Facturatie).
-        Alleen aanroepen als paymentType=Invoice en klant gelinkt aan een bedrijf.
+        Nu voor private individuals (US-11) inclusief volledige gebruikersdata.
 
-        Verplichte velden: orderId, userId, companyId, amount, currency, orderedAt, items
+        Verplichte velden: orderId, user (nested), amount, currency, orderedAt, items
         """
         self.ensure_one()
 
         partner = self.partner_id
+        names = (partner.name or "").split(" ", 1)
+        first_name = names[0]
+        last_name = names[1] if len(names) > 1 else ""
+
+        raw_role = partner.role or 'VISITOR'
+        # Map 'Customer' naar een geldige waarde conform XSD schema
+        if raw_role == 'Customer':
+            role = 'COMPANY_CONTACT' if partner.company_id_custom else 'VISITOR'
+        else:
+            role = raw_role
+
+        user_data = {
+            'userId': partner.user_id_custom or '',
+            'firstName': first_name,
+            'lastName': last_name,
+            'email': partner.email or '',
+            'badgeCode': partner.badge_code or '',
+            'role': role,
+        }
 
         items = []
         for line in self.lines:
@@ -88,18 +107,13 @@ class PosOrder(models.Model):
                 'unitPrice': line.price_unit,
             })
 
-        company = partner.parent_id if (partner and partner.parent_id) else None
-
         return {
             'orderId': self.order_id_custom,
-            'userId': partner.user_id_custom if partner else '',
-            'companyId': partner.company_id_custom if partner else '',
+            'user': user_data,
             'amount': self.amount_total,
             'currency': 'EUR',
             'orderedAt': self.date_order.strftime('%Y-%m-%dT%H:%M:%SZ') if self.date_order else None,
             'items': items,
-            'email': partner.email if partner else None,
-            'companyName': company.name if company else None,
         }
 
     @api.model
@@ -122,18 +136,17 @@ class PosOrder(models.Model):
         """
         Stuur de correcte berichten naar RabbitMQ op basis van paymentType:
 
-        - Altijd: PaymentConfirmed → kassa.payment.confirmed (Contract 16, naar CRM)
-        - Alleen bij Invoice + bedrijfskoppeling:
-          InvoiceRequested → kassa.invoice.requested (Contract K-01, naar Facturatie)
+        - PaymentConfirmed → kassa.payment.confirmed (Contract 16, naar CRM)
+          ALTIJD voor bezoekers, BEHALVE bij 'Invoice' (dat gaat via K-01).
+        - InvoiceRequested → kassa.invoice.requested (Contract K-01, naar Facturatie)
+          Alleen bij 'Invoice' voor bezoekers (US-11).
         """
-        # Contract 16 — alleen versturen voor bezoekers (NIET gelinkt aan bedrijf)
-        # Bedrijven worden nu via de dagelijkse Batch (K-02) verwerkt.
+        # Contract 16 — alleen voor bezoekers en NIET bij Invoice
         payment_data = order._build_payment_confirmed_data()
-        if payment_data.get('email') and not order.partner_id.company_id_custom:
+        if payment_data.get('email') and not order.partner_id.company_id_custom and order.payment_type != 'Invoice':
             rabbitmq_sender.send_payment_confirmed(payment_data)
 
-        # Contract K-01 — alleen bij Invoice-betaling voor bezoekers (NIET gelinkt aan bedrijf)
-        # Bedrijven worden nu via de dagelijkse Batch (K-02) verwerkt.
+        # Contract K-01 — US-11: factuurverzoek voor privépersonen (geen bedrijfskoppeling)
         if order.payment_type == 'Invoice' and order.partner_id and not order.partner_id.company_id_custom:
             invoice_data = order._build_invoice_requested_data()
             rabbitmq_sender.send_invoice_requested(invoice_data)

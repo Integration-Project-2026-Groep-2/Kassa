@@ -304,8 +304,7 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element name="orderId" type="xs:string"/>
-        <xs:element name="userId" type="UUIDType"/>
-        <xs:element name="companyId" type="UUIDType"/>
+        <xs:element ref="User"/>
         <xs:element name="amount" type="NonNegativeAmountType"/>
         <xs:element name="currency" type="CurrencyType"/>
         <xs:element name="orderedAt" type="ISO8601DateTimeType"/>
@@ -316,9 +315,6 @@
             </xs:sequence>
           </xs:complexType>
         </xs:element>
-        <xs:element name="email" type="EmailType" minOccurs="0"/>
-        <xs:element name="companyName" type="xs:string" minOccurs="0"/>
-        <xs:element name="eventId" type="xs:string" minOccurs="0"/>
         <xs:element name="paymentReference" type="xs:string" minOccurs="0"/>
       </xs:sequence>
     </xs:complexType>
