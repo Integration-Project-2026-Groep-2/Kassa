@@ -80,17 +80,28 @@ def build_payment_confirmed_xml(payment_data: dict) -> str:
 def build_invoice_requested_xml(invoice_data: dict) -> str:
     """
     Bouw een InvoiceRequested XML-bericht conform Contract K-01 (Kassa → Facturatie).
-    Alleen bij paymentType=Invoice en klant gelinkt aan een bedrijf.
+    Bevat nu een volledige <User> entiteit voor on-demand provisioning (US-11).
 
-    Verplichte velden: orderId, userId, companyId, amount, currency, orderedAt, items
-    Optionele velden: email, companyName, eventId, paymentReference
-    Items: productName, quantity, unitPrice
+    Verplichte velden: orderId, User (nested), amount, currency, orderedAt, items
     """
     root = ET.Element('InvoiceRequested')
 
     ET.SubElement(root, 'orderId').text = str(invoice_data.get('orderId', ''))
-    ET.SubElement(root, 'userId').text = str(invoice_data.get('userId', ''))
-    ET.SubElement(root, 'companyId').text = str(invoice_data.get('companyId', ''))
+    
+    # User data (nested)
+    user_data = invoice_data.get('user', {})
+    user_el = ET.SubElement(root, 'User')
+    ET.SubElement(user_el, 'userId').text = str(user_data.get('userId', ''))
+    ET.SubElement(user_el, 'firstName').text = str(user_data.get('firstName', ''))
+    ET.SubElement(user_el, 'lastName').text = str(user_data.get('lastName', ''))
+    ET.SubElement(user_el, 'email').text = str(user_data.get('email', ''))
+    
+    if user_data.get('companyId'):
+        ET.SubElement(user_el, 'companyId').text = str(user_data['companyId'])
+    
+    ET.SubElement(user_el, 'badgeCode').text = str(user_data.get('badgeCode', ''))
+    ET.SubElement(user_el, 'role').text = str(user_data.get('role', 'VISITOR'))
+
     ET.SubElement(root, 'amount').text = str(invoice_data.get('amount', '0'))
     ET.SubElement(root, 'currency').text = 'EUR'
     ET.SubElement(root, 'orderedAt').text = str(invoice_data.get('orderedAt') or _now_iso())
@@ -102,12 +113,6 @@ def build_invoice_requested_xml(invoice_data: dict) -> str:
         ET.SubElement(item_el, 'quantity').text = str(item.get('quantity', ''))
         ET.SubElement(item_el, 'unitPrice').text = str(item.get('unitPrice', ''))
 
-    if invoice_data.get('email'):
-        ET.SubElement(root, 'email').text = str(invoice_data['email'])
-    if invoice_data.get('companyName'):
-        ET.SubElement(root, 'companyName').text = str(invoice_data['companyName'])
-    if invoice_data.get('eventId'):
-        ET.SubElement(root, 'eventId').text = str(invoice_data['eventId'])
     if invoice_data.get('paymentReference'):
         ET.SubElement(root, 'paymentReference').text = str(invoice_data['paymentReference'])
 
