@@ -66,6 +66,15 @@ def post_init(cr, registry):
 
     if not pos_config:
         journal, payment_method_ids = env['pos.config']._create_journal_and_payment_methods()
+        
+        # Also add the Top Up payment method if it exists
+        topup_method = env['pos.payment.method'].search([
+            ('name', '=', 'Top Up'),
+        ], limit=1)
+        
+        if topup_method:
+            payment_method_ids = list(payment_method_ids) + [topup_method.id]
+        
         pos_config = env['pos.config'].create({
             'name': 'Kassa Main',
             'company_id': company.id,
@@ -74,35 +83,14 @@ def post_init(cr, registry):
             'module_pos_restaurant': False,
             'cash_control': True,
         })
-    
-    # Create "Top Up" payment method for saldo payments (always ensure it exists)
-    topup_journal = env['account.journal'].search([
-        ('code', '=', 'KSALDO'),
-        ('company_id', '=', company.id),
-    ], limit=1)
-    
-    if not topup_journal:
-        topup_journal = env['account.journal'].create({
-            'name': 'Kassa Saldo (Top Up)',
-            'code': 'KSALDO',
-            'type': 'bank',
-            'company_id': company.id,
-        })
-    
-    topup_method = env['pos.payment.method'].search([
-        ('name', '=', 'Top Up'),
-        ('journal_id', '=', topup_journal.id),
-    ], limit=1)
-    
-    if not topup_method:
-        topup_method = env['pos.payment.method'].create({
-            'name': 'Top Up',
-            'journal_id': topup_journal.id,
-        })
-    
-    # Ensure Top Up method is linked to pos_config
-    if pos_config and topup_method not in pos_config.payment_method_ids:
-        pos_config.payment_method_ids = [(4, topup_method.id)]
+    else:
+        # Ensure Top Up payment method is linked to existing pos_config
+        topup_method = env['pos.payment.method'].search([
+            ('name', '=', 'Top Up'),
+        ], limit=1)
+        
+        if topup_method and topup_method not in pos_config.payment_method_ids:
+            pos_config.payment_method_ids = [(4, topup_method.id)]
     
     env['ir.model.data']._update_xmlids([{
         'xml_id': 'kassa_pos.pos_config_kassa_main',

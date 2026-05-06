@@ -13,5 +13,19 @@
             <field name="company_id" ref="base.main_company"/>
         </record>
 
+        <!-- Journal for Top Up payment method -->
+        <record id="account_journal_topup_kassa" model="account.journal">
+            <field name="name">Kassa Top Up</field>
+            <field name="code">KSALDO</field>
+            <field name="type">bank</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <!-- Top Up payment method -->
+        <record id="pos_payment_method_topup" model="pos.payment.method">
+            <field name="name">Top Up</field>
+            <field name="journal_id" ref="account_journal_topup_kassa"/>
+        </record>
+
     </data>
 </odoo>
