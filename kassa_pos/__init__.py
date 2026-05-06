@@ -89,9 +89,15 @@ def post_init(cr, registry):
             ('name', '=', 'Top Up'),
         ], limit=1)
         
-        if topup_method and topup_method not in pos_config.payment_method_ids:
-            pos_config.payment_method_ids = [(4, topup_method.id)]
     
+        if topup_method and topup_method not in pos_config.payment_method_ids:
+            # Use SQL INSERT to ensure relationship is created
+            cr.execute("""
+                INSERT INTO pos_config_pos_payment_method_rel 
+                (pos_config_id, pos_payment_method_id) 
+                VALUES (%s, %s)
+                ON CONFLICT DO NOTHING
+            """, (pos_config.id, topup_method.id))
     env['ir.model.data']._update_xmlids([{
         'xml_id': 'kassa_pos.pos_config_kassa_main',
         'record': pos_config,
