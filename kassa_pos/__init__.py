@@ -66,6 +66,34 @@ def post_init(cr, registry):
 
     if not pos_config:
         journal, payment_method_ids = env['pos.config']._create_journal_and_payment_methods()
+        
+        # Create "Top Up" payment method for saldo payments
+        topup_journal = env['account.journal'].search([
+            ('code', '=', 'KSALDO'),
+            ('company_id', '=', company.id),
+        ], limit=1)
+        
+        if not topup_journal:
+            topup_journal = env['account.journal'].create({
+                'name': 'Kassa Saldo (Top Up)',
+                'code': 'KSALDO',
+                'type': 'bank',
+                'company_id': company.id,
+            })
+        
+        topup_method = env['pos.payment.method'].search([
+            ('name', '=', 'Top Up'),
+            ('journal_id', '=', topup_journal.id),
+        ], limit=1)
+        
+        if not topup_method:
+            topup_method = env['pos.payment.method'].create({
+                'name': 'Top Up',
+                'journal_id': topup_journal.id,
+            })
+        
+        payment_method_ids = list(payment_method_ids) + [topup_method.id]
+        
         pos_config = env['pos.config'].create({
             'name': 'Kassa Main',
             'company_id': company.id,
