@@ -98,3 +98,16 @@ class BalanceController(http.Controller):
         if not partner.exists():
             return {'success': False, 'error': 'Klant niet gevonden'}
         return {'success': True, 'balance': partner.balance, 'name': partner.name}
+
+    @http.route('/kassa/partner/company', type='json', auth='user', methods=['POST'])
+    def get_partner_company(self, partner_id=None):
+        if not partner_id:
+            return {'success': False, 'error': 'Geen klant geselecteerd'}
+        partner = request.env['res.partner'].browse(int(partner_id))
+        if not partner.exists():
+            return {'success': False, 'error': 'Klant niet gevonden'}
+        return {
+            'success': True,
+            'has_company': bool(partner.company_id_custom),
+            'name': partner.name,
+        }
