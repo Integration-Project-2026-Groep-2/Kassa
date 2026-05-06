@@ -11,7 +11,7 @@ This is a **POS User Registration Button** for Odoo that lets cashiers manually 
 ```bash
 # Verify files exist
 ls kassa_pos/static/src/js/UserRegistration.js
-ls kassa_pos/views/user_registration_templates.xml
+ls kassa_pos/views/kassa_pos_user_registration_view.xml
 ls kassa_pos/models/user_registration.py
 ```
 
@@ -39,7 +39,7 @@ kassa_pos/
 │   ├── res_partner.py        (Odoo contact model)
 │   └── __init__.py
 ├── views/
-│   └── user_registration_templates.xml  (OWL templates)
+│   └── kassa_pos_user_registration_view.xml  (Odoo views)
 ├── static/src/js/
 │   └── UserRegistration.js   (Frontend component)
 ├── data/
@@ -62,21 +62,25 @@ src/
 The core validation layer. Located in `src/models/user.py`.
 
 ```python
-from src.models.user import User, UserStore
+from src.models.user import User
+from src.odoo.odoo_connection import OdooConnection
+from src.odoo.user_repository import OdooUserRepository
 
 user = User(
-    user_id='<uuid>',
-    first_name='John',
-    last_name='Doe',
+    userId='<uuid>',
+    firstName='John',
+    lastName='Doe',
     email='john@example.com',
-    badge_code='QR123',
+    badgeCode='QR123',
     role='VISITOR',  # VISITOR, SPEAKER, CASHIER, ADMIN, EVENTMANAGER
 )
 
-# Validate
-errors = user.validate()  # Returns list of error strings
-if errors:
-    print(f"Invalid: {errors}")
+connection = OdooConnection(url='http://localhost:8069', db='kassa_db', user='admin', password='admin')
+connection.connect()
+repository = OdooUserRepository(connection)
+
+partner_id = repository.create_user(user)
+print(partner_id)
 ```
 
 ### 2. Message Flow
@@ -90,8 +94,8 @@ RabbitMQ Publisher
     ↓ (or fallback queue)
 Integration Service
     ↓ (UserConsumer processes)
-UserStore (in-memory)
-    ↓ (or PostgreSQL in future)
+OdooUserRepository (Odoo-backed)
+    ↓
 CRM System (via UserConfirmed message)
 ```
 
@@ -134,7 +138,7 @@ formData = {
 
 **2. Update Template (XML)**
 
-File: `kassa_pos/views/user_registration_templates.xml`
+File: `kassa_pos/views/kassa_pos_user_registration_view.xml`
 
 ```xml
 <input 
@@ -458,7 +462,7 @@ Run through this before deploying:
 |------|---------|----------|
 | `UserRegistration.js` | Frontend modal | Form fields, validation, styling |
 | `user_registration.py` | Backend handler | Contact creation, XM L building |
-| `user_registration_templates.xml` | Form template | HTML structure, field labels |
+| `kassa_pos_user_registration_view.xml` | Form template | Odoo view, field labels |
 | `src/models/user.py` | CRUD validation | Validation rules, roles |
 | `__manifest__.py` | Module config | Permissions, dependencies |
 

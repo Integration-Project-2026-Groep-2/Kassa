@@ -57,7 +57,7 @@ print(odoo.tools.config.get('db_name'))
 cd /path/to/kassa
 test -f kassa_pos/models/user_registration.py && echo "✓ user_registration.py"
 test -f kassa_pos/static/src/js/UserRegistration.js && echo "✓ UserRegistration.js"
-test -f kassa_pos/views/user_registration_templates.xml && echo "✓ user_registration_templates.xml"
+test -f kassa_pos/views/kassa_pos_user_registration_view.xml && echo "✓ kassa_pos_user_registration_view.xml"
 test -f src/models/user.py && echo "✓ user.py"
 test -f src/messaging/user_consumer.py && echo "✓ user_consumer.py"
 test -f src/receiver.py && echo "✓ receiver.py"
@@ -65,7 +65,8 @@ test -f src/receiver.py && echo "✓ receiver.py"
 
 **Verify imports:**
 ```bash
-python -c "from src.models.user import User, UserStore; print('✓ User model imports')"
+python -c "from src.models.user import User; print('✓ User model imports')"
+python -c "from src.odoo.user_repository import OdooUserRepository; print('✓ OdooUserRepository imports')"
 python -c "from src.messaging.user_consumer import UserConsumer; print('✓ UserConsumer imports')"
 python -c "from kassa_pos.models.user_registration import UserMessageQueue; print('✓ UserMessageQueue imports')" 2>/dev/null || echo "Install kassa_pos module first"
 ```
@@ -258,14 +259,14 @@ cd /path/to/kassa
 python -m pytest src/tests/test_user_crud.py -v
 
 # With coverage:
-python -m pytest src/tests/test_user_crud.py -v --cov=src.models.user --cov=src.messaging
+python -m pytest src/tests/test_user_crud.py -v --cov=src.models.user --cov=src.odoo.user_repository --cov=src.messaging
 
 # Expected: ~40 tests pass
 ```
 
 **Test categories:**
 - UserModel tests (12 tests)
-- UserStore CRUD (25+ tests)  
+- Odoo repository CRUD (25+ tests)  
 - XML builders (4 tests)
 - Error handling (edge cases)
 
@@ -523,7 +524,7 @@ module.button_immediate_uninstall()
 ```bash
 git checkout kassa_pos/static/src/js/UserRegistration.js
 git checkout kassa_pos/models/user_registration.py
-git checkout kassa_pos/views/user_registration_templates.xml
+git checkout kassa_pos/views/kassa_pos_user_registration_view.xml
 ```
 
 **3. Reinstall:**

@@ -79,7 +79,7 @@ Welcome! This is your guide to all documentation for the **POS User Registration
 1. [DEVELOPER_QUICKSTART.md](DEVELOPER_QUICKSTART.md) - Common tasks
 2. [POS_USER_REGISTRATION_API.md](POS_USER_REGISTRATION_API.md) - Frontend API
 3. [kassa_pos/static/src/js/UserRegistration.js](../kassa_pos/static/src/js/UserRegistration.js) - Component code
-4. [kassa_pos/views/user_registration_templates.xml](../kassa_pos/views/user_registration_templates.xml) - Templates
+4. [kassa_pos/views/kassa_pos_user_registration_view.xml](../kassa_pos/views/kassa_pos_user_registration_view.xml) - Templates
 
 #### 🧪 QA/Tester
 1. [POS_USER_REGISTRATION.md](POS_USER_REGISTRATION.md) - Feature specification
@@ -239,7 +239,7 @@ The **fallback queue** in Odoo that stores pending user messages when RabbitMQ i
   - Class: `UserRegistrationModal`
   - See: [POS_USER_REGISTRATION_API.md](POS_USER_REGISTRATION_API.md#frontend-api)
 
-- **Templates:** [kassa_pos/views/user_registration_templates.xml](../kassa_pos/views/user_registration_templates.xml)
+- **Templates:** [kassa_pos/views/kassa_pos_user_registration_view.xml](../kassa_pos/views/kassa_pos_user_registration_view.xml)
   - Components: Modal form, buttons
   - See: [POS_USER_REGISTRATION_API.md](POS_USER_REGISTRATION_API.md#add-user-button)
 

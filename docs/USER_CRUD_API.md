@@ -7,15 +7,19 @@ Quick reference guide for User CRUD operations in the Kassa Integration Service.
 ### Import and Initialize
 
 ```python
-from models.user import User, UserStore
+from models.user import User
 from messaging.user_consumer import UserConsumer
+from odoo.odoo_connection import OdooConnection
+from odoo.user_repository import OdooUserRepository
 from messaging.message_builders import build_user_xml, parse_user_xml
 
-# Create store
-store = UserStore()
+# Create repository
+connection = OdooConnection(url="http://localhost:8069", db="kassa_db", user="admin", password="admin")
+connection.connect()
+repository = OdooUserRepository(connection)
 
 # For message handling
-consumer = UserConsumer(store)
+consumer = UserConsumer(repository)
 ```
 
 ## User Object
@@ -205,9 +209,13 @@ else:
 
 ```python
 from messaging.user_consumer import UserConsumer
+from odoo.odoo_connection import OdooConnection
+from odoo.user_repository import OdooUserRepository
 
-store = UserStore()
-consumer = UserConsumer(store)
+connection = OdooConnection(url="http://localhost:8069", db="kassa_db", user="admin", password="admin")
+connection.connect()
+repository = OdooUserRepository(connection)
+consumer = UserConsumer(repository)
 
 # Process incoming XML message
 xml_payload = "..."  # from RabbitMQ
@@ -366,11 +374,15 @@ python -m pytest tests/test_user_crud.py -v
 
 ```python
 import unittest
-from models.user import User, UserStore
+from models.user import User
+from odoo.odoo_connection import OdooConnection
+from odoo.user_repository import OdooUserRepository
 
 class TestUserOperations(unittest.TestCase):
     def setUp(self):
-        self.store = UserStore()
+        connection = OdooConnection(url="http://localhost:8069", db="kassa_db", user="admin", password="admin")
+        connection.connect()
+        self.repository = OdooUserRepository(connection)
     
     def test_create_and_read(self):
         user = User(
@@ -382,12 +394,11 @@ class TestUserOperations(unittest.TestCase):
             role="VISITOR"
         )
         
-        success, error, created = self.store.create_user(user)
-        self.assertTrue(success)
+        partner_id = self.repository.create_user(user)
+        self.assertIsInstance(partner_id, int)
         
-        found = self.store.get_user_by_id(user.userId)
-        self.assertIsNotNone(found)
-        self.assertEqual(found.firstName, "Test")
+        # Repository writes to Odoo, so assertions should be based on the returned partner ID
+        self.assertGreater(partner_id, 0)
 ```
 
 ## Performance Tips

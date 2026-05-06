@@ -59,8 +59,15 @@ docker compose -f docker-compose.production.yml exec odoo odoo \
 	--db_user=${POSTGRES_USER} \
 	--db_password=${POSTGRES_PASSWORD}
 
-# Initialize store
-store = UserStore()
+# Initialize the Odoo-backed repository
+connection = OdooConnection(
+    url="http://localhost:8069",
+    db="${POSTGRES_DB}",
+    user="${ODOO_USER}",
+    password="${ODOO_PASSWORD}",
+)
+connection.connect()
+repository = OdooUserRepository(connection)
 
 # Create user object
 user = User(
@@ -73,12 +80,9 @@ user = User(
     companyId="9c21f4e1-8b2e-4d71-a7a2-6f8cbbf81c10"  # Optional
 )
 
-# Store user
-success, error, created_user = store.create_user(user)
-if success:
-    print(f"User created: {created_user.userId}")
-else:
-    print(f"Error: {error}")
+# Store user in Odoo
+partner_id = repository.create_user(user)
+print(f"User created in Odoo: {partner_id}")
 ```
 
 #### Reading User Data
@@ -147,8 +151,15 @@ xml = build_user_xml(user_data)
 # Send xml to RabbitMQ queue: kassa.user.created
 
 # On receiver side:
-store = UserStore()
-consumer = UserConsumer(store)
+connection = OdooConnection(
+    url="http://localhost:8069",
+    db="${POSTGRES_DB}",
+    user="${ODOO_USER}",
+    password="${ODOO_PASSWORD}",
+)
+connection.connect()
+repository = OdooUserRepository(connection)
+consumer = UserConsumer(repository)
 success = consumer.process_user_message(xml)
 ```
 
@@ -214,23 +225,17 @@ if not valid:
     print(f"Validation error: {error}")
 ```
 
-### UserStore Class
+### OdooUserRepository Class
 
-**Location:** `src/models/user.py`
+**Location:** `src/odoo/user_repository.py`
 
 #### Methods
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `create_user(user)` | `(bool, str&#124;None, User&#124;None)` | Create new user, return created user or error |
-| `get_user_by_id(user_id)` | `User&#124;None` | Retrieve user by UUID |
-| `get_user_by_badge(badge_code)` | `User&#124;None` | Retrieve user by badge code |
-| `get_user_by_email(email)` | `User&#124;None` | Retrieve user by email |
-| `get_all_users()` | `List[User]` | Get all users |
-| `update_user(user_id, updates)` | `(bool, str&#124;None, User&#124;None)` | Update user fields |
-| `delete_user(user_id)` | `(bool, str&#124;None)` | Delete user |
-| `get_user_count()` | `int` | Total number of users |
-| `clear_all()` | `None` | Clear all users (testing only) |
+| `create_user(user)` | `int` | Create or update a user in Odoo and return the partner ID |
+| `update_user(user)` | `bool` | Update an existing user in Odoo |
+| `deactivate_user(user_id)` | `bool` | Soft-delete a user in Odoo |
 
 ### Message Builders
 
@@ -255,7 +260,7 @@ build_user_deleted_message(user_id: str) -> str
 
 ```python
 class UserConsumer:
-    def __init__(self, user_store: UserStore, on_error: Optional[Callable] = None)
+    def __init__(self, odoo_user_repo: OdooUserRepository, on_error: Optional[Callable] = None)
     
     def process_user_message(self, xml_payload: str) -> bool:
         """Process User, UserConfirmed, UserUpdated, or UserDeactivated messages."""
@@ -291,7 +296,9 @@ Tests cover:
 ```python
 def test_create_user_success():
     """Test successful user creation."""
-    store = UserStore()
+    connection = OdooConnection(url="http://localhost:8069", db="kassa_db", user="admin", password="admin")
+    connection.connect()
+    repository = OdooUserRepository(connection)
     user = User(
         userId=str(uuid.uuid4()),
         firstName="Test",
@@ -301,10 +308,9 @@ def test_create_user_success():
         role="VISITOR"
     )
     
-    success, error, created = store.create_user(user)
-    assert success
-    assert error is None
-    assert created.firstName == "Test"
+    partner_id = repository.create_user(user)
+    assert isinstance(partner_id, int)
+    assert partner_id > 0
 ```
 
 ---
@@ -314,11 +320,12 @@ def test_create_user_success():
 ### Code Structure
 
 **User CRUD Code:**
-- `src/models/user.py` — User model and UserStore (380 lines)
+- `src/models/user.py` — User model and validation helpers
+- `src/odoo/user_repository.py` — Odoo-backed user persistence
 - `src/messaging/user_consumer.py` — Message handler (290 lines)
 - `src/messaging/message_builders.py` — XML builders (60 lines addition)
 - `src/receiver.py` — RabbitMQ integration (40 lines addition)
-- `src/tests/test_user_crud.py` — Unit tests (600+ lines)
+- `src/tests/test_user_crud.py` — Unit tests for the user model and repository flow
 
 **Odoo Integration:**
 - `kassa_pos/models/res_partner.py` — Contact fields (user_id_custom, badge_code, role, company_id_custom)
