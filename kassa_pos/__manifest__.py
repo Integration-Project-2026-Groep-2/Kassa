@@ -36,6 +36,7 @@
             'kassa_pos/static/src/js/BalanceTopupModal.js',
             'kassa_pos/static/src/js/BalanceButton.js',
             'kassa_pos/static/src/js/BalanceValidation.js',
+            'kassa_pos/static/src/js/InvoiceValidation.js',
         ],
     },
     'external_dependencies': {
