@@ -717,6 +717,198 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "git-commit-sql-fix",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"fix: use SQL INSERT to link Top Up to pos_config in post_init hook"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-push-sql-fix",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"main"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-stop-odoo-rebuild",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"stop",
+				"odoo"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "rebuild-and-wait",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 5; cd 'c:\\Users\\Sbou5\\Herd\\Kassa'; docker compose up -d --build odoo; Start-Sleep -Seconds 40; (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-health-final",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"(Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-and-check-health",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 20; (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-pos-final",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 10"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-topup-linked-final",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT ppm.id, ppm.name FROM pos_config_pos_payment_method_rel rel JOIN pos_payment_method ppm ON rel.pos_payment_method_id = ppm.id WHERE rel.pos_config_id IN (SELECT id FROM pos_config WHERE name LIKE '%Kassa%');"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "count-topup-relations",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT COUNT(*) FROM pos_config_pos_payment_method_rel WHERE pos_payment_method_id=10;"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "list-pos-configs",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT id, name FROM pos_config;"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "manual-sql-insert",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"INSERT INTO pos_config_pos_payment_method_rel (pos_config_id, pos_payment_method_id) VALUES (3, 10);"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-pos-reload-topup",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 10"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-add-final",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }
