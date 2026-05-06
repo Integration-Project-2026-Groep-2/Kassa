@@ -1,150 +1,874 @@
 /* =========================================================
-   CLEAN MODERN POS THEME (consistent & premium look)
+   GLOBAL DARK POS THEME (FULL FIX)
    ========================================================= */
 
 .pos {
-    background: #f4f6f9 !important;
-    color: #1e293b !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0b1220 !important;
+    color: #e5e7eb !important;
 }
 
-/* ── TOP BAR ───────────────────────────── */
+/* SURFACES OVERRIDE */
+.pos .bg-white,
+.pos .bg-light,
+.pos .bg-100,
+.pos .bg-200,
+.pos .bg-300,
+.pos .bg-view {
+    background-color: #111827 !important;
+}
+
+/* graded surfaces */
+.pos .bg-100 { background-color: #0f172a !important; }
+.pos .bg-200 { background-color: #111827 !important; }
+.pos .bg-300 { background-color: #1f2937 !important; }
+.pos .bg-view { background-color: #1b2433 !important; }
+
+
+/* =========================================================
+   TOP BAR
+   ========================================================= */
+
 .pos .pos-topheader {
-    background: #ffffff !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.04) !important;
+    background: #0f172a !important;
+    border-bottom: 1px solid #1f2937 !important;
 }
 
-/* ── LEFT PANEL (orders) ───────────────── */
-.pos .leftpane {
-    background: #eef2f7 !important;
-    border-right: 1px solid #e2e8f0 !important;
+
+/* =========================================================
+   PANELS
+   ========================================================= */
+
+.pos .leftpane,
+.pos .rightpane {
+    background: #111827 !important;
+    border-color: #1f2937 !important;
 }
 
-/* ── ORDER CARD ───────────────────────── */
 .pos .order-container {
-    background: #ffffff !important;
-    border-radius: 20px !important;
-    border: none !important;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
-    padding: 10px;
+    background: #1b2433 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
 }
+
+
+/* =========================================================
+   ORDER LINES
+   ========================================================= */
 
 .pos .orderline {
-    border-bottom: 1px solid #f1f5f9 !important;
-    padding: 10px;
+    background: transparent !important;
+    border-bottom: 1px solid #243244 !important;
+    color: #e5e7eb !important;
+    border-radius: 10px !important;
+    transition: all .2s ease;
+}
+
+.pos .orderline:hover {
+    background: #1f2a3a !important;
 }
 
 .pos .orderline.selected {
-    background: #e0edff !important;
-    border-radius: 10px;
+    background: #1d4ed8 !important;
+    color: #fff !important;
 }
 
-/* ── PRODUCT GRID ─────────────────────── */
+
+/* =========================================================
+   PRODUCTS
+   ========================================================= */
+
 .pos .product {
-    background: #ffffff !important;
+    background: #1b2433 !important;
+    border: 1px solid #243244 !important;
     border-radius: 16px !important;
-    border: 1px solid #e5eaf1 !important;
-    transition: all 0.2s ease !important;
+    color: #e5e7eb !important;
+    transition: all .2s ease;
 }
 
 .pos .product:hover {
-    transform: translateY(-3px) scale(1.01);
-    box-shadow: 0 12px 22px rgba(0,0,0,0.08);
+    transform: translateY(-3px);
+    background: #243244 !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-/* ── BUTTONS GENERAL ─────────────────── */
+
+/* =========================================================
+   BUTTONS GLOBAL
+   ========================================================= */
+
 .pos .btn,
 .pos .button,
-.pos .control-button {
+.pos button {
     border-radius: 14px !important;
-    border: none !important;
-    background: #ffffff !important;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.06) !important;
-    transition: all 0.2s ease !important;
+    border: 1px solid #243244 !important;
+    background: #1b2433 !important;
+    color: #e5e7eb !important;
+    transition: all .2s ease;
 }
 
 .pos .btn:hover,
-.pos .button:hover {
+.pos .button:hover,
+.pos button:hover {
+    background: #243244 !important;
     transform: translateY(-2px);
-    background: #f1f5f9 !important;
 }
 
-/* ── NUMPAD (BIG UPGRADE) ────────────── */
+
+/* =========================================================
+   NUMPAD (REKENMACHINE)
+   ========================================================= */
+
+.pos .numpad button,
 .pos .numpad .btn {
-    min-width: 85px !important;
-    min-height: 85px !important;
-    font-size: 1.2rem !important;
-    font-weight: 700 !important;
-    border-radius: 18px !important;
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
+    background: #1b2433 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #e5e7eb !important;
+    border-radius: 16px !important;
+    font-weight: 700;
+    transition: all .15s ease;
 }
 
-/* numbers */
-.pos .numpad .btn:nth-child(n+1):nth-child(-n+12) {
-    background: #f8fafc !important;
+.pos .numpad button:hover,
+.pos .numpad .btn:hover {
+    background: #243244 !important;
+    border-color: #3b82f6 !important;
+    transform: scale(1.04);
 }
 
-/* operators */
-.pos .numpad .btn:nth-child(4),
-.pos .numpad .btn:nth-child(8),
-.pos .numpad .btn:nth-child(12),
-.pos .numpad .btn:nth-child(15),
-.pos .numpad .btn:nth-child(16) {
-    background: #e0edff !important;
-    color: #1d4ed8 !important;
-}
-
-/* pay button */
-.pos .pay-order-button {
-    background: linear-gradient(135deg, #4f7cff, #3b82f6) !important;
+.pos .numpad button.active {
+    background: #1d4ed8 !important;
     color: white !important;
-    border-radius: 18px !important;
-    box-shadow: 0 10px 20px rgba(59,130,246,0.3) !important;
 }
 
-.pos .pay-order-button:hover {
-    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+
+/* =========================================================
+   PAYMENT SCREEN
+   ========================================================= */
+
+.pos .payment-screen {
+    background: #0b1220 !important;
 }
 
-/* ── CATEGORY BUTTONS ───────────────── */
-.pos .category-button {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
+.pos .paymentmethods-container,
+.pos .paymentlines-container {
+    background: #111827 !important;
+    border-radius: 16px !important;
 }
 
-.pos .category-button.active {
-    background: #e0edff !important;
-    color: #1d4ed8 !important;
+.pos .paymentmethod {
+    background: #1b2433 !important;
+    border-bottom: 1px solid #243244 !important;
 }
 
-/* ── RIGHT PANEL BUTTONS ────────────── */
-.pos .pos-rightheader .btn {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
+.pos .paymentmethod:hover {
+    background: #243244 !important;
 }
 
-/* ── CUSTOM BUTTONS ─────────────────── */
+.pos .paymentlines-container .total {
+    color: #22c55e !important;
+    font-size: 2.5rem !important;
+}
+
+
+/* =========================================================
+   CONTROL BUTTONS
+   ========================================================= */
+
+.pos .control-button {
+    border-radius: 12px !important;
+}
+
+/* ADD USER */
 .pos .kassa-add-user-btn {
     background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+    border: none !important;
     color: white !important;
 }
 
+.pos .kassa-add-user-btn:hover {
+    background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+}
+
+/* CLOSE */
 .pos .kassa-closing-btn {
     background: linear-gradient(135deg, #10b981, #059669) !important;
+    border: none !important;
     color: white !important;
 }
 
-/* ── MODALS / POPUPS ───────────────── */
-.pos .popup {
-    background: #ffffff !important;
-    border-radius: 20px !important;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
+.pos .kassa-closing-btn:hover {
+    background: linear-gradient(135deg, #059669, #047857) !important;
 }
 
-/* ── SMALL POLISH ─────────────────── */
-.pos .order-summary {
-    background: #f8fafc !important;
+
+/* =========================================================
+   SEARCH BAR
+   ========================================================= */
+
+.pos .input-container,
+.pos .form-control {
+    background: #1b2433 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #e5e7eb !important;
+    border-radius: 12px !important;
+}
+
+
+/* =========================================================
+   NOTIFICATIONS (POPUPS)
+   ========================================================= */
+
+.o_notification_manager {
+    z-index: 9999;
+}
+
+.o_notification {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #243244 !important;
     border-radius: 14px !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5) !important;
+}
+
+.o_notification.border-success {
+    border-left: 4px solid #22c55e !important;
+}
+
+.o_notification_title {
+    color: #22c55e !important;
+}
+
+.o_notification_close {
+    filter: invert(1);
+    opacity: 0.8;
+}
+
+.o_notification_close:hover {
+    opacity: 1;
+}
+
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+
+.modal-content {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border-radius: 18px !important;
+    border: 1px solid #243244 !important;
+}
+
+.modal-header,
+.modal-footer {
+    background: #0f172a !important;
+    border-color: #243244 !important;
+}
+
+.form-control,
+select {
+    background: #1b2433 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #e5e7eb !important;
+    border-radius: 10px !important;
+}
+
+
+/* =========================================================
+   BORDER FIXES (NO WHITE LINES)
+   ========================================================= */
+
+.pads {
+    border-top: 1px solid #243244 !important;
+}
+
+.control-buttons {
+    border-bottom: 1px solid #243244 !important;
+}
+
+.actionpad {
+    border-right: 1px solid #243244 !important;
+}
+
+
+/* =========================================================
+   NEXT / PAYMENT BUTTON FIX
+   ========================================================= */
+
+.pos .next.validation,
+.pos .pay-order-button {
+    background: #1b2433 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #93c5fd !important;
+    border-radius: 14px !important;
+}
+
+.pos .next.validation:hover,
+.pos .pay-order-button:hover {
+    background: #243244 !important;
+    transform: translateY(-2px);
+}
+
+.pos .next.validation.disabled {
+    background: #111827 !important;
+    color: #64748b !important;
+    opacity: 0.6 !important;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+
+/* =========================================================
+   PAYMENT SCREEN HEADER (TITLE + BACK)
+   ========================================================= */
+
+.pos .top-content {
+    background: #111827 !important;
+    border-bottom: 1px solid #243244 !important;
+    color: #e5e7eb !important;
+}
+
+.pos .top-content h2,
+.pos .top-content .back_text,
+.pos .top-content .button {
+    color: #e5e7eb !important;
+}
+
+
+/* =========================================================
+   PAYMENT MAIN BACKGROUND FORCE FIX
+   ========================================================= */
+
+.pos .payment-screen .main-content {
+    background: #111827 !important;
+}
+
+.pos .left-content,
+.pos .center-content,
+.pos .right-content {
+    background: #111827 !important;
+}
+
+
+/* =========================================================
+   PAYMENT METHOD PANEL FIX
+   ========================================================= */
+
+.pos .paymentmethods-container,
+.pos .paymentlines-container {
+    background: #111827 !important;
+}
+
+.pos .paymentmethod {
+    background: #1b2433 !important;
+    border-bottom: 1px solid #243244 !important;
+    color: #e5e7eb !important;
+}
+
+.pos .paymentmethod:hover {
+    background: #243244 !important;
+}
+
+
+/* =========================================================
+   SUMMARY TITLE FIX
+   ========================================================= */
+
+.pos .title-category {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
+
+/* =========================================================
+   VALIDATION BUTTON (KEEP BLUE - DO NOT FOLLOW THEME)
+   ========================================================= */
+
+.pos .button.next.validation {
+    background: #1d4ed8 !important; /* same blue as qty */
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 14px !important;
+    opacity: 1 !important;
+}
+
+.pos .button.next.validation:hover {
+    background: #2563eb !important;
+    transform: translateY(-2px);
+}
+
+
+/* force disable state not to go grey theme style */
+.pos .button.next.validation.disabled {
+    background: #1d4ed8 !important;
+    color: #93c5fd !important;
+    opacity: 0.5 !important;
+}
+
+
+/* =========================================================
+   SEARCH BAR (UNIFIED DARK STYLE)
+   ========================================================= */
+
+.pos .products-widget-control .input-container,
+.pos .products-widget-control .form-control {
+    background: #1b2433 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #e5e7eb !important;
+    border-radius: 12px !important;
+}
+
+.pos .products-widget-control input {
+    background: transparent !important;
+    color: #e5e7eb !important;
+}
+
+
+/* =========================================================
+   REMOVE WHITE OVERRIDES FROM THIS SECTION ONLY
+   ========================================================= */
+
+.pos .payment-screen .bg-view,
+.pos .payment-screen .bg-300,
+.pos .payment-screen .bg-400 {
+    background: #111827 !important;
+}
+
+
+/* =========================================================
+   PAYMENT LINES AREA FIX
+   ========================================================= */
+
+.pos .paymentlines-empty {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+}
+
+.pos .paymentlines-empty .message {
+    color: #9ca3af !important;
+}
+
+.pos .paymentlines-empty .total {
+    color: #22c55e !important;
+}
+
+html, body, .pos {
+    background-color: #0b1220 !important;
+    color: #a8a9ab !important;
+}
+
+/* FIX ODOO BG VARIABLES OVERRIDING YOUR DARK MODE */
+.pos .bg-200,
+.pos .bg-100,
+.pos .bg-300,
+.pos .bg-white,
+.pos .bg-light,
+.pos .bg-view {
+    background-color: #111827 !important;
+}
+
+/* REMOVE WHITE BORDER LINES (GLOBAL FIX) */
+.pos .border,
+.pos .border-bottom,
+.pos .border-top,
+.pos .border-start,
+.pos .border-end {
+    border-color: #243244 !important;
+}
+
+/* TOP PAYMENT HEADER TEXT FIX (Back + Payment title white) */
+.pos .top-content,
+.pos .top-content * {
+    color: #e5e7eb !important;
+}
+
+/* BACK BUTTON KEEP STYLE BUT FIX TEXT VISIBILITY */
+.pos .top-content .btn-secondary {
+    color: #e5e7eb !important;
+    background: #1f2937 !important;
+    border: 1px solid #2b3a50 !important;
+    border-radius: 12px !important;
+}
+
+.pos .top-content .btn-secondary:hover {
+    background: #243244 !important;
+}
+
+/* PAYMENT SCREEN MAIN BACKGROUND HARD FIX */
+.pos .payment-screen,
+.pos .pos-content,
+.pos .main-content {
+    background: #0b1220 !important;
+}
+
+/* PAYMENT METHODS CARDS FIX (remove light bootstrap override) */
+.pos .paymentmethod.btn-light {
+    background: #1b2433 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #243244 !important;
+    border-radius: 12px !important;
+}
+
+.pos .paymentmethod.btn-light:hover {
+    background: #243244 !important;
+}
+
+/* VALIDATE BUTTON FIX (IMPORTANT: stays blue, not theme changing) */
+.pos .button.next.validation {
+    background: #2563eb !important;   /* strong blue */
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25) !important;
+}
+
+/* prevent disabled grey weird override */
+.pos .button.next.validation.disabled {
+    background: #1d4ed8 !important;
+    opacity: 0.55 !important;
+}
+
+/* NUMPAD BORDER CLEAN FIX (no white grid lines) */
+.pos .numpad button,
+.pos .numpad .btn {
+    border: 1px solid #2b3a50 !important;
+    background: #1b2433 !important;
+    color: #e5e7eb !important;
+    border-radius: 14px !important;
+}
+
+/* SEARCH BAR FIX (entire input group dark) */
+.pos .input-container,
+.pos .form-control,
+.pos input {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #2b3a50 !important;
+    border-radius: 12px !important;
+}
+
+/* FORCE ODOO CSS VARIABLES THAT BREAK DARK MODE */
+:root {
+    --o-cc5-bg: #0b1220 !important;
+    --o-cc4-bg: #0b1220 !important;
+}
+
+/* SCROLLBAR CLEAN DARK */
+.pos *::-webkit-scrollbar-thumb {
+    background: #334155 !important;
+}
+.pos *::-webkit-scrollbar-track {
+    background: #0b1220 !important;
+}
+
+.pos .navbar-button.menu-button {
+    background: #1b2433 !important;
+    border: 1px solid #243244 !important;
+    border-radius: 12px !important;
+    color: #cbd5e1 !important; /* lichtere grijze tint */
+    transition: all .2s ease;
+}
+
+.pos .modal-header {
+    background: #0f172a !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
+/* titel wit maken */
+.pos .modal-header .modal-title {
+    color: #e5e7eb !important;
+    font-weight: 600 !important;
+}
+
+/* close button (X) */
+.pos .modal-header .btn {
+    background: transparent !important;
+    border: none !important;
+    color: #cbd5e1 !important;
+}
+
+.pos .modal-header .btn i {
+    color: #cbd5e1 !important;
+}
+
+.pos .modal-header .btn:hover i {
+    color: #ffffff !important;
+} 
+
+.pos .navbar-button.menu-button.btn {
+    background: #1b2433 !important;
+    border: 1px solid #243244 !important;
+    border-radius: 12px !important;
+    transition: all .2s ease;
+    color: #cbd5e1 !important;
+}
+
+.pos .navbar-button.menu-button,
+.pos .navbar-button.menu-button * {
+    color: #cbd5e1 !important;
+}
+
+.pos .navbar-button.menu-button i {
+    color: #cbd5e1 !important;
+}
+
+.pos .navbar-button.menu-button:hover {
+    background: #243244 !important;
+    transform: scale(1.03);
+}
+
+.pos .navbar-button.menu-button:hover,
+.pos .navbar-button.menu-button:hover * {
+    color: #ffffff !important;
+}
+
+.pos .text-muted {
+    color: #cbd5e1 !important;  
+    opacity: 0.95 !important;
+}
+
+.pos .text-muted h3,
+.pos .text-muted h1,
+.pos .text-muted h2,
+.pos .text-muted h4 {
+    color: #e5e7eb !important;  
+}
+
+.pos .text-muted i {
+    color: #94a3b8 !important;
+}
+
+.pos .text-muted:hover {
+    color: #e5e7eb !important;
+}
+.pos .modal-body {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+    border-top: 1px solid #243244 !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
+.pos .bg-100,
+.pos .bg-200,
+.pos .bg-300,
+.pos .bg-white,
+.pos .bg-light,
+.pos .bg-view,
+.pos .bg-400,
+.pos .bg-700 {
+    background-color: #111827 !important;
+}
+
+.pos .leftpane,
+.pos .rightpane,
+.pos .pane-border,
+.pos .controls,
+.pos .payment-screen,
+.pos .pos-content {
+    background-color: #111827 !important;
+}
+
+.pos .orders,
+.pos .order-row,
+.pos .header-row {
+    background-color: #111827 !important;
+}
+
+.bg-300, .bg-200, .bg-100 {
+    background-color: #111827 !important;
+}
+
+.pos * {
+    border-color: #243244 !important;
+}
+
+.pos .border,
+.pos .border-top,
+.pos .border-bottom,
+.pos .border-start,
+.pos .border-end {
+    border-color: #243244 !important;
+}
+
+.pos {
+    color: #e5e7eb !important;
+}
+
+.pos .text-muted {
+    color: #cbd5e1 !important;
+}
+
+.pos .form-control,
+.pos input {
+    background-color: #0f172a !important;
+    color: #e5e7eb !important;
+    border: 1px solid #243244 !important;
+}
+
+.pos .input-container {
+    background-color: #0f172a !important;
+}
+
+.pos .button.next.validation {
+    background: #1d4ed8 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.pos .button.next.validation.disabled {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    opacity: 0.9 !important;
+}
+
+.modal,
+.modal-content {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+}
+
+.modal-body {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+    padding: 1.25rem !important;
+}
+
+.modal-header,
+.modal-title {
+    color: #f1f5f9 !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
+.pos .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+
+::-webkit-scrollbar-track {
+    background: #0b1220 !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #334155 !important;
+}
+
+.pos .orders {
+    background: #111827 !important;
+}
+
+/* elke row duidelijk scheiden */
+.pos .order-row {
+    background-color: #111827 !important;
+    border-bottom: 1px solid #243244 !important;
+    padding: 6px 0;
+}
+
+/* header iets sterker onderscheiden */
+.pos .header-row {
+    background-color: #0f172a !important;
+    border-bottom: 2px solid #334155 !important;
+    color: #e5e7eb !important;
+}
+
+/* hover effect zodat je weet waar je zit */
+.pos .order-row:hover {
+    background-color: #1b2433 !important;
+}
+
+/* optioneel: zebra effect (maakt het nog leesbaarder) */
+.pos .order-row:nth-child(even) {
+    background-color: #0f172a !important;
+}
+
+/* kill bootstrap “col padding blending” visueel probleem */
+.pos .order-row > div {
+    border-right: 1px solid #1f2937 !important;
+}
+
+.pos .order-row > div:last-child {
+    border-right: none !important;
+}
+
+.pos .text-bg-view {
+    background-color: #0f172a !important;  /* zelfde als dark panels */
+    color: #e5e7eb !important;            /* wit/grijs zoals rest UI */
+    border-bottom: 1px solid #243244 !important;
+}
+
+.pos .text-bg-view * {
+    color: #e5e7eb !important;
+}
+
+.pos .leftpane .text-bg-view {
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.pos .section-product-info-title,
+.pos .section-financials,
+.pos .section-inventory,
+.pos .section-order {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+    border-color: #243244 !important;
+}
+
+/* kill Bootstrap contextual styling */
+.pos .section-product-info-title.bg-info,
+.pos .section-product-info-title.text-info {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+}
+
+/* text consistency everywhere */
+.pos .section-product-info-title *,
+.pos .section-financials *,
+.pos .section-inventory *,
+.pos .section-order * {
+    color: #e5e7eb !important;
+}
+
+/* headings iets sterker contrast */
+.pos .section-title {
+    color: #f1f5f9 !important;
+    font-weight: 700;
+}
+
+/* tables dark readable */
+.pos .modal-body table {
+    color: #e5e7eb !important;
+}
+
+.pos .modal-body td {
+    border-color: #243244 !important;
+}
+
+/* price highlight */
+.pos .product-info-price-with-tax {
+    color: #60a5fa !important;
+    font-weight: 700;
+}
+
+/* remove Bootstrap opacity wash */
+.pos .bg-opacity-25 {
+    opacity: 1 !important;
+    background-color: #111827 !important;
 }
