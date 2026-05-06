@@ -180,3 +180,81 @@
 .kassa-add-user-btn i {
     margin-right: 4px;
 }
+
+/* QR Code Button */
+.kassa-qr-btn i,
+.kassa-scanner-btn i {
+    margin-right: 4px;
+}
+
+/* QR Code Dialog */
+.kassa-qr-dialog .modal-dialog {
+    max-width: 340px;
+}
+
+.kassa-qr-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.kassa-qr-image {
+    width: 260px;
+    height: 260px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+/* QR Partner button in client list */
+.kassa-qr-partner-btn {
+    margin-left: 6px;
+}
+
+/* Scanner Dialog */
+.kassa-scanner-dialog .modal-dialog {
+    max-width: 480px;
+}
+
+.kassa-scanner-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    gap: 1rem;
+}
+
+.kassa-scanner-video {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 4px;
+    background: #000;
+}
+
+.kassa-scanner-hint {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.kassa-scanner-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 0;
+}
+
+.kassa-scanner-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.kassa-scanner-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    text-align: center;
+}
