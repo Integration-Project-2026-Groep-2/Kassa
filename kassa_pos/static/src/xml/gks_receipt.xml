@@ -6,7 +6,7 @@
                 <style>
                     .pos-gks-receipt { font-family: monospace; font-size: 12px; }
                     .pos-gks-center { text-align: center; }
-                    .pos-gks-title { font-weight: 700; margin-bottom: 4px; }
+                    .pos-gks-title { font-weight: 800; font-size: 18px; line-height: 1.2; margin-bottom: 6px; letter-spacing: 0.4px; }
                     .pos-gks-subtitle { font-size: 11px; margin-bottom: 2px; }
                     .pos-gks-divider { border-top: 1px dashed #000; margin: 6px 0; }
 
