@@ -9,6 +9,10 @@ _logger = logging.getLogger(__name__)
 class PosSession(models.Model):
     _inherit = 'pos.session'
 
+    def _get_pos_ui_res_partner(self, params):
+        params['search_params']['fields'] += ['user_id_custom', 'badge_code']
+        return super()._get_pos_ui_res_partner(params)
+
     def action_pos_session_closing_control(self, bank_payment_method_diffs=None):
         """
         Override session closing control to trigger the daily batch close (Afsluitknop)
