@@ -106,7 +106,7 @@ class PosOrder(models.Model):
     def create_from_ui(self, orders, draft=False):
         """
         Override van de POS frontend call.
-        Na het verwerken van de order → stuur berichten naar RabbitMQ.
+        Na het verwerken van de order → stuur berichten naar RabbitMQ en verwerk saldo.
         """
         order_ids = super().create_from_ui(orders, draft=draft)
 
@@ -115,8 +115,29 @@ class PosOrder(models.Model):
 
             if order.state in ('paid', 'done', 'invoiced'):
                 self._trigger_rabbitmq_messages(order)
+                self._process_balance_payment(order)
 
         return order_ids
+
+    def _process_balance_payment(self, order):
+        """Verwerk saldo-betalingen: deducteer van partner balance en sla transactie op."""
+        if not order.partner_id:
+            return
+        for payment in order.payment_ids:
+            if payment.payment_method_id and 'saldo' in payment.payment_method_id.name.lower():
+                amount = payment.amount
+                partner = order.partner_id
+                new_balance = max(0.0, partner.balance - amount)
+                partner.write({'balance': new_balance})
+                self.env['balance.transaction'].create({
+                    'partner_id': partner.id,
+                    'amount': -amount,
+                    'transaction_type': 'payment',
+                    'payment_method': 'balance',
+                    'note': f'Betaling via saldo — order {order.name}',
+                    'pos_order_id': order.id,
+                    'balance_after': new_balance,
+                })
 
     def _trigger_rabbitmq_messages(self, order):
         """
