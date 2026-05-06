@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension" owl="1">
+        <xpath expr="//div[contains(concat(' ', normalize-space(@class), ' '), ' pos-receipt ')]" position="replace">
+            <div class="pos-receipt pos-gks-receipt">
+                <div class="pos-gks-center pos-gks-title">Desiderius Hogeschool</div>
+                <div class="pos-gks-center pos-gks-subtitle">Straatnaam 1, 1000 Brussel</div>
+                <div class="pos-gks-center pos-gks-subtitle">VAT: BE 0123.456.789</div>
+
+                <div class="pos-gks-divider"/>
+
+                <div class="pos-gks-items">
+                    <t t-foreach="gksReceiptLines" t-as="line" t-key="line.id || line.uid || line.uuid || line.product_id?.id">
+                        <div class="pos-gks-item-row">
+                            <div class="pos-gks-item-name">
+                                <t t-esc="gksLineName(line)"/>
+                                <span style="font-size: 10px;"> [<t t-esc="gksLineIndicator(line)"/>]</span>
+                            </div>
+                            <div class="pos-gks-item-qty"><t t-esc="gksLineQty(line)"/></div>
+                            <div class="pos-gks-item-price"><t t-esc="gksFormatCurrency(gksLineGross(line))"/></div>
+                            <div class="pos-gks-item-total"><t t-esc="gksFormatCurrency(gksLineGross(line))"/></div>
+                        </div>
+                    </t>
+                </div>
+
+                <div class="pos-gks-divider"/>
+
+                <div class="pos-gks-total-row">
+                    <div>SUBTOTAAL</div>
+                    <div><t t-esc="gksFormatCurrency(gksTaxBreakdown.grossTotal)"/></div>
+                </div>
+                <div class="pos-gks-total-row">
+                    <div>TOTAAL</div>
+                    <div><t t-esc="gksFormatCurrency(gksTaxBreakdown.grossTotal)"/></div>
+                </div>
+
+                <div class="pos-gks-divider"/>
+
+                <div class="pos-gks-tax-table">
+                    <div class="pos-gks-total-row pos-gks-table-header">
+                        <div>Tarief</div>
+                        <div>Netto</div>
+                        <div>BTW %</div>
+                        <div>BTW bedrag</div>
+                    </div>
+                    <div class="pos-gks-total-row">
+                        <div>Food</div>
+                        <div><t t-esc="gksFormatCurrency(gksTaxBreakdown.rates[6].net)"/></div>
+                        <div>6%</div>
+                        <div><t t-esc="gksFormatCurrency(gksTaxBreakdown.rates[6].vat)"/></div>
+                    </div>
+                    <div class="pos-gks-total-row">
+                        <div>Drinks</div>
+                        <div><t t-esc="gksFormatCurrency(gksTaxBreakdown.rates[21].net)"/></div>
+                        <div>21%</div>
+                        <div><t t-esc="gksFormatCurrency(gksTaxBreakdown.rates[21].vat)"/></div>
+                    </div>
+                    <div class="pos-gks-total-row" style="font-weight: 700;">
+                        <div>--</div>
+                        <div><t t-esc="gksFormatCurrency(gksTaxBreakdown.netTotal)"/></div>
+                        <div/>
+                        <div><t t-esc="gksFormatCurrency(gksTaxBreakdown.vatTotal)"/></div>
+                    </div>
+                </div>
+
+                <div class="pos-gks-divider"/>
+
+                <div class="pos-gks-vsc">VSC: {{VSC_HASH_PLACEHOLDER}}</div>
+                <div class="pos-gks-footer">GKS REGISTERED</div>
+            </div>
+        </xpath>
+    </t>
+</templates>

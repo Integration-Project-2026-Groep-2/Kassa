@@ -1,0 +1,92 @@
+.pos-receipt-print .pos-gks-receipt {
+    width: 80mm;
+    max-width: 80mm;
+    box-sizing: border-box;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 11px;
+    line-height: 1.15;
+    color: #000000;
+    padding: 0;
+    margin: 0 auto;
+}
+.pos-receipt.pos-gks-receipt,
+.pos-receipt-print .pos-gks-receipt {
+    width: 80mm;
+    max-width: 80mm;
+    box-sizing: border-box;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 11px;
+    line-height: 1.15;
+    color: #000000;
+    padding: 0;
+    margin: 0 auto;
+}
+
+.pos-receipt-print .pos-gks-receipt * {
+    box-sizing: border-box;
+}
+
+.pos-receipt-print .pos-gks-center {
+    text-align: center;
+}
+
+.pos-receipt-print .pos-gks-title {
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.pos-receipt-print .pos-gks-subtitle {
+    font-size: 10px;
+}
+
+.pos-receipt-print .pos-gks-divider {
+    border-top: 1px dashed #000000;
+    margin: 6px 0;
+}
+
+.pos-receipt-print .pos-gks-items,
+.pos-receipt-print .pos-gks-tax-table {
+    width: 100%;
+}
+
+.pos-receipt-print .pos-gks-item-row,
+.pos-receipt-print .pos-gks-tax-row,
+.pos-receipt-print .pos-gks-total-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.pos-receipt-print .pos-gks-item-name {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.pos-receipt-print .pos-gks-item-qty,
+.pos-receipt-print .pos-gks-item-price,
+.pos-receipt-print .pos-gks-item-total,
+.pos-receipt-print .pos-gks-tax-net,
+.pos-receipt-print .pos-gks-tax-rate,
+.pos-receipt-print .pos-gks-tax-amount {
+    flex: 0 0 auto;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.pos-receipt-print .pos-gks-table-header {
+    font-weight: 700;
+    border-bottom: 1px solid #000000;
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+}
+
+.pos-receipt-print .pos-gks-footer {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.pos-receipt-print .pos-gks-vsc {
+    font-size: 9px;
+    word-break: break-all;
+    margin-top: 4px;
+}

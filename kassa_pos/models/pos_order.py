@@ -116,6 +116,108 @@ class PosOrder(models.Model):
             'items': items,
         }
 
+    def _get_tax_rate_for_product(self, product):
+        """
+        Map product category to VAT rate (6% for Food, 21% for Drinks/other).
+        
+        Args:
+            product: product.product record
+            
+        Returns:
+            float: Tax rate (6.0 or 21.0)
+        """
+        if not product or not product.categ_id:
+            return 21.0
+        
+        category_name = (product.categ_id.name or "").lower().strip()
+        
+        # Food → 6% VAT
+        if category_name == "food":
+            return 6.0
+        
+        # Drinks → 21% VAT (alcoholic beverages)
+        if category_name == "drinks":
+            return 21.0
+        
+        # Default to 21%
+        return 21.0
+
+    def _build_gks_vat_breakdown(self):
+        """
+        Bouw een VAT-breakdown payload geschikt voor het GKS ticket.
+
+        Retourneert een dict met netto en btw bedragen per tarief (6% en 21%),
+        plus totalen. Deze helper probeert eerst de tax info van de orderlijn
+        te gebruiken (`line.tax_ids`), en valt terug naar product category mapping.
+
+        Resultaatvoorbeeld:
+        {
+            'rates': {
+                6: {'net': 3.5, 'vat': 0.21},
+                21: {'net': 3.98, 'vat': 0.83}
+            },
+            'net_total': 7.48,
+            'vat_total': 1.04,
+            'gross_total': 8.52
+        }
+        """
+        self.ensure_one()
+
+        rates = {6: {'net': 0.0, 'vat': 0.0}, 21: {'net': 0.0, 'vat': 0.0}}
+        net_total = 0.0
+        vat_total = 0.0
+        gross_total = 0.0
+
+        for line in self.lines:
+            try:
+                qty = float(line.qty)
+            except Exception:
+                qty = 0.0
+
+            try:
+                unit_price = float(line.price_unit)
+            except Exception:
+                unit_price = 0.0
+
+            # Calculation: Qty × Unit Price = Gross (including VAT)
+            gross = unit_price * qty
+            gross_total += gross
+
+            # Determine VAT rate: 
+            # 1) Prefer line.tax_ids if available
+            rate = None
+            if hasattr(line, 'tax_ids') and line.tax_ids:
+                try:
+                    rate = float(line.tax_ids[0].amount)
+                except Exception:
+                    rate = None
+            
+            # 2) Fallback to product category mapping
+            if rate is None and line.product_id:
+                rate = self._get_tax_rate_for_product(line.product_id)
+            
+            # 3) Default to 21% if all else fails
+            if rate is None:
+                rate = 21.0
+
+            # Calculate net from gross: net = gross / (1 + rate/100)
+            net = gross / (1.0 + (rate / 100.0)) if rate >= 0 else gross
+            vat = gross - net
+
+            # Aggregate by rate group
+            key = 6 if int(round(rate)) == 6 else 21
+            rates[key]['net'] += round(net, 2)
+            rates[key]['vat'] += round(vat, 2)
+            net_total += net
+            vat_total += vat
+
+        return {
+            'rates': rates,
+            'net_total': round(net_total, 2),
+            'vat_total': round(vat_total, 2),
+            'gross_total': round(gross_total, 2)
+        }
+
     @api.model
     def create_from_ui(self, orders, draft=False):
         """
