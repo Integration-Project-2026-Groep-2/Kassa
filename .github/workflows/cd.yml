@@ -52,6 +52,8 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Deploy to Dev (Single Odoo+POS image)
         uses: appleboy/ssh-action@v1
         with:
@@ -59,8 +61,4 @@ jobs:
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
           command_timeout: 10m
-          script: |
-            set -e
-            docker compose --project-directory ~/kassa -f ~/kassa/docker-compose.production.yml pull odoo
-            docker compose --project-directory ~/kassa -f ~/kassa/docker-compose.production.yml up -d
-            docker compose --project-directory ~/kassa -f ~/kassa/docker-compose.production.yml ps
+          script_path: .github/scripts/deploy.sh
