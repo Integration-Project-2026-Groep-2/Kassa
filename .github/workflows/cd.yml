@@ -61,4 +61,4 @@ jobs:
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
           command_timeout: 10m
-          script_path: .github/scripts/deploy.sh
+          script: bash --noprofile --norc -c 'set -euo pipefail; docker compose --project-directory "$HOME/kassa" -f "$HOME/kassa/docker-compose.production.yml" pull odoo && docker compose --project-directory "$HOME/kassa" -f "$HOME/kassa/docker-compose.production.yml" up -d && docker compose --project-directory "$HOME/kassa" -f "$HOME/kassa/docker-compose.production.yml" ps'
