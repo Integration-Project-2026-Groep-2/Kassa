@@ -28,6 +28,7 @@
     ],
     'assets': {
         'point_of_sale._assets_pos': [
+            'kassa_pos/static/src/lib/jsQR.js',
             'kassa_pos/static/src/css/user_registration.css',
             'kassa_pos/static/src/js/UserRegistration.js',
             'kassa_pos/static/src/js/ProductScreenUserButton.js',
@@ -35,7 +36,6 @@
             'kassa_pos/static/src/js/ClosingButton.js',
             'kassa_pos/static/src/js/QRCodeButton.js',
             'kassa_pos/static/src/js/QRScanner.js',
-            'kassa_pos/static/src/xml/kassa_qr_templates.xml',
         ],
     },
     'external_dependencies': {
