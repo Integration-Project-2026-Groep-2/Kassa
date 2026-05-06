@@ -87,7 +87,7 @@ Extension for user registration settings:
 
 ### 3. Templates (XML)
 
-**File:** `kassa_pos/views/user_registration_templates.xml`
+**File:** `kassa_pos/views/kassa_pos_user_registration_view.xml`
 
 - Modal form layout
 - Button styling

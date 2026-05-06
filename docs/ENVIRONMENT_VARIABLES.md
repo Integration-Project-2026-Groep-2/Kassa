@@ -19,7 +19,7 @@ This document defines all environment variables required for the Kassa Odoo cust
 | **RABBITMQ CONFIGURATION**   |
 | `RABBIT_HOST`                | odoo, pos_receiver, contact_receiver, heartbeat           | string  | `rabbitmq`          | `rabbitmq.integration-project-2026-groep-2.my.be` | RabbitMQ hostname/FQDN for AMQP connections.                                                |
 | `RABBIT_PORT`                | odoo, pos_receiver, contact_receiver, heartbeat           | integer | `5672`              | `5672`                                            | RabbitMQ AMQP protocol port (non-encrypted).                                                |
-| `RABBIT_MANAGEMENT_PORT`     | -                                                         | integer | `15671`             | `15671`                                           | RabbitMQ Management UI port (HTTPS). For reference/monitoring only.                         |
+| `RABBIT_MANAGEMENT_PORT`     | -                                                         | integer | `15672`             | `15672`                                           | RabbitMQ Management UI port. Local Docker Compose exposes this port by default; production may proxy the UI differently. |
 | `RABBIT_USER`                | odoo, pos_receiver, contact_receiver, heartbeat, rabbitmq | string  | `guest`             | `kassa_user`                                      | RabbitMQ username for authentication.                                                       |
 | `RABBIT_PASSWORD`            | odoo, pos_receiver, contact_receiver, heartbeat, rabbitmq | string  | `<PASSWORD_HERE>`   | `<PASSWORD_HERE>`                                 | RabbitMQ password. Use Azure Key Vault or secrets management.                               |
 | `RABBIT_VHOST`               | odoo, pos_receiver, contact_receiver, heartbeat, rabbitmq | string  | `/`                 | `/kassa`                                          | RabbitMQ virtual host. Isolates message queues.                                             |
@@ -73,7 +73,7 @@ POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
 
 ```
 RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
-RABBIT_PORT (5672), RABBIT_MANAGEMENT_PORT (15671)
+RABBIT_PORT (5672), RABBIT_MANAGEMENT_PORT (15672 in local Docker Compose; 15671 when proxied in Azure)
 ```
 
 ---
