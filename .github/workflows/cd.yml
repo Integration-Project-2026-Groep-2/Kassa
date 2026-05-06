@@ -56,22 +56,42 @@ jobs:
 
       - name: Deploy to Dev (Single Odoo+POS image)
         run: |
-          # Validate secrets are set
-          if [ -z "${{ secrets.DEV_HOST }}" ] || [ -z "${{ secrets.DEV_USER }}" ] || [ -z "${{ secrets.DEV_SSH_KEY }}" ]; then
-            echo "ERROR: Missing required GitHub secrets (DEV_HOST, DEV_USER, DEV_SSH_KEY)"
+          # Validate secrets are set and show length (not content, for security)
+          HOST_LEN=${#DEV_HOST}
+          USER_LEN=${#DEV_USER}
+          KEY_LEN=${#DEV_SSH_KEY}
+          
+          echo "Secret status:"
+          echo "  DEV_HOST length: $HOST_LEN"
+          echo "  DEV_USER length: $USER_LEN"
+          echo "  DEV_SSH_KEY length: $KEY_LEN"
+          
+          if [ "$HOST_LEN" -eq 0 ] || [ "$USER_LEN" -eq 0 ] || [ "$KEY_LEN" -eq 0 ]; then
+            echo "ERROR: One or more secrets are empty!"
             exit 1
           fi
           
-          # Write SSH key with proper newline handling (unquoted heredoc to expand secret)
+          # Write SSH key with proper newline handling
           SSH_KEY_FILE=$(mktemp)
           cat > "$SSH_KEY_FILE" << SSHKEY_EOF
           ${{ secrets.DEV_SSH_KEY }}
           SSHKEY_EOF
           chmod 600 "$SSH_KEY_FILE"
           
+          # Validate SSH key format
+          if ! grep -q "BEGIN.*PRIVATE KEY" "$SSH_KEY_FILE"; then
+            echo "ERROR: SSH key doesn't contain valid BEGIN marker!"
+            rm "$SSH_KEY_FILE"
+            exit 1
+          fi
+          
           # Test SSH connection
           echo "Testing SSH connection to ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}..."
-          ssh -i "$SSH_KEY_FILE" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}" "echo 'SSH connection successful'"
+          ssh -v -i "$SSH_KEY_FILE" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}" "echo 'SSH connection successful'" || {
+            echo "SSH connection failed!"
+            rm "$SSH_KEY_FILE"
+            exit 1
+          }
           
           # Run deploy commands
           echo "Running deploy script..."
@@ -86,3 +106,7 @@ jobs:
           DEPLOY_EOF
           
           rm "$SSH_KEY_FILE"
+        env:
+          DEV_HOST: ${{ secrets.DEV_HOST }}
+          DEV_USER: ${{ secrets.DEV_USER }}
+          DEV_SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
