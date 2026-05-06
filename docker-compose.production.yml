@@ -71,10 +71,8 @@ services:
 
     # Odoo POS Application
     odoo:
-        build:
-            context: .
-            dockerfile: Dockerfile
         image: ${ODOO_IMAGE:-ghcr.io/integration-project-2026-groep-2/kassa:latest-dev}
+        pull_policy: always
         container_name: kassa-odoo
         restart: unless-stopped
         depends_on:
