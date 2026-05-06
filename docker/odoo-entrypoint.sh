@@ -135,16 +135,20 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
     else
       "${SYNC_CMD[@]}"
     fi
-  elif [ -n "$ODOO_SYNC_MODULES" ]; then
-    echo "[entrypoint] kassa_pos already installed, upgrading explicitly listed modules: ${ODOO_SYNC_MODULES}"
-    SYNC_CMD=("${BASE_SYNC_ARGS[@]}" -u "${ODOO_SYNC_MODULES}")
+  else
+    # Always upgrade kassa_pos to ensure data files are loaded (pos_config_data.xml, etc.)
+    # Also upgrade any modules explicitly listed in ODOO_SYNC_MODULES
+    MODULES_TO_UPGRADE="kassa_pos"
+    if [ -n "$ODOO_SYNC_MODULES" ]; then
+      MODULES_TO_UPGRADE="${MODULES_TO_UPGRADE},${ODOO_SYNC_MODULES}"
+    fi
+    echo "[entrypoint] kassa_pos already installed, upgrading for data sync: ${MODULES_TO_UPGRADE}"
+    SYNC_CMD=("${BASE_SYNC_ARGS[@]}" -u "${MODULES_TO_UPGRADE}")
     if [ "$(id -u)" = "0" ]; then
       runuser -u odoo -- "${SYNC_CMD[@]}"
     else
       "${SYNC_CMD[@]}"
     fi
-  else
-    echo "[entrypoint] kassa_pos already installed, no explicit upgrade requested — skipping module sync"
   fi
 fi
 
