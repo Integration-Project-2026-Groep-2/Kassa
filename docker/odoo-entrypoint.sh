@@ -27,15 +27,9 @@ chown -R odoo:odoo /mnt/extra-addons/kassa_pos/
 
 # kassa_pos is always required — merge it with any extra modules from ODOO_SYNC_MODULES.
 # This ensures the addon is installed/upgraded on every start, regardless of env config.
+CORE_MODULES="kassa_pos"
+if [ -n "$ODOO_SYNC_MODULES" ]; then
   EFFECTIVE_SYNC_MODULES="${CORE_MODULES},${ODOO_SYNC_MODULES}"
-# Ensure Top Up payment method is linked to Kassa Main pos_config
-echo "[entrypoint] Linking Top Up payment method to pos_config"
-psql \
-  "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" \
-  -c "INSERT INTO pos_config_pos_payment_method_rel (pos_config_id, pos_payment_method_id) SELECT pc.id, ppm.id FROM pos_config pc, pos_payment_method ppm WHERE pc.name LIKE '%Kassa Main%' AND ppm.name LIKE '%Top Up%' ON CONFLICT DO NOTHING;" 2>/dev/null || true
-
-# Initialize RabbitMQ topology (exchanges, queues, bindings)
-echo "[entrypoint] Initializing RabbitMQ topology via setup_rabbitmq.py"
 else
   EFFECTIVE_SYNC_MODULES="${CORE_MODULES}"
 fi
@@ -157,6 +151,12 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
     fi
   fi
 fi
+
+# Ensure Top Up payment method is linked to Kassa Main pos_config
+echo "[entrypoint] Linking Top Up payment method to pos_config"
+psql \
+  "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" \
+  -c "INSERT INTO pos_config_pos_payment_method_rel (pos_config_id, pos_payment_method_id) SELECT pc.id, ppm.id FROM pos_config pc, pos_payment_method ppm WHERE pc.name LIKE '%Kassa Main%' AND ppm.name LIKE '%Top Up%' ON CONFLICT DO NOTHING;" 2>/dev/null || true
 
 # Initialize RabbitMQ topology (exchanges, queues, bindings)
 echo "[entrypoint] Initializing RabbitMQ topology via setup_rabbitmq.py"

@@ -22,8 +22,8 @@ patch(PaymentScreen.prototype, {
 
         if (!partner) {
             this.notification.add(
-                'Selecteer eerst een klant om met saldo te betalen.',
-                { type: 'warning', title: 'Geen klant geselecteerd' }
+                'Selecteer eerst een klant om met Top Up te betalen.',
+                { type: 'warning', title: 'Klant vereist' }
             );
             return;
         }
@@ -73,7 +73,7 @@ patch(PaymentScreen.prototype, {
         if (topupLine) {
             if (!partner) {
                 this.notification.add(
-                    'Selecteer een klant om met saldo te kunnen betalen.',
+                    'Selecteer een klant om met Top Up te kunnen betalen.',
                     { type: 'warning', title: 'Geen klant' }
                 );
                 return;

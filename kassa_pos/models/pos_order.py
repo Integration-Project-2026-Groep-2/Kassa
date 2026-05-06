@@ -137,21 +137,29 @@ class PosOrder(models.Model):
         """Verwerk saldo-betalingen: deducteer van partner balance en sla transactie op."""
         if not order.partner_id:
             return
+
         for payment in order.payment_ids:
-            if payment.payment_method_id and 'saldo' in payment.payment_method_id.name.lower():
-                amount = payment.amount
-                partner = order.partner_id
-                new_balance = max(0.0, partner.balance - amount)
-                partner.write({'balance': new_balance})
-                self.env['balance.transaction'].create({
-                    'partner_id': partner.id,
-                    'amount': -amount,
-                    'transaction_type': 'payment',
-                    'payment_method': 'balance',
-                    'note': f'Betaling via saldo — order {order.name}',
-                    'pos_order_id': order.id,
-                    'balance_after': new_balance,
-                })
+            if not payment.payment_method_id:
+                continue
+
+            payment_name = (payment.payment_method_id.name or '').lower()
+            if 'saldo' not in payment_name and 'top up' not in payment_name:
+                continue
+
+            amount = payment.amount
+            partner = order.partner_id
+            new_balance = partner.balance - amount
+
+            partner.write({'balance': new_balance})
+            self.env['balance.transaction'].create({
+                'partner_id': partner.id,
+                'amount': -amount,
+                'transaction_type': 'payment',
+                'payment_method': 'balance',
+                'note': f'Top Up betaling — order {order.name}',
+                'pos_order_id': order.id,
+                'balance_after': new_balance,
+            })
 
     def _trigger_rabbitmq_messages(self, order):
         """
