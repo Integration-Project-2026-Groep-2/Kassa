@@ -17,6 +17,13 @@
             <field name="company_id" ref="base.main_company"/>
         </record>
 
+        <record id="account_journal_invoice_kassa" model="account.journal">
+            <field name="name">Kassa Factuur</field>
+            <field name="code">KINV</field>
+            <field name="type">bank</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
         <!-- Payment Methods -->
         <record id="payment_method_cash" model="pos.payment.method">
             <field name="name">Cash</field>
@@ -37,11 +44,17 @@
             <field name="company_id" ref="base.main_company"/>
         </record>
 
+        <record id="payment_method_invoice" model="pos.payment.method">
+            <field name="name">Invoice</field>
+            <field name="journal_id" ref="account_journal_invoice_kassa"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
         <!-- POS Configuration -->
         <record id="pos_config_kassa_main" model="pos.config">
             <field name="name">Kassa Main</field>
             <field name="company_id" ref="base.main_company"/>
-            <field name="payment_method_ids" eval="[(6, 0, [ref('payment_method_cash'), ref('payment_method_card'), ref('payment_method_saldo')])]"/>
+            <field name="payment_method_ids" eval="[(6, 0, [ref('payment_method_cash'), ref('payment_method_card'), ref('payment_method_saldo'), ref('payment_method_invoice')])]"/>
             <field name="module_pos_restaurant" eval="False"/>
             <field name="cash_control" eval="True"/>
         </record>
