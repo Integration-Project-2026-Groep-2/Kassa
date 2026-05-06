@@ -58,10 +58,5 @@ jobs:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
-          script_stop: true
-          script: |
-            set -e
-            cd ~/kassa
-            docker compose -f docker-compose.production.yml pull odoo
-            docker compose -f docker-compose.production.yml up -d
-            docker compose -f docker-compose.production.yml ps
+          sync: true
+          script: cd ~/kassa && docker compose -f docker-compose.production.yml pull odoo && docker compose -f docker-compose.production.yml up -d && docker compose -f docker-compose.production.yml ps
