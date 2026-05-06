@@ -20,3 +20,6 @@ odoo.conf
 __pycache__/
 *.pyc
 *.pyo
+
+# Claude Code lokale instellingen
+.claude/
