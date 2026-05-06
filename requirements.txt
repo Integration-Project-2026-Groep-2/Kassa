@@ -3,3 +3,4 @@ aio-pika>=9.0
 lxml>=5.0
 psutil>=5.9
 lxml_html_clean
+qrcode[pil]==7.4.2
