@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!--
+        Voeg QR-knop toe naast de Details-knop in de klantenlijst.
+        Als de xpath niet matcht na een Odoo update, pas de expr aan
+        zodat hij wijst naar de container van de Details-knop.
+    -->
+    <t t-inherit="point_of_sale.ClientListScreen" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('partner-list')]//div[hasclass('button-list')]" position="inside">
+            <button class="button kassa-qr-partner-btn"
+                    t-on-click.stop="() => this.showPartnerQR(partner)"
+                    title="Toon QR-code">
+                <i class="fa fa-qrcode"/>
+            </button>
+        </xpath>
+    </t>
+
+</templates>
