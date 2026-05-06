@@ -271,6 +271,10 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
     """
     global _odoo_connection, _user_consumer
     
+    # Give Odoo time to start (especially on first boot in Docker)
+    logger.info("Waiting 10 seconds for Odoo to be ready...")
+    await asyncio.sleep(10)
+    
     # Initialize Odoo connection
     odoo_url = os.getenv('ODOO_URL', 'http://odoo:8069')
     odoo_db = os.getenv('ODOO_DB', 'odoo')
