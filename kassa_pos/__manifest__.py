@@ -42,6 +42,7 @@
     'external_dependencies': {
         'python': ['pika'],
     },
+    'pre_init_hook': 'pre_init_hook',
     'post_init_hook': 'post_init',
     'license': 'LGPL-3',
     'installable': True,

@@ -16,19 +16,16 @@
         <!-- Accounting Journals for Payment Methods -->
         <record id="account_journal_cash_kassa" model="account.journal" forcecreate="False">
             <field name="name">Kassa Cash</field>
-            <field name="type">cash</field>
             <field name="code">KCASH</field>
         </record>
 
         <record id="account_journal_bancontact_kassa" model="account.journal">
             <field name="name">Kassa Bancontact</field>
-            <field name="type">bank</field>
             <field name="code">KBANC</field>
         </record>
 
         <record id="account_journal_saldo_kassa" model="account.journal">
             <field name="name">Kassa Saldo</field>
-            <field name="type">bank</field>
             <field name="code">KSALDO</field>
         </record>
 
