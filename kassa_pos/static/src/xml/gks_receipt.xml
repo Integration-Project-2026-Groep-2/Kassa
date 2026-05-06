@@ -28,15 +28,19 @@
                     .pos-gks-footer { text-align:center; margin-top:8px; }
                     .pos-gks-vsc { font-size:10px; text-align:left; margin-top:6px; }
                 </style>
+                
 
-                <div class="pos-gks-center pos-gks-title"><b>Desiderius Hogeschool</b></div>
+                <div class="pos-gks-center pos-gks-title"><b>Kassa-Ticket</b></div>
+                <div class="pos-gks-center pos-gks-subtitle"><b>Desiderius Hogeschool</b></div>
                 <div class="pos-gks-center pos-gks-subtitle">Straatnaam 1, 1000 Brussel</div>
-                <div class="pos-gks-center pos-gks-subtitle">VAT: BE 0123.456.789</div>
+                <div class="pos-gks-center pos-gks-subtitle">VAT: BE 0123.456.789 </div>
+                <div class="pos-gks-center pos-gks-subtitle">TEL: 010 123 456 </div>
+                
 
                 <div class="pos-gks-divider"/>
 
                 <div class="pos-gks-items">
-                    <t t-foreach="gksReceiptLines" t-as="line" t-key="line.id || line.uid || line.uuid || line.product_id?.id">
+                    <t t-foreach="gksReceiptLines" t-as="line" t-key="line.id || line.uid || line.uuid || (line.product_id &amp;&amp; line.product_id.id)">
                         <div class="pos-gks-item">
                             <div class="pos-gks-item-left">
                                 <div class="qty"><t t-esc="gksLineQty(line)"/>x</div>
@@ -99,6 +103,8 @@
                 <div class="pos-gks-vsc">VSC: <t t-esc="gksVsc"/></div>
                 <div class="pos-gks-footer">GKS REGISTERED</div>
             </div>
+            <div class="pos-gks-center pos-gks-subtitle">Desiderius Hogeschool</div>
+            <div class="pos-gks-center pos-gks-subtitle">BTW: BE 0123.456.789 </div>
         </xpath>
     </t>
 </templates>
