@@ -58,11 +58,10 @@ jobs:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
+          script_stop: true
           script: |
+            set -e
             cd ~/kassa
-            # Pull latest image from GHCR (no local build)
             docker compose -f docker-compose.production.yml pull odoo
-            # Deploy using production compose (contains Odoo + kassa_pos + receivers in one image)
             docker compose -f docker-compose.production.yml up -d
-            # Verify deployment
             docker compose -f docker-compose.production.yml ps
