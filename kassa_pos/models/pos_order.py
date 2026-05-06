@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import uuid
+import hashlib
 from odoo import models, fields, api
 from ..utils import rabbitmq_sender
 
@@ -217,6 +218,33 @@ class PosOrder(models.Model):
             'vat_total': round(vat_total, 2),
             'gross_total': round(gross_total, 2)
         }
+
+    def _build_gks_vsc(self):
+        """Return a deterministic demo string derived from the POS order ID."""
+        self.ensure_one()
+        source = f"{self.id}:{self.order_id_custom or ''}:{self.name or ''}"
+        digest = hashlib.sha1(source.encode('utf-8')).hexdigest().upper()
+        return f"GKS-{digest[:12]}"
+
+    def export_for_printing(self):
+        """Inject GKS receipt payload into the POS print data."""
+        data = super().export_for_printing()
+        if self:
+            breakdown = self._build_gks_vat_breakdown()
+            data['gks_vat_breakdown'] = breakdown
+            data['gks_vsc'] = self._build_gks_vsc()
+            data['gks_order_id'] = self.id
+
+            # Also expose per-group gross totals so the template can render totals
+            # directly from the backend-calculated groups if needed.
+            data['gks_vat_breakdown']['rates'][6]['gross'] = round(
+                data['gks_vat_breakdown']['rates'][6]['net'] + data['gks_vat_breakdown']['rates'][6]['vat'], 2
+            )
+            data['gks_vat_breakdown']['rates'][21]['gross'] = round(
+                data['gks_vat_breakdown']['rates'][21]['net'] + data['gks_vat_breakdown']['rates'][21]['vat'], 2
+            )
+
+        return data
 
     @api.model
     def create_from_ui(self, orders, draft=False):

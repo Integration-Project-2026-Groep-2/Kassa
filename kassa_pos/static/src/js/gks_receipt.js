@@ -72,19 +72,42 @@ function getLineRate(line) {
 }
 
 function getLineGross(line) {
-    return toNumber(
-        parseCurrency(line?.price) ??  // export_for_printing format: "8.40 €"
-            line?.price_subtotal_incl ??
-            line?.prices?.total_included ??
-            line?.total_included ??
-            line?.price_unit * toNumber(line?.qty)
-    );
+    // Prefer explicit fields if present; avoid parseCurrency returning 0 for undefined
+    if (line?.price != null) {
+        return toNumber(parseCurrency(line.price));
+    }
+    if (line?.price_subtotal_incl != null) {
+        return toNumber(line.price_subtotal_incl);
+    }
+    if (line?.prices?.total_included != null) {
+        return toNumber(line.prices.total_included);
+    }
+    if (line?.total_included != null) {
+        return toNumber(line.total_included);
+    }
+    // Fallback to unit price * qty
+    return toNumber((line?.price_unit ?? line?.unitPrice ?? line?.unit_price) * toNumber(line?.qty));
 }
 
 function getLineNet(line) {
+    // Prefer an explicit net value only if it appears to be a true net (smaller than gross).
     const gross = getLineGross(line);
     const rate = getLineRate(line);
-    return gross / (1.0 + (rate / 100.0));
+
+    const explicitNetCandidate = (line?.price_without_discount != null)
+        ? parseCurrency(line.price_without_discount)
+        : (line?.price_subtotal != null ? parseCurrency(line.price_subtotal) : null);
+
+    if (explicitNetCandidate != null && explicitNetCandidate > 0) {
+        // If the explicit candidate is meaningfully smaller than gross, trust it as net.
+        if (explicitNetCandidate < gross - 0.001) {
+            return toNumber(explicitNetCandidate);
+        }
+        // Otherwise ignore it (it was likely a gross value masquerading as subtotal).
+    }
+
+    // Fallback: compute net from gross and rate
+    return toNumber(gross / (1.0 + (rate / 100.0)));
 }
 
 function getLineVatAmount(line) {
@@ -107,6 +130,10 @@ patch(OrderReceipt.prototype, {
         return "BE 0123.456.789";
     },
 
+    get gksVsc() {
+        return this.props?.data?.gks_vsc || "{{VSC_HASH_PLACEHOLDER}}";
+    },
+
     get gksReceiptLines() {
         let order = this.order || this.props?.order;
 
@@ -114,6 +141,28 @@ patch(OrderReceipt.prototype, {
         const printedData = this.props?.data;
         if (!order && printedData) {
             console.debug('[kassa_pos] gksReceiptLines - using props.data');
+        }
+
+        // Attempt to fetch server-side VAT breakdown for synced orders.
+        // If the receipt component has access to a server-backed order object
+        // (props.order) or the printed data contains an order id, request the
+        // authoritative breakdown and cache it on the component instance.
+        const serverId = this.props?.order?.backendId || this.props?.order?.server_id || printedData?.server_id || printedData?.backendId || printedData?.id;
+        if (serverId && !this._gksServerBreakdownFetched) {
+            this._gksServerBreakdownFetched = true;
+            (async () => {
+                try {
+                    const resp = await this.env.services.rpc('/kassa_pos/get_gks_vat_breakdown', { order_id: serverId });
+                    if (resp && resp.ok && resp.breakdown) {
+                        this._gksServerBreakdown = resp.breakdown;
+                        console.debug('[kassa_pos] fetched server gks_vat_breakdown', resp.breakdown);
+                    } else {
+                        console.debug('[kassa_pos] server breakdown not available', resp && resp.error);
+                    }
+                } catch (err) {
+                    console.warn('[kassa_pos] failed to fetch server gks_vat_breakdown', err);
+                }
+            })();
         }
 
         // As a last resort, try to read the active POS order from the environment
@@ -135,36 +184,39 @@ patch(OrderReceipt.prototype, {
             (posOrderCandidate && (typeof posOrderCandidate.get_orderlines === 'function' ? posOrderCandidate.get_orderlines() : posOrderCandidate.orderlines)) ??
             [];
 
+        // Log raw exported shape for easier debugging in DevTools
+        try {
+            if (Array.isArray(raw)) {
+                console.debug('[kassa_pos] raw orderlines length', raw.length, 'first:', raw[0]);
+            } else {
+                console.debug('[kassa_pos] raw orderlines (non-array)', raw);
+            }
+        } catch (e) {
+            console.warn('[kassa_pos] failed to log raw orderlines', e);
+        }
+
         const normalized = (raw || []).map((l, idx) => {
-            const qty = toNumber(
-                l?.quantity ?? l?.qty ?? l?.qty_order ??
-                parseCurrency(l?.qty) ?? // export_for_printing() has qty as string like "3.00"
-                (typeof l?.get_quantity === "function" ? l.get_quantity() : undefined) ?? 0
-            );
+            const qty = parseCurrency(l?.qty ?? l?.quantity ?? l?.qty_order ?? (typeof l?.get_quantity === "function" ? l.get_quantity() : undefined)) || 0;
+            const price_unit = parseCurrency(l?.unitPrice ?? l?.price_unit ?? l?.unit_price ?? (typeof l?.get_unit_price === "function" ? l.get_unit_price() : undefined)) || 0;
+            const price_subtotal_incl = parseCurrency(l?.price ?? l?.price_subtotal_incl ?? l?.prices?.total_included ?? l?.total_included ?? (typeof l?.get_price_included === "function" ? l.get_price_included() : undefined)) || (price_unit * qty);
+                const raw_price_without_discount = parseCurrency(l?.price_without_discount ?? l?.price_subtotal ?? l?.prices?.total_excluded ?? l?.total_excluded ?? (typeof l?.get_price_without_tax === "function" ? l.get_price_without_tax() : undefined));
 
-            const price_unit = toNumber(
-                l?.price_unit ??
-                parseCurrency(l?.unitPrice) ?? // export_for_printing format
-                l?.unit_price ?? l?.price ??
-                (typeof l?.get_unit_price === "function" ? l.get_unit_price() : undefined) ?? 0
-            );
-
-            const price_subtotal_incl = toNumber(
-                parseCurrency(l?.price) ??  // export_for_printing format: "8.40 €"
-                    l?.price_subtotal_incl ?? l?.prices?.total_included ?? l?.total_included ??
-                    (typeof l?.get_price_included === "function" ? l.get_price_included() : undefined) ??
-                    price_unit * qty
-            );
-
-            // Assume net = gross / (1 + tax rate)
-            const price_subtotal = toNumber(
-                l?.price_subtotal ?? l?.prices?.total_excluded ?? l?.total_excluded ??
-                    (typeof l?.get_price_without_tax === "function" ? l.get_price_without_tax() : undefined) ??
-                    price_subtotal_incl / 1.21  // fallback: assume 21% tax
-            );
+                let price_subtotal;
+                if (raw_price_without_discount) {
+                    // If the exported shape contains a unit-level `price_without_discount`
+                    // alongside `unitPrice`, treat it as a unit price and multiply by qty.
+                    if (l?.unitPrice || l?.unit_price || l?.price_unit) {
+                        price_subtotal = raw_price_without_discount * qty;
+                    } else {
+                        // Otherwise assume it's the line-level net price already.
+                        price_subtotal = raw_price_without_discount;
+                    }
+                } else {
+                    price_subtotal = (price_subtotal_incl / (1.0 + (getLineRate(l) / 100.0)));
+                }
 
             const product_name =
-                l?.productName ??  // export_for_printing format
+                l?.productName ??
                 l?.full_product_name ?? l?.product?.display_name ?? l?.product_id?.name ??
                 l?.product_id?.display_name ?? l?.product?.name ?? l?.name ?? "";
 
@@ -188,6 +240,13 @@ patch(OrderReceipt.prototype, {
             };
         });
 
+        // Log normalized shape for debugging
+        try {
+            console.debug('[kassa_pos] normalized orderlines length', normalized.length, 'first:', normalized[0]);
+        } catch (e) {
+            console.warn('[kassa_pos] failed to log normalized orderlines', e);
+        }
+
         return normalized;
     },
 
@@ -201,6 +260,7 @@ patch(OrderReceipt.prototype, {
 
     gksLineName(line) {
         return (
+            line?.productName ||
             line?.full_product_name ||
             line?.product_id?.name ||
             line?.product_id?.display_name ||
@@ -226,6 +286,32 @@ patch(OrderReceipt.prototype, {
     },
 
     get gksTaxBreakdown() {
+        // Prefer server-provided breakdown when available (either injected
+        // into the printed `data` or fetched via RPC and cached).
+        const serverBreakdown = this.props?.data?.gks_vat_breakdown || this._gksServerBreakdown;
+        if (serverBreakdown && serverBreakdown.rates) {
+            // Normalize server structure to the shape used by the template
+            const rates = {
+                6: {
+                    net: parseFloat(serverBreakdown.rates[6]?.net || 0),
+                    vat: parseFloat(serverBreakdown.rates[6]?.vat || 0),
+                    gross: parseFloat(serverBreakdown.rates[6]?.gross || 0),
+                },
+                21: {
+                    net: parseFloat(serverBreakdown.rates[21]?.net || 0),
+                    vat: parseFloat(serverBreakdown.rates[21]?.vat || 0),
+                    gross: parseFloat(serverBreakdown.rates[21]?.gross || 0),
+                },
+            };
+            return {
+                rates,
+                netTotal: parseFloat(serverBreakdown.net_total || serverBreakdown.netTotal || 0),
+                vatTotal: parseFloat(serverBreakdown.vat_total || serverBreakdown.vatTotal || 0),
+                grossTotal: parseFloat(serverBreakdown.gross_total || serverBreakdown.grossTotal || 0),
+            };
+        }
+
+        // Fallback: compute from local (possibly exported) lines
         const breakdown = {
             6: { net: 0, vat: 0 },
             21: { net: 0, vat: 0 },
