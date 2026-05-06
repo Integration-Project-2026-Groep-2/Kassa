@@ -33,6 +33,9 @@
             'kassa_pos/static/src/js/ProductScreenUserButton.js',
             'kassa_pos/static/src/js/BadgeScanner.js',
             'kassa_pos/static/src/js/ClosingButton.js',
+            'kassa_pos/static/src/js/BalanceTopupModal.js',
+            'kassa_pos/static/src/js/BalanceButton.js',
+            'kassa_pos/static/src/js/BalanceValidation.js',
         ],
     },
     'external_dependencies': {
