@@ -1,8 +1,20 @@
-name: Build & Deploy Image to Dev
+name: Build & Deploy Kassa (Single Image: Odoo + POS + Receivers)
 
 on:
   push:
     branches: [main]
+
+# This workflow builds a SINGLE Docker image containing:
+# - Odoo 17 application
+# - kassa_pos custom module (Kassa POS functionality)
+# - src/ services (Heartbeat, User receivers, RabbitMQ integration)
+# 
+# The image is pushed to GHCR and deployed to dev/prod VMs.
+# No separate images are built or deployed for POS.
+# The entrypoint.sh automatically:
+#   - Copies kassa_pos from /tmp to /mnt/extra-addons
+#   - Installs/upgrades the kassa_pos module in Odoo
+#   - Starts Heartbeat and Receiver services in background
 
 env:
   SERVICE_NAME: kassa
