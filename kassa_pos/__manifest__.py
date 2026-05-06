@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Kassa POS',
-    'version': '1.0',
+    'version': '1.1',
     'category': 'Point of Sale',
     'summary': 'Custom POS module voor schoolproject',
     'description': """
