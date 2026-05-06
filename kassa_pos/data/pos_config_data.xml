@@ -1,27 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="0">
+    <data noupdate="1">
 
-        <record id="base.main_company" model="res.company">
-            <field name="currency_id" ref="base.EUR"/>
-        </record>
-
-        <!-- Pricelist in EUR -->
-        <record id="pricelist_kassa_eur" model="product.pricelist">
-            <field name="name">Kassa EUR</field>
-            <field name="currency_id" ref="base.EUR"/>
+        <!-- Accounting Journals for Payment Methods -->
+        <record id="account_journal_cash_kassa" model="account.journal">
+            <field name="name">Kassa Cash</field>
+            <field name="code">KCASH</field>
+            <field name="type">cash</field>
             <field name="company_id" ref="base.main_company"/>
         </record>
 
-        <!-- Accounting Journals for Payment Methods -->
-        <record id="account_journal_cash_kassa" model="account.journal" forcecreate="False">
-            <field name="name">Kassa Cash</field>
-            <field name="code">KCASH</field>
-        </record>
-
-        <record id="account_journal_bank_kassa" model="account.journal" forcecreate="False">
+        <record id="account_journal_bank_kassa" model="account.journal">
             <field name="name">Kassa Bank</field>
             <field name="code">KBANK</field>
+            <field name="type">bank</field>
+            <field name="company_id" ref="base.main_company"/>
         </record>
 
         <!-- Payment Methods -->
@@ -38,19 +31,17 @@
             <field name="company_id" ref="base.main_company"/>
         </record>
 
-        <record id="payment_method_invoice" model="pos.payment.method">
-            <field name="name">Invoice</field>
+        <record id="payment_method_saldo" model="pos.payment.method">
+            <field name="name">Saldo</field>
             <field name="journal_id" ref="account_journal_bank_kassa"/>
             <field name="company_id" ref="base.main_company"/>
-            <field name="split_transactions" eval="True"/>
         </record>
 
         <!-- POS Configuration -->
         <record id="pos_config_kassa_main" model="pos.config">
             <field name="name">Kassa Main</field>
             <field name="company_id" ref="base.main_company"/>
-            <field name="pricelist_id" ref="pricelist_kassa_eur"/>
-            <field name="payment_method_ids" eval="[(6, 0, [ref('payment_method_cash'), ref('payment_method_card'), ref('payment_method_invoice')])]"/>
+            <field name="payment_method_ids" eval="[(6, 0, [ref('payment_method_cash'), ref('payment_method_card'), ref('payment_method_saldo')])]"/>
             <field name="module_pos_restaurant" eval="False"/>
             <field name="cash_control" eval="True"/>
         </record>
