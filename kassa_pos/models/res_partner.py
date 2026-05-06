@@ -36,6 +36,13 @@ class ResPartner(models.Model):
         help='Optioneel company ID (UUID format) voor klant'
     )
 
+    balance = fields.Float(
+        string='Saldo (€)',
+        default=0.0,
+        digits=(10, 2),
+        help='Huidig saldo van de klant in euro'
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         _logger.warning(
