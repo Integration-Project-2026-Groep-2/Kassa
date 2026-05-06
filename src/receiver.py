@@ -275,9 +275,9 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
     logger.info("Waiting 10 seconds for Odoo to be ready...")
     await asyncio.sleep(10)
     
-    # Initialize Odoo connection
-    # Note: receiver runs in the same container as Odoo, so use localhost not the hostname
-    odoo_url = os.getenv('ODOO_URL', 'http://localhost:8069')
+    # Initialize Odoo connection.
+    # The receiver runs inside the same container as Odoo, so it must always use localhost.
+    odoo_url = 'http://localhost:8069'
     odoo_db = os.getenv('ODOO_DB', 'odoo')
     odoo_user = os.getenv('ODOO_USER')
     odoo_password = os.getenv('ODOO_PASSWORD')
