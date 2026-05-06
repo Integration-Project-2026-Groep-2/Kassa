@@ -1,4 +1,4 @@
-name: Build & Deploy Kassa (Single Image: Odoo + POS + Receivers)
+name: Build and Deploy Kassa - Single Image (Odoo + POS + Receivers)
 
 on:
   push:
