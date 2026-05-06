@@ -42,7 +42,9 @@ def pre_init_hook(cr):
 
 
 def post_init(cr, registry):
-    """Post-init hook: ensure res_partner.balance column exists."""
+    """Post-init hook: ensure schema and default POS setup exist."""
+    env = api.Environment(cr, SUPERUSER_ID, {})
+
     # Check if column exists
     cr.execute("""
         SELECT 1 FROM information_schema.columns 
@@ -55,5 +57,27 @@ def post_init(cr, registry):
             ALTER TABLE res_partner 
             ADD COLUMN balance numeric(10,2) DEFAULT 0.0
         """)
+
+    company = env.company
+    pos_config = env['pos.config'].search([
+        ('name', '=', 'Kassa Main'),
+        ('company_id', '=', company.id),
+    ], limit=1)
+
+    if not pos_config:
+        journal, payment_method_ids = env['pos.config']._create_journal_and_payment_methods()
+        pos_config = env['pos.config'].create({
+            'name': 'Kassa Main',
+            'company_id': company.id,
+            'journal_id': journal.id,
+            'payment_method_ids': [(6, 0, payment_method_ids)],
+            'module_pos_restaurant': False,
+            'cash_control': True,
+        })
+    env['ir.model.data']._update_xmlids([{
+        'xml_id': 'kassa_pos.pos_config_kassa_main',
+        'record': pos_config,
+        'noupdate': True,
+    }])
 
 
