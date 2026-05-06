@@ -33,6 +33,9 @@
             'kassa_pos/static/src/js/ProductScreenUserButton.js',
             'kassa_pos/static/src/js/BadgeScanner.js',
             'kassa_pos/static/src/js/ClosingButton.js',
+            'kassa_pos/static/src/js/QRCodeButton.js',
+            'kassa_pos/static/src/js/QRScanner.js',
+            'kassa_pos/static/src/xml/kassa_qr_templates.xml',
         ],
     },
     'external_dependencies': {
