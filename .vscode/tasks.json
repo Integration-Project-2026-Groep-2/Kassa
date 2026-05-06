@@ -909,6 +909,44 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "git-commit-topup-working",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"feat: Top Up payment method now appears in POS with balance deduction logic ready"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-push-topup-working",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"main"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-add-entrypoint",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }
