@@ -62,13 +62,19 @@ jobs:
             exit 1
           fi
           
+          # Write SSH key with proper newline handling (unquoted heredoc to expand secret)
           SSH_KEY_FILE=$(mktemp)
-          echo "${{ secrets.DEV_SSH_KEY }}" > "$SSH_KEY_FILE"
+          cat > "$SSH_KEY_FILE" << SSHKEY_EOF
+          ${{ secrets.DEV_SSH_KEY }}
+          SSHKEY_EOF
           chmod 600 "$SSH_KEY_FILE"
           
-          # Debug: show SSH command (secrets will be masked)
-          echo "Connecting to ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}"
+          # Test SSH connection
+          echo "Testing SSH connection to ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}..."
+          ssh -i "$SSH_KEY_FILE" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}" "echo 'SSH connection successful'"
           
+          # Run deploy commands
+          echo "Running deploy script..."
           ssh -i "$SSH_KEY_FILE" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}" << 'DEPLOY_EOF'
           set -e
           echo "Deploy script started on $(hostname)"
