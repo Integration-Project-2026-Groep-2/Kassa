@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { useState } from "@odoo/owl";
+import { onWillStart, useState } from "@odoo/owl";
 import { patch } from "@web/core/utils/patch";
 import { OrderReceipt } from "@point_of_sale/app/screens/receipt_screen/receipt/order_receipt";
 
@@ -124,8 +124,40 @@ patch(OrderReceipt.prototype, {
             super.setup(...arguments);
         }
 
+        const initialVscCode = this.props?.data?.vsc_code || this.props?.data?.gks_vsc || "";
         this.gksReceiptState = useState({
-            vscCode: "",
+            vscCode: initialVscCode,
+        });
+
+        onWillStart(async () => {
+            if (this.gksReceiptState.vscCode) {
+                return;
+            }
+
+            let orderId = this.props?.order?.server_id || this.props?.data?.id || this.props?.data?.server_id || this.props?.data?.gks_order_id;
+            if (!orderId && this.props?.data?.name) {
+                const nameMatch = this.props.data.name.match(/(\d+)/);
+                if (nameMatch) {
+                    orderId = parseInt(nameMatch[0]);
+                }
+            }
+
+            if (!orderId) {
+                return;
+            }
+
+            try {
+                const result = await this.env.services.rpc('/kassa_pos/get_vsc_code', { order_id: orderId });
+                if (result && result.vsc_code) {
+                    this._cachedVscCode = result.vsc_code;
+                    this.gksReceiptState.vscCode = result.vsc_code;
+                    if (this.props?.data) {
+                        this.props.data.vsc_code = result.vsc_code;
+                    }
+                }
+            } catch (error) {
+                console.error('[kassa_pos] ❌ RPC fetch failed:', error);
+            }
         });
     },
 
@@ -154,66 +186,7 @@ patch(OrderReceipt.prototype, {
     },
 
     get gksVsc() {
-        // First check if we already have it cached or in props
-        const vscFromProps = this.gksReceiptState?.vscCode || this.props?.data?.vsc_code || this.props?.data?.gks_vsc || "";
-        if (vscFromProps) {
-            console.log('[kassa_pos] ✅ gksVsc getter: FOUND in props:', vscFromProps);
-            return vscFromProps;
-        }
-
-        // Check if we've already fetched it
-        if (this._cachedVscCode) {
-            console.log('[kassa_pos] ✅ gksVsc getter: FOUND in cache:', this._cachedVscCode);
-            return this._cachedVscCode;
-        }
-
-        // If not fetched yet, trigger async fetch (without blocking)
-        if (!this._vscFetchInProgress) {
-            this._vscFetchInProgress = true;
-            
-            // Try to extract order ID from available sources
-            let orderId = this.props?.order?.server_id || this.props?.data?.id || this.props?.data?.server_id || this.props?.data?.gks_order_id;
-            
-            // Fallback: try to extract numeric ID from order name
-            if (!orderId && this.props?.data?.name) {
-                const nameMatch = this.props.data.name.match(/(\d+)/);
-                if (nameMatch) {
-                    orderId = parseInt(nameMatch[0]);
-                    console.log('[kassa_pos] 🔄 gksVsc: Extracted order ID from name:', orderId);
-                }
-            }
-            
-            console.log('[kassa_pos] 🔄 gksVsc getter: Starting async fetch for order_id:', orderId);
-            
-            if (orderId) {
-                (async () => {
-                    try {
-                        console.log('[kassa_pos] 📡 RPC: Calling /kassa_pos/get_vsc_code with order_id:', orderId);
-                        const result = await this.env.services.rpc('/kassa_pos/get_vsc_code', { order_id: orderId });
-                        
-                        if (result && result.vsc_code) {
-                            this._cachedVscCode = result.vsc_code;
-                            if (this.gksReceiptState) {
-                                this.gksReceiptState.vscCode = result.vsc_code;
-                            }
-                            console.log('[kassa_pos] ✅ VSC fetched and cached:', this._cachedVscCode);
-                            // Trigger a re-render if possible
-                            if (this.props?.data) {
-                                this.props.data.vsc_code = result.vsc_code;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('[kassa_pos] ❌ RPC fetch failed:', error);
-                    }
-                })();
-            } else {
-                console.log('[kassa_pos] ❌ No order ID available for VSC fetch');
-            }
-        }
-        
-        // Return empty or placeholder while fetching
-        console.log('[kassa_pos] ⏳ VSC fetch in progress, returning empty');
-        return "";
+        return this.gksReceiptState?.vscCode || this.props?.data?.vsc_code || this.props?.data?.gks_vsc || this._cachedVscCode || "";
     },
 
     get gksReceiptLines() {

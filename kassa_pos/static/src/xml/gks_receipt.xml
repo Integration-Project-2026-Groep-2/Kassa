@@ -31,9 +31,9 @@
                 
 
                 <div class="pos-gks-center pos-gks-title"><b>Kassa-Ticket</b></div>
-                <div class="pos-gks-center pos-gks-subtitle"><b>Desiderius Hogeschool</b></div>
+                <div class="pos-gks-center pos-gks-subtitle"><b><t t-esc="gksCompanyName"/></b></div>
                 <div class="pos-gks-center pos-gks-subtitle">Straatnaam 1, 1000 Brussel</div>
-                <div class="pos-gks-center pos-gks-subtitle">VAT: BE 0123.456.789 </div>
+                <div class="pos-gks-center pos-gks-subtitle">VAT: <t t-esc="gksVatNumber"/></div>
                 <div class="pos-gks-center pos-gks-subtitle">TEL: 010 123 456 </div>
                 
 
@@ -102,9 +102,9 @@
 
                 <div class="pos-gks-vsc">VSC: <t t-esc="gksVsc"/></div>
                 <div class="pos-gks-footer">GKS REGISTERED</div>
+                <div class="pos-gks-center pos-gks-subtitle"><t t-esc="gksCompanyName"/></div>
+                <div class="pos-gks-center pos-gks-subtitle">BTW: <t t-esc="gksVatNumber"/></div>
             </div>
-            <div class="pos-gks-center pos-gks-subtitle">Desiderius Hogeschool</div>
-            <div class="pos-gks-center pos-gks-subtitle">BTW: BE 0123.456.789 </div>
         </xpath>
     </t>
 </templates>
