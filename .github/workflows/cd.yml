@@ -56,14 +56,27 @@ jobs:
 
       - name: Deploy to Dev (Single Odoo+POS image)
         run: |
+          # Validate secrets are set
+          if [ -z "${{ secrets.DEV_HOST }}" ] || [ -z "${{ secrets.DEV_USER }}" ] || [ -z "${{ secrets.DEV_SSH_KEY }}" ]; then
+            echo "ERROR: Missing required GitHub secrets (DEV_HOST, DEV_USER, DEV_SSH_KEY)"
+            exit 1
+          fi
+          
           SSH_KEY_FILE=$(mktemp)
           echo "${{ secrets.DEV_SSH_KEY }}" > "$SSH_KEY_FILE"
           chmod 600 "$SSH_KEY_FILE"
-          ssh -i "$SSH_KEY_FILE" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'DEPLOY_EOF'
+          
+          # Debug: show SSH command (secrets will be masked)
+          echo "Connecting to ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}"
+          
+          ssh -i "$SSH_KEY_FILE" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}" << 'DEPLOY_EOF'
           set -e
+          echo "Deploy script started on $(hostname)"
           cd ~/kassa
           docker compose -f docker-compose.production.yml pull odoo
           docker compose -f docker-compose.production.yml up -d
           docker compose -f docker-compose.production.yml ps
+          echo "Deploy completed successfully"
           DEPLOY_EOF
+          
           rm "$SSH_KEY_FILE"
