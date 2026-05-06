@@ -339,6 +339,40 @@ class ResPartner(models.Model):
         }
         return role_map.get(role, 'VISITOR')
 
+    def get_qr_code_data(self):
+        self.ensure_one()
+        try:
+            import base64
+            import io
+            import qrcode
+            import qrcode.constants
+        except ImportError:
+            return {'error': 'qrcode library niet beschikbaar in Odoo omgeving'}
+
+        token = self.badge_code or self.user_id_custom
+        if not token:
+            return {'error': 'Geen badge code of user ID beschikbaar voor deze klant'}
+
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(token)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color='black', back_color='white')
+
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        buf.seek(0)
+
+        return {
+            'qr_image_base64': base64.b64encode(buf.read()).decode('utf-8'),
+            'badge_code': token,
+            'name': self.name,
+        }
+
     @staticmethod
     def _to_iso(dt_value):
         if not dt_value:
