@@ -55,26 +55,23 @@ class QRScannerDialog extends Component {
         this.videoRef = useRef('video');
         this.stream = null;
         this.animFrameId = null;
-        this.detector = null;
+        this._canvas = null;
+        this._ctx = null;
 
         onMounted(() => this._startCamera());
         onWillUnmount(() => this._stopCamera());
     }
 
     async _startCamera() {
-        if (!('BarcodeDetector' in window)) {
-            this.state.error = 'BarcodeDetector wordt niet ondersteund in deze browser. Gebruik Chrome of Edge.';
-            return;
-        }
-
         try {
-            this.detector = new BarcodeDetector({ formats: ['qr_code'] });
             this.stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'environment' },
             });
             const video = this.videoRef.el;
             video.srcObject = this.stream;
             await video.play();
+            this._canvas = document.createElement('canvas');
+            this._ctx = this._canvas.getContext('2d', { willReadFrequently: true });
             this._scanLoop();
         } catch (e) {
             this.state.error = 'Camera niet beschikbaar: ' + e.message;
@@ -90,26 +87,31 @@ class QRScannerDialog extends Component {
             this.stream.getTracks().forEach(t => t.stop());
             this.stream = null;
         }
+        this._canvas = null;
+        this._ctx = null;
     }
 
     _scanLoop() {
         if (this.state.found || this.state.error) return;
 
         const video = this.videoRef.el;
-        if (!video || video.readyState < 2) {
+        if (!video || video.readyState < 2 || video.videoWidth === 0) {
             this.animFrameId = requestAnimationFrame(() => this._scanLoop());
             return;
         }
 
-        this.detector.detect(video).then(barcodes => {
-            if (barcodes.length > 0) {
-                this._handleCode(barcodes[0].rawValue);
-            } else {
-                this.animFrameId = requestAnimationFrame(() => this._scanLoop());
-            }
-        }).catch(() => {
+        this._canvas.width = video.videoWidth;
+        this._canvas.height = video.videoHeight;
+        this._ctx.drawImage(video, 0, 0);
+        const imageData = this._ctx.getImageData(0, 0, this._canvas.width, this._canvas.height);
+        // jsQR is included as a global script via the asset bundle
+        // eslint-disable-next-line no-undef
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code && code.data) {
+            this._handleCode(code.data);
+        } else {
             this.animFrameId = requestAnimationFrame(() => this._scanLoop());
-        });
+        }
     }
 
     async _handleCode(code) {
