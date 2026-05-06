@@ -146,7 +146,7 @@ User Registration Flow:
                       modal closes
          ↓
 7. Message Routing
-   integration.user.created queue
+    kassa.user.created queue
    - If online: Sent immediately
    - If offline: Stored in user.message.queue
          ↓
@@ -289,7 +289,7 @@ class PosSession(models.Model):
         """Publish to RabbitMQ or queue locally."""
         try:
             from src.messaging.producer import publish_message
-            publish_message(xml_message, 'integration.user.created')
+            publish_message(xml_message, 'kassa.user.created')
             return {'status': 'published', 'user_id': user_id}
         except Exception as e:
             # Fallback: Queue locally
@@ -534,8 +534,8 @@ class UserConsumer:
 
 | Queue Name | Direction | Purpose | Format |
 |-----------|-----------|---------|--------|
-| integration.user.created | POS → Service | New user registration | XML |
-| integration.user.updated | Service → POS | User update notification | XML |
+| kassa.user.created | POS → Service | New user registration | XML |
+| kassa.user.updated | Service → POS | User update notification | XML |
 | integration.user.confirmed | CRM → Service | CRM acknowledgment | XML |
 | integration.user.deactivated | CRM → Service | GDPR deletion | XML |
 

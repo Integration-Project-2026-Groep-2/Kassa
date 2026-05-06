@@ -4,6 +4,6 @@ Integration Service Models Package.
 Contains data models for users, orders, and other entities.
 """
 
-from .user import User, UserStore
+from .user import User
 
-__all__ = ['User', 'UserStore']
+__all__ = ['User']

@@ -45,18 +45,15 @@ fi
 HEARTBEAT_ENABLED="${ENABLE_HEARTBEAT_IN_ODOO_IMAGE:-true}"
 HB_PID=""
 
-if [ "$HEARTBEAT_ENABLED" = "true" ]; then
-  (
-    cd /app/src
-    python3 main_heartbeat.py
-  ) &
-  HB_PID="$!"
-  echo "[entrypoint] Heartbeat gestart in dezelfde container (PID: ${HB_PID})"
-fi
+RECEIVER_ENABLED="${ENABLE_RECEIVER_IN_ODOO_IMAGE:-true}"
+REC_PID=""
 
 cleanup() {
   if [ -n "$HB_PID" ]; then
     kill "$HB_PID" 2>/dev/null || true
+  fi
+  if [ -n "$REC_PID" ]; then
+    kill "$REC_PID" 2>/dev/null || true
   fi
 }
 trap cleanup EXIT TERM INT
@@ -110,6 +107,36 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_SYNC_MODULES" ] && [ -n
   else
     "${SYNC_CMD[@]}"
   fi
+fi
+
+# Initialize RabbitMQ topology (exchanges, queues, bindings)
+echo "[entrypoint] Initializing RabbitMQ topology via setup_rabbitmq.py"
+if [ "$(id -u)" = "0" ]; then
+  runuser -u odoo -- python3 /app/setup_rabbitmq.py || {
+    echo "[entrypoint] WARNING: RabbitMQ setup failed, but continuing with Odoo startup"
+  }
+else
+  python3 /app/setup_rabbitmq.py || {
+    echo "[entrypoint] WARNING: RabbitMQ setup failed, but continuing with Odoo startup"
+  }
+fi
+
+if [ "$HEARTBEAT_ENABLED" = "true" ]; then
+  (
+    cd /app/src
+    python3 main_heartbeat.py
+  ) &
+  HB_PID="$!"
+  echo "[entrypoint] Heartbeat gestart in dezelfde container (PID: ${HB_PID})"
+fi
+
+if [ "$RECEIVER_ENABLED" = "true" ]; then
+  (
+    cd /app/src
+    python3 main.py
+  ) &
+  REC_PID="$!"
+  echo "[entrypoint] Contact receiver gestart in dezelfde container (PID: ${REC_PID})"
 fi
 
 echo "[entrypoint] Odoo starten met custom config en flags"

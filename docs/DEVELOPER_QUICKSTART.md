@@ -340,7 +340,7 @@ test_user = {
 }
 
 xml = build_user_xml(test_user)
-publish_message(xml, 'integration.user.created')
+publish_message(xml, 'kassa.user.created')
 ```
 
 ### Debug RabbitMQ Queue

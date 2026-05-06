@@ -234,7 +234,7 @@ def create_and_publish_user(self, user_data: dict) -> dict
 **Process:**
 1. Validates user data via User model
 2. Creates/updates contact if needed
-3. Publishes to RabbitMQ integration.user.created queue
+3. Publishes to RabbitMQ kassa.user.created queue
 4. On failure: Queues message in user.message.queue
 
 **Example:**
@@ -403,7 +403,7 @@ Published from POS to CRM system.
 
 **Schema Location:** `src/schema/kassa-schema-v1.xsd`
 
-**Queue:** `integration.user.created`
+**Queue:** `kassa.user.created`
 
 **Example in code:**
 ```python
@@ -417,7 +417,7 @@ xml = """
     <createdAt>2026-03-29T12:00:00Z</createdAt>
 </User>
 """
-await publisher.publish(xml, routing_key='integration.user.created')
+await publisher.publish(xml, routing_key='kassa.user.created')
 ```
 
 ---
@@ -593,7 +593,7 @@ def create_and_publish_user(self, user_data):
     # 4. Publish to RabbitMQ
     try:
         from src.messaging.producer import publish_message
-        publish_message(xml_message, 'integration.user.created')
+        publish_message(xml_message, 'kassa.user.created')
         return {
             'contact_id': contact.id,
             'user_id': user_data['userId'],
@@ -706,7 +706,7 @@ def on_startup():
 - Uses custom fields: `user_id_custom`, `badge_code`, `role`
 
 ### With RabbitMQ
-- Publishes to `integration.user.created`
+- Publishes to `kassa.user.created`
 - Receives responses on `integration.user.confirmed`
 - Falls back to `user.message.queue` when offline
 

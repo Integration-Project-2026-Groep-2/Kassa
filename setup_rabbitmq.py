@@ -11,7 +11,16 @@ import sys
 import time
 
 
+USER_QUEUE_BINDINGS = [
+    ("kassa.user.confirmed", "crm.user.confirmed"),
+    ("kassa.user.updated", "crm.user.updated"),
+    ("kassa.user.deactivated", "crm.user.deactivated"),
+]
+
+
 def create_exchanges():
+    """Create all required exchanges for Kassa system."""
+
     host     = os.environ.get('RABBIT_HOST', 'localhost')
     port     = int(os.environ.get('RABBIT_PORT', 5672))
     user     = os.environ.get('RABBIT_USER', 'guest')

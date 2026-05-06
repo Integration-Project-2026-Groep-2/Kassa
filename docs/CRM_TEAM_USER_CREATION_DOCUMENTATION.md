@@ -10,7 +10,7 @@ De inhoud is afgestemd op de contracten in AsyncAPI/XML v1.8.0 en op de bestaand
 
 Voor een correcte samenwerking gebruik je dit patroon:
 
-1. Kassa publiceert een nieuw user-profiel op queue integration.user.created als XML User.
+1. Kassa publiceert een nieuw user-profiel op queue kassa.user.created als XML User.
 2. CRM consumeert dit bericht en maakt of verrijkt de gebruiker in CRM.
 3. CRM publiceert daarna een bevestiging op queue crm.user.confirmed als XML UserConfirmed.
 4. Kassa verwerkt UserConfirmed en houdt de lokale user-store synchroon.
@@ -19,7 +19,7 @@ Voor een correcte samenwerking gebruik je dit patroon:
 
 | Richting | Doel | Exchange | Routing key | Queue | Durable |
 |---|---|---|---|---|---|
-| Kassa -> CRM | User create event | default exchange '' | integration.user.created | integration.user.created | true |
+| Kassa -> CRM | User create event | default exchange '' | kassa.user.created | kassa.user.created | true |
 | CRM -> Kassa | User bevestigd | default exchange '' | crm.user.confirmed | crm.user.confirmed | true |
 | CRM -> Kassa | User update | default exchange '' | crm.user.updated | crm.user.updated | true |
 | CRM -> Kassa | User deactivated | default exchange '' | crm.user.deactivated | crm.user.deactivated | true |
@@ -35,7 +35,7 @@ Root: User
 
 ### Queue
 
-integration.user.created
+kassa.user.created
 
 ### XML formaat (voorbeeld)
 
@@ -128,7 +128,7 @@ Belangrijk:
 
 ## Aanbevolen end-to-end flow
 
-1. Consumeer integration.user.created.
+1. Consumeer kassa.user.created.
 2. Valideer XML en verplichte velden.
 3. Maak user in CRM (of update als user al bestaat).
 4. Publiceer UserConfirmed naar crm.user.confirmed.
@@ -147,11 +147,11 @@ Als Kassa tijdelijk niet kan publiceren, wordt een lokale fallback queue gebruik
 
 ## Minimale consumer/publisher voorbeelden
 
-### Consume integration.user.created
+### Consume kassa.user.created
 
 ```python
-channel.queue_declare(queue='integration.user.created', durable=True)
-channel.basic_consume(queue='integration.user.created', on_message_callback=on_user, auto_ack=True)
+channel.queue_declare(queue='kassa.user.created', durable=True)
+channel.basic_consume(queue='kassa.user.created', on_message_callback=on_user, auto_ack=True)
 ```
 
 ### Publish UserConfirmed
@@ -176,7 +176,7 @@ Gebruik deze bestanden als bron van waarheid:
 
 ## Interoperability checklist
 
-- Queue integration.user.created bestaat en is durable.
+- Queue kassa.user.created bestaat en is durable.
 - Queue crm.user.confirmed bestaat en is durable.
 - CRM antwoordt met UserConfirmed (niet met vrij formaat XML).
 - id in UserConfirmed equals userId uit User.
@@ -198,7 +198,7 @@ Controleer:
 
 Controleer:
 
-1. Queue integration.user.created bestaat.
+1. Queue kassa.user.created bestaat.
 2. CRM-consumer is verbonden met juiste vhost/credentials.
 3. RabbitMQ durable queue-instellingen zijn correct.
 4. Odoo fallback queue heeft pending berichten (bij tijdelijke outage).

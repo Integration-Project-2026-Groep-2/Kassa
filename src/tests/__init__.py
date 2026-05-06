@@ -3,6 +3,6 @@
 Unit tests for the Kassa Integration Service.
 """
 
-from .test_user_crud import TestUserModel, TestUserStore, TestUserXMLBuilders
+from .test_user_crud import TestUserModel, TestUserXMLBuilders
 
-__all__ = ['TestUserModel', 'TestUserStore', 'TestUserXMLBuilders']
+__all__ = ['TestUserModel', 'TestUserXMLBuilders']

@@ -38,25 +38,28 @@ class ResPartner(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        import uuid
+        created_locally_indices = []
+        for i, vals in enumerate(vals_list):
+            if not vals.get('user_id_custom'):
+                vals['user_id_custom'] = str(uuid.uuid4())
+                created_locally_indices.append(i)
+
         records = super().create(vals_list)
-        for record in records:
-            if record.user_id_custom:
-                record._publish_user_change('created')
+        for i in created_locally_indices:
+            records[i]._publish_user_change('created')
         return records
 
     def write(self, vals):
+        # Only publish an updated event if this write is initiated locally via Kassa POS UI.
+        is_local_update = ('user_id_custom' not in vals)
+
         result = super().write(vals)
 
         watched_fields = {
-            'name',
-            'email',
-            'phone',
-            'badge_code',
-            'role',
-            'company_id_custom',
-            'user_id_custom',
+            'name', 'email', 'phone', 'badge_code', 'role', 'company_id_custom',
         }
-        if watched_fields.intersection(vals.keys()):
+        if is_local_update and watched_fields.intersection(vals.keys()):
             for record in self:
                 if record.user_id_custom:
                     record._publish_user_change('updated')
@@ -76,10 +79,7 @@ class ResPartner(models.Model):
         result = super().unlink()
 
         for candidate in delete_candidates:
-            self._publish_user_deleted(
-                candidate['user_id_custom'],
-                candidate['email'],
-            )
+            self._publish_user_deleted(candidate['user_id_custom'], candidate['email'])
 
         return result
 
@@ -89,120 +89,76 @@ class ResPartner(models.Model):
         if operation not in ('created', 'updated'):
             return
 
-        routing_key = f'integration.user.{operation}'
         user_data = self._build_user_data_dict()
 
-        if operation == 'created':
-            queue_message_type = 'UserCreated'
-            payload = self._build_user_created_payload_xml(user_data)
-        else:
-            queue_message_type = 'UserUpdatedIntegration'
-            payload = self._build_user_updated_payload_xml(user_data)
-
-        # 1. Interne integration-service queue (integration.user.*)
         self._publish_with_fallback(
-            payload=payload,
             operation=operation,
             user_data=user_data,
-            routing_key=routing_key,
-            queue_message_type=queue_message_type,
             user_id_custom=self.user_id_custom,
         )
-
-        # 2. CRM user.topic exchange (C36 / C37)
-        self._publish_to_crm(operation, user_data)
 
     def _publish_user_deleted(self, user_id_custom, email=''):
         if not user_id_custom:
             return
 
-        # 1. Interne integration-service queue (integration.user.deleted)
-        payload = self._build_user_deleted_payload(user_id_custom)
-        self._publish_with_fallback(
-            payload=payload,
-            operation='deleted',
-            user_data={'userId': user_id_custom},
-            routing_key='integration.user.deleted',
-            queue_message_type='UserDeleted',
+        self._publish_deactivated_with_fallback(
+            user_email=email,
             user_id_custom=user_id_custom,
         )
 
-        # 2. CRM user.topic exchange (C38 — UserDeactivated)
-        if email:
-            try:
-                from ..utils.rabbitmq_sender import send_kassa_user_deactivated
-                sent = send_kassa_user_deactivated(user_id_custom, email)
-                if not sent:
-                    _logger.warning(
-                        "C38 UserDeactivated niet verzonden naar CRM [user_id=%s]",
-                        user_id_custom,
-                    )
-            except Exception as exc:
-                _logger.warning(
-                    "C38 UserDeactivated: fout bij publiceren naar CRM [user_id=%s error=%s]",
-                    user_id_custom, str(exc),
-                )
-        else:
-            _logger.warning(
-                "C38 UserDeactivated: email ontbreekt, bericht niet verzonden naar CRM [user_id=%s]",
-                user_id_custom,
-            )
-
-    def _publish_with_fallback(self, payload, operation, user_data, routing_key, queue_message_type, user_id_custom):
+    def _publish_with_fallback(self, operation, user_data, user_id_custom):
         try:
-            from ..utils.rabbitmq_sender import send_user_created, send_user_updated, send_user_deleted
+            from ..utils.rabbitmq_sender import send_user_created, send_user_updated
 
             if operation == 'created':
                 sent = send_user_created(user_data)
             elif operation == 'updated':
                 sent = send_user_updated(user_data)
             else:
-                sent = send_user_deleted(user_data.get('userId', ''))
+                return
 
             if not sent:
                 raise RuntimeError('RabbitMQ sender returned False')
 
             _logger.info(
-                "User event published [routing_key=%s user_id=%s]",
-                routing_key,
+                "User event published [operation=%s user_id_custom=%s]",
+                operation,
                 user_id_custom,
             )
 
         except Exception as exc:
             _logger.warning(
-                "Failed to publish user event, queueing locally [routing_key=%s user_id=%s error=%s]",
-                routing_key,
+                "Failed to publish user event, queueing locally [operation=%s user_id_custom=%s error=%s]",
+                operation,
                 user_id_custom,
                 str(exc),
             )
+            queue_message_type = 'UserCreated' if operation == 'created' else 'UserUpdated'
+            payload = self._build_user_created_payload_xml(user_data) if operation == 'created' else self._build_user_updated_payload_xml(user_data)
             self._enqueue_user_message(user_id_custom, queue_message_type, payload, str(exc))
 
-    def _publish_to_crm(self, operation, user_data):
-        """
-        Publiceer een user CRUD event naar CRM via user.topic exchange.
-
-        operation='created' → C36 KassaUserCreated  (routing key: kassa.user.created)
-        operation='updated' → C37 KassaUserUpdated   (routing key: kassa.user.updated)
-        """
-        self.ensure_one()
+    def _publish_deactivated_with_fallback(self, user_email, user_id_custom):
         try:
-            from ..utils.rabbitmq_sender import send_kassa_user_created, send_kassa_user_updated
+            from ..utils.rabbitmq_sender import send_user_deactivated
 
-            if operation == 'created':
-                sent = send_kassa_user_created(user_data)
-            else:
-                sent = send_kassa_user_updated(user_data)
+            sent = send_user_deactivated(user_email, user_id_custom)
 
             if not sent:
-                _logger.warning(
-                    "CRM user event niet verzonden [operation=%s user_id=%s]",
-                    operation, self.user_id_custom,
-                )
+                raise RuntimeError('RabbitMQ sender returned False')
+
+            _logger.info(
+                "User deactivated event published [user_id_custom=%s]",
+                user_id_custom,
+            )
+
         except Exception as exc:
             _logger.warning(
-                "CRM user event: fout bij publiceren [operation=%s user_id=%s error=%s]",
-                operation, self.user_id_custom, str(exc),
+                "Failed to publish user deactivated event, queueing locally [user_id_custom=%s error=%s]",
+                user_id_custom,
+                str(exc),
             )
+            payload = self._build_user_deleted_payload(user_id_custom)
+            self._enqueue_user_message(user_id_custom, 'UserDeactivated', payload, str(exc))
 
     def _enqueue_user_message(self, user_id_custom, message_type, payload, error_message=''):
         try:
@@ -226,6 +182,7 @@ class ResPartner(models.Model):
         self.ensure_one()
 
         first_name, last_name = self._split_name(self.name or '')
+        
         return {
             'userId': self.user_id_custom,
             'firstName': first_name,

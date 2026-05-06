@@ -6,14 +6,14 @@ The Kassa system uses RabbitMQ for message publishing and consuming between diff
 
 ## Exchanges Required
 
-| Exchange Name | Type | Purpose |
-|---------------|------|---------|
-| `kassa.topic` | topic | Batch closing messages from POS to Facturatie |
-| `kassa.direct` | direct | Other Kassa system messages |
-| `user.direct` | direct | User CRUD events |
-| `user.dlx` | direct | User dead letter exchange (errors) |
-| `user.retry` | direct | User message retry queue |
-| `heartbeat.direct` | direct | System heartbeat messages |
+| Exchange Name      | Type   | Purpose                                       |
+| ------------------ | ------ | --------------------------------------------- |
+| `kassa.topic`      | topic  | Batch closing messages from POS to Facturatie |
+| `kassa.direct`     | direct | Other Kassa system messages                   |
+| `user.direct`      | direct | User CRUD events                              |
+| `user.dlx`         | direct | User dead letter exchange (errors)            |
+| `user.retry`       | direct | User message retry queue                      |
+| `heartbeat.direct` | direct | System heartbeat messages                     |
 
 ## Setup Instructions
 
@@ -26,11 +26,13 @@ python setup_rabbitmq.py
 ```
 
 This script will:
+
 1. Wait for RabbitMQ to be ready (with retries)
 2. Create all required exchanges
 3. Verify they exist and are durable
 
 **Output:**
+
 ```
 ✓ Connected to RabbitMQ
 ✓ Exchange 'kassa.topic' (topic) created/verified
@@ -52,10 +54,10 @@ If you need to verify or manually create exchanges, use the RabbitMQ Management 
 2. Log in with credentials from your `.env` file (default: guest/guest)
 3. Navigate to "Exchanges" tab
 4. Create each exchange with the following settings:
-   - **Name:** (from table above)
-   - **Type:** (from table above)
-   - **Durable:** Yes
-   - **Auto delete:** No
+    - **Name:** (from table above)
+    - **Type:** (from table above)
+    - **Durable:** Yes
+    - **Auto delete:** No
 
 ### Verify Exchanges
 
@@ -129,12 +131,12 @@ The `rabbitmq` service in docker-compose.yml is configured with:
 - **Health Check:** `rabbitmq-diagnostics ping` every 10 seconds
 - **Credentials:** From `.env` file environment variables
 
-Dependent services (`pos_receiver`) wait for RabbitMQ to be healthy before starting:
+Dependent services (`pos_receiver`, `contact_receiver`) wait for RabbitMQ to be healthy before starting:
 
 ```yaml
 depends_on:
-  rabbitmq:
-    condition: service_healthy
+    rabbitmq:
+        condition: service_healthy
 ```
 
 ## Scripts Reference
@@ -144,16 +146,19 @@ depends_on:
 Python script that creates all required RabbitMQ exchanges using pika AMQP library.
 
 **Features:**
+
 - Auto-retry connection logic (up to 30 attempts)
 - Creates all exchanges atomically
 - Handles already-existing exchanges gracefully
 - Clear success/failure output
 
 **Usage:**
+
 ```bash
 python setup_rabbitmq.py
 ```
 
 **Requirements:**
+
 - pika 1.3.2+ (already in requirements.txt)
 - RabbitMQ running and accessible on localhost:5672

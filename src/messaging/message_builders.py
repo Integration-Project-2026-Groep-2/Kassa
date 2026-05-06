@@ -1,4 +1,5 @@
 import datetime
+import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, Optional, Tuple
@@ -10,6 +11,8 @@ InvoiceRequested (Contract K-01), User (CRUD operations).
 """
 
 TEMPLATE_PATH = Path(__file__).resolve().parents[2] / 'templates' / 'Heartbeat.xml'
+
+logger = logging.getLogger(__name__)
 
 
 def _read_template_text(path: Path) -> str:
@@ -144,7 +147,15 @@ def build_user_xml(user_data: Dict) -> str:
     if user_data.get('updatedAt'):
         ET.SubElement(root, 'updatedAt').text = str(user_data['updatedAt'])
 
-    return ET.tostring(root, encoding='unicode')
+    xml_string = ET.tostring(root, encoding='unicode')
+    from xml_validator import validate_xml
+
+    valid, error = validate_xml(xml_string)
+    if not valid:
+        logger.error("Invalid User XML generated: %s", error)
+        raise ValueError(f"Invalid User XML generated: {error}")
+
+    return xml_string
 
 
 def parse_user_xml(xml_string: str) -> Tuple[bool, Optional[str], Optional[Dict]]:
@@ -196,7 +207,7 @@ def parse_user_xml(xml_string: str) -> Tuple[bool, Optional[str], Optional[Dict]
 
 def build_user_created_message(user_data: Dict) -> str:
     """
-    Build a UserCreated event message for RabbitMQ (integration.user.created queue).
+    Build a UserCreated event message for RabbitMQ (kassa.user.created queue).
     Conforms to the <UserCreated> element in kassa-schema-v1.xsd.
 
     Verplichte velden: userId, firstName, lastName, email, badgeCode, role, createdAt
@@ -221,7 +232,7 @@ def build_user_created_message(user_data: Dict) -> str:
 
 def build_user_updated_message(user_data: Dict) -> str:
     """
-    Build a UserUpdatedIntegration event message for RabbitMQ (integration.user.updated queue).
+    Build a UserUpdatedIntegration event message for RabbitMQ (kassa.user.updated queue).
     Conforms to the <UserUpdatedIntegration> element in kassa-schema-v1.xsd.
 
     Verplichte velden: userId, firstName, lastName, email, badgeCode, role, updatedAt

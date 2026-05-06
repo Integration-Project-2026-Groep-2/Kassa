@@ -22,9 +22,9 @@ Bij een foutief bericht: loggen als error, nooit crashen, POS-flow niet blokkere
 
 Queues (conform Docker-docs):
   R1: controlroom.warning.issued, crm.person.lookup.responded,
-      crm.user.confirmed, crm.company.confirmed, crm.unpaid.responded
-  R2: crm.user.updated, crm.company.updated
-  R3: crm.user.deactivated, crm.company.deactivated
+      crm.user.confirmed, kassa.company.confirmed, crm.unpaid.responded
+  R2: crm.user.updated, kassa.company.updated
+  R3: crm.user.deactivated, kassa.company.deactivated
 """
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -111,12 +111,20 @@ def on_company_deactivated(body: bytes):
 
 # ── Thread helper ──────────────────────────────────────────────────────────────
 
-def listen_queue(queue_name: str, callback, durable: bool = True):
+CONTACT_TOPIC_EXCHANGE = "contact.topic"
+
+def listen_queue(queue_name: str, callback, durable: bool = True, exchange: str | None = None, routing_key: str | None = None):
     """Start een consumer voor één queue in een aparte thread."""
     consumer = KassaConsumer(host=RABBIT_HOST)
     consumer.connect()
     try:
-        consumer.start_listening(queue_name=queue_name, callback=callback, durable=durable)
+        consumer.start_listening(
+            queue_name=queue_name,
+            callback=callback,
+            durable=durable,
+            exchange=exchange,
+            routing_key=routing_key,
+        )
     except KeyboardInterrupt:
         pass
     finally:
@@ -141,10 +149,21 @@ QUEUE_HANDLERS = [
 if __name__ == "__main__":
     threads = []
     for queue_name, durable, callback in QUEUE_HANDLERS:
+        exchange = None
+        routing_key = None
+        if queue_name == USER_CONFIRMED_QUEUE:
+            exchange = CONTACT_TOPIC_EXCHANGE
+            routing_key = "crm.user.confirmed"
+        elif queue_name == USER_UPDATED_QUEUE:
+            exchange = CONTACT_TOPIC_EXCHANGE
+            routing_key = "crm.user.updated"
+        elif queue_name == USER_DEACTIVATED_QUEUE:
+            exchange = CONTACT_TOPIC_EXCHANGE
+            routing_key = "crm.user.deactivated"
         logger.info("Start listener op queue '%s'", queue_name)
         t = threading.Thread(
             target=listen_queue,
-            args=(queue_name, callback, durable),
+            args=(queue_name, callback, durable, exchange, routing_key),
             daemon=True,
         )
         t.start()

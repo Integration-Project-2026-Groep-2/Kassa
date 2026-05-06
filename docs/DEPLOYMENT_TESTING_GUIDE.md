@@ -435,7 +435,7 @@ Run through before declaring deployment complete:
   - [ ] Email validated for duplicates
 
 - [ ] **RabbitMQ Integration**
-  - [ ] Message published to integration.user.created
+  - [ ] Message published to kassa.user.created
   - [ ] Message format valid (matches schema)
   - [ ] Fallback queue receives message if offline
   - [ ] Retry works after coming online
