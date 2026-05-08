@@ -165,16 +165,17 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
   fi
 fi
 
-# Ensure Top Up payment method is linked to Kassa Main pos_config
-# (safety net in case the XML record was already present and noupdate skipped the link)
-echo "[entrypoint] Linking Top Up payment method to pos_config"
+# Ensure Kassa payment methods are linked to Kassa Main pos_config
+echo "[entrypoint] Linking Kassa payment methods to Kassa Main pos_config"
 psql \
   "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" \
   -c "INSERT INTO pos_config_pos_payment_method_rel (pos_config_id, pos_payment_method_id)
       SELECT pc.id, ppm.id
-      FROM pos_config pc, pos_payment_method ppm
+      FROM pos_config pc, pos_payment_method ppm, account_journal aj
       WHERE pc.name = 'Kassa Main'
-        AND ppm.name::text LIKE '%Top Up%'
+        AND ppm.journal_id = aj.id
+        AND aj.code IN ('KCASH', 'KBANC', 'KSALDO')
+        AND ppm.company_id = pc.company_id
       ON CONFLICT DO NOTHING;" 2>/dev/null || true
 
 
