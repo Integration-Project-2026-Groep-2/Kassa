@@ -9,15 +9,15 @@
             <field name="company_id" ref="base.main_company"/>
         </record>
 
-        <!-- Journal for Top Up payment method -->
-        <record id="account_journal_topup_kassa" model="account.journal">
-            <field name="name">Kassa Top Up</field>
-            <field name="code">KSALDO</field>
-            <field name="type">bank</field>
-            <field name="company_id" ref="base.main_company"/>
-        </record>
+        <!--
+            NOTE: The 'Kassa Top Up' journal (account_journal_topup_kassa) is created
+            by the pre_init_hook in __init__.py (code: KSALDO, type: bank).
+            It is intentionally NOT declared here because Odoo forbids modifying
+            the 'type' of a journal that already has an associated payment method,
+            which causes a ParseError during fresh install on the VM.
+        -->
 
-        <!-- Top Up payment method -->
+        <!-- Top Up payment method — references the journal created by pre_init_hook -->
         <record id="pos_payment_method_topup" model="pos.payment.method">
             <field name="name">Top Up</field>
             <field name="journal_id" ref="account_journal_topup_kassa"/>
