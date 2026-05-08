@@ -101,6 +101,19 @@ if [ -n "${ODOO_EXTRA_ARGS:-}" ]; then
   set -- "$@" ${ODOO_EXTRA_ARGS}
 fi
 
+# ── Wait for PostgreSQL to be ready ──────────────────────────────────────────
+# On VM restarts the DB container may take longer to accept connections.
+# We wait up to 60 s before giving up.
+echo "[entrypoint] Waiting for PostgreSQL at ${ODOO_DB_HOST}:${ODOO_DB_PORT}..."
+for i in $(seq 1 30); do
+  if pg_isready -h "${ODOO_DB_HOST}" -p "${ODOO_DB_PORT}" -U "${ODOO_DB_USER}" -q; then
+    echo "[entrypoint] PostgreSQL is ready."
+    break
+  fi
+  echo "[entrypoint] PostgreSQL not ready yet (attempt ${i}/30), retrying in 2s..."
+  sleep 2
+done
+
 if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
 
   # Check if kassa_pos is already installed in the database.
@@ -153,10 +166,17 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
 fi
 
 # Ensure Top Up payment method is linked to Kassa Main pos_config
+# (safety net in case the XML record was already present and noupdate skipped the link)
 echo "[entrypoint] Linking Top Up payment method to pos_config"
 psql \
   "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" \
-  -c "INSERT INTO pos_config_pos_payment_method_rel (pos_config_id, pos_payment_method_id) SELECT pc.id, ppm.id FROM pos_config pc, pos_payment_method ppm WHERE pc.name LIKE '%Kassa Main%' AND ppm.name LIKE '%Top Up%' ON CONFLICT DO NOTHING;" 2>/dev/null || true
+  -c "INSERT INTO pos_config_pos_payment_method_rel (pos_config_id, pos_payment_method_id)
+      SELECT pc.id, ppm.id
+      FROM pos_config pc, pos_payment_method ppm
+      WHERE pc.name = 'Kassa Main'
+        AND ppm.name::text LIKE '%Top Up%'
+      ON CONFLICT DO NOTHING;" 2>/dev/null || true
+
 
 # Initialize RabbitMQ topology (exchanges, queues, bindings)
 echo "[entrypoint] Initializing RabbitMQ topology via setup_rabbitmq.py"

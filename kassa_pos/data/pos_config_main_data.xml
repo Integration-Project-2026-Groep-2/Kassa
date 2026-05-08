@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Define the "Kassa Main" POS shop as an XML record.
+        Using noupdate="1" so that manual user changes are preserved after the initial
+        creation, but the record is ALWAYS created if it does not exist yet.
+        This ensures the shop survives container restarts because Odoo re-applies
+        missing noupdate records during module upgrade (-u kassa_pos).
+    -->
+    <data noupdate="1">
+
+        <!-- Kassa Main POS configuration -->
+        <record id="pos_config_kassa_main" model="pos.config">
+            <field name="name">Kassa Main</field>
+            <field name="company_id" ref="base.main_company"/>
+            <!-- Use the dedicated Kassa Cash journal instead of the default POS journal -->
+            <field name="journal_id" ref="account_journal_cash_kassa"/>
+            <field name="payment_method_ids" eval="[
+                (4, ref('payment_method_cash')),
+                (4, ref('payment_method_card')),
+                (4, ref('pos_payment_method_topup')),
+            ]"/>
+            <field name="module_pos_restaurant" eval="False"/>
+            <field name="cash_control" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

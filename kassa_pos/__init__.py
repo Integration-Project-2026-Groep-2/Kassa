@@ -42,66 +42,39 @@ def pre_init_hook(cr):
 
 
 def post_init(cr, registry):
-    """Post-init hook: ensure schema and default POS setup exist."""
+    """Post-init hook: ensure the balance column schema exists.
+
+    NOTE: The 'Kassa Main' pos.config record is now defined in
+    data/pos_config_main_data.xml and is created/maintained by Odoo's
+    own data loading mechanism on every -i / -u run.  There is no longer
+    any need to create it here.
+    """
     env = api.Environment(cr, SUPERUSER_ID, {})
 
-    # Check if column exists
+    # Ensure the custom balance column exists on res.partner
     cr.execute("""
-        SELECT 1 FROM information_schema.columns 
+        SELECT 1 FROM information_schema.columns
         WHERE table_name='res_partner' AND column_name='balance'
     """)
-    
     if not cr.fetchone():
-        # Column doesn't exist, create it
         cr.execute("""
-            ALTER TABLE res_partner 
+            ALTER TABLE res_partner
             ADD COLUMN balance numeric(10,2) DEFAULT 0.0
         """)
 
-    company = env.company
+    # For databases that were set up by the old post_init hook, ensure the
+    # existing 'Kassa Main' record is registered under the canonical XML-ID
+    # so Odoo knows it belongs to this module and won't try to create a
+    # duplicate when it loads pos_config_main_data.xml.
     pos_config = env['pos.config'].search([
         ('name', '=', 'Kassa Main'),
-        ('company_id', '=', company.id),
+        ('company_id', '=', env.company.id),
     ], limit=1)
-
-    if not pos_config:
-        journal, payment_method_ids = env['pos.config']._create_journal_and_payment_methods()
-        
-        # Also add the Top Up payment method if it exists
-        topup_method = env['pos.payment.method'].search([
-            ('name', '=', 'Top Up'),
-        ], limit=1)
-        
-        if topup_method:
-            payment_method_ids = list(payment_method_ids) + [topup_method.id]
-        
-        pos_config = env['pos.config'].create({
-            'name': 'Kassa Main',
-            'company_id': company.id,
-            'journal_id': journal.id,
-            'payment_method_ids': [(6, 0, payment_method_ids)],
-            'module_pos_restaurant': False,
-            'cash_control': True,
-        })
-    else:
-        # Ensure Top Up payment method is linked to existing pos_config
-        topup_method = env['pos.payment.method'].search([
-            ('name', '=', 'Top Up'),
-        ], limit=1)
-        
-    
-        if topup_method and topup_method not in pos_config.payment_method_ids:
-            # Use SQL INSERT to ensure relationship is created
-            cr.execute("""
-                INSERT INTO pos_config_pos_payment_method_rel 
-                (pos_config_id, pos_payment_method_id) 
-                VALUES (%s, %s)
-                ON CONFLICT DO NOTHING
-            """, (pos_config.id, topup_method.id))
-    env['ir.model.data']._update_xmlids([{
-        'xml_id': 'kassa_pos.pos_config_kassa_main',
-        'record': pos_config,
-        'noupdate': True,
-    }])
+    if pos_config:
+        env['ir.model.data']._update_xmlids([{
+            'xml_id': 'kassa_pos.pos_config_kassa_main',
+            'record': pos_config,
+            'noupdate': True,
+        }])
 
 
