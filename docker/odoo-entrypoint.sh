@@ -174,7 +174,7 @@ psql \
       FROM pos_config pc, pos_payment_method ppm, account_journal aj
       WHERE pc.name = 'Kassa Main'
         AND ppm.journal_id = aj.id
-        AND aj.code IN ('KCASH', 'KBANC', 'KSALDO')
+        AND aj.code IN ('KCASH', 'KBANC', 'KSAL')
         AND ppm.company_id = pc.company_id
       ON CONFLICT DO NOTHING;" 2>/dev/null || true
 

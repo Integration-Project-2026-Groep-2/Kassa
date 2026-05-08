@@ -18,7 +18,7 @@
 
         <record id="account_journal_saldo_kassa" model="account.journal">
             <field name="name">Kassa Top Up</field>
-            <field name="code">KSALDO</field>
+            <field name="code">KSAL</field>
             <field name="type">bank</field>
             <field name="company_id" ref="base.main_company"/>
         </record>
