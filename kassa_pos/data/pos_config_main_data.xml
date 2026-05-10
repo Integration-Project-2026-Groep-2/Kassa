@@ -7,12 +7,9 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="module_pos_restaurant" eval="False"/>
             <field name="cash_control" eval="True"/>
-            <field name="payment_method_ids" eval="[
-                (4, ref('kassa_pos.payment_method_cash')),
-                (4, ref('kassa_pos.payment_method_card')),
-                (4, ref('kassa_pos.payment_method_invoice')),
-                (4, ref('kassa_pos.pos_payment_method_topup'))
-            ]"/>
+            <!-- payment_method_ids removed from XML to avoid ORM write during install
+                 Linking of payment methods to this pos.config is done in post_init via
+                 direct SQL to prevent UserError when sessions are open. -->
         </record>
 
     </data>
