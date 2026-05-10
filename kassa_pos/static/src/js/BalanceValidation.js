@@ -3,6 +3,7 @@
 import { patch } from "@web/core/utils/patch";
 import { PaymentScreen } from "@point_of_sale/app/screens/payment_screen/payment_screen";
 import { useService } from "@web/core/utils/hooks";
+import { NumberPopup } from "@point_of_sale/app/utils/input_popups/number_popup";
 
 patch(PaymentScreen.prototype, {
     setup() {
@@ -41,19 +42,63 @@ patch(PaymentScreen.prototype, {
                 return;
             }
 
+            // Create the payment line first, then ask cashier how much of the
+            // available balance should be used (up to min(balance, due)).
             await super.selectPaymentMethod(paymentMethod);
 
             const due = order.get_due();
             const maxAmount = Math.min(result.balance, due);
             const paymentLines = order.get_paymentlines();
             const topupLine = paymentLines[paymentLines.length - 1];
-            const isTopUpPayment = ['saldo', 'top up'].includes(topupLine.payment_method.name.toLowerCase());
-            if (topupLine && isTopUpPayment) {
-                topupLine.set_amount(maxAmount);
+            const isTopUpPayment = topupLine && topupLine.payment_method && ['saldo', 'top up'].includes(topupLine.payment_method.name.toLowerCase());
+
+            if (!topupLine || !isTopUpPayment) {
+                return;
+            }
+
+            const { confirmed, payload } = await this.popup.add(NumberPopup, {
+                title: 'Gebruik saldo',
+                startingValue: Math.min(maxAmount, topupLine.get_amount ? topupLine.get_amount() : maxAmount),
+                isInputSelected: true,
+                nbrDecimal: this.pos.currency.decimal_places,
+                inputSuffix: this.pos.currency.symbol,
+            });
+
+            if (!confirmed) {
+                // User cancelled — remove the just-created Top Up payment line
+                try {
+                    order.remove_paymentline(topupLine);
+                } catch (e) {
+                    // ignore
+                }
+                return;
+            }
+
+            let chosen = parseFloat(payload);
+            if (isNaN(chosen) || chosen <= 0) {
+                // Remove if zero/invalid
+                try { order.remove_paymentline(topupLine); } catch (e) { }
+                this.notification.add('Ongeldig bedrag geselecteerd.', { type: 'warning' });
+                return;
+            }
+
+            if (chosen > maxAmount) {
+                chosen = maxAmount;
+            }
+
+            try {
+                if (topupLine.set_amount) {
+                    topupLine.set_amount(chosen);
+                } else if (topupLine.set_amount_raw) {
+                    topupLine.set_amount_raw(chosen);
+                }
+            } catch (e) {
+                // fallback: try updating via order API
+                try { order.updateSelectedPaymentline(chosen); } catch (e) { }
             }
 
             this.notification.add(
-                `Beschikbaar saldo: €${result.balance.toFixed(2)} — Ingevuld: €${maxAmount.toFixed(2)}`,
+                `Beschikbaar saldo: €${result.balance.toFixed(2)} — Ingevuld: €${chosen.toFixed(2)}`,
                 { type: 'info', title: 'Saldo' }
             );
 
