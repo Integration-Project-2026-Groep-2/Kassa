@@ -29,31 +29,26 @@ patch(PaymentScreen.prototype, {
             return;
         }
 
-        // Create the payment line first (POS adds it before calling selectPaymentMethod)
-        await super.selectPaymentMethod(paymentMethod);
-
+        // Check balance FIRST, before creating any payment line
         try {
             const result = await this.rpc('/kassa/balance/get', {
                 partner_id: partner.id,
             });
 
+            console.log('Top Up: balance check result =', result);
+
             if (!result.success || result.balance <= 0) {
-                // Remove the just-created payment line since we can't use Top Up
-                const paymentLines = order.get_paymentlines();
-                if (paymentLines.length > 0) {
-                    const lastLine = paymentLines[paymentLines.length - 1];
-                    if (lastLine && lastLine.payment_method && ['saldo', 'top up'].includes(lastLine.payment_method.name.toLowerCase())) {
-                        try {
-                            order.remove_paymentline(lastLine);
-                        } catch (e) {}
-                    }
-                }
+                console.warn('Top Up blocked: balance is', result.balance);
                 this.notification.add(
                     `${partner.name} heeft geen saldo beschikbaar.`,
                     { type: 'warning', title: 'Onvoldoende saldo' }
                 );
                 return;
             }
+
+            console.log('Top Up: balance OK, creating payment line');
+            // Balance is OK, now create the payment line
+            await super.selectPaymentMethod(paymentMethod);
 
             // Continue with Top Up amount selection
 
