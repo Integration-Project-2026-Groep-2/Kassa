@@ -25,6 +25,54 @@ def post_init(env):
             ALTER TABLE res_partner
             ADD COLUMN balance numeric(10,2) DEFAULT 0.0
         """)
+    # ── 2. Ensure POS payment methods exist (safe ORM create) ──────────────
+    try:
+        PaymentMethod = env['pos.payment.method'].sudo()
+        IrModelData = env['ir.model.data'].sudo()
+        Company = env.ref('base.main_company')
+
+        pm_defs = [
+            ('payment_method_cash', 'Cash', 'kassa_pos.account_journal_cash_kassa', {}),
+            ('payment_method_card', 'Bancontact', 'kassa_pos.account_journal_bancontact_kassa', {}),
+            ('payment_method_invoice', 'Invoice', 'kassa_pos.account_journal_bancontact_kassa', {'split_transactions': True}),
+            ('pos_payment_method_topup', 'Top Up', 'kassa_pos.account_journal_saldo_kassa', {}),
+        ]
+
+        for xml_name, display_name, journal_xmlid, extra in pm_defs:
+            # skip if xmlid already mapped
+            try:
+                IrModelData.get_object('kassa_pos', xml_name)
+                continue
+            except Exception:
+                pass
+
+            # try to find by name first
+            existing = PaymentMethod.search([('name', 'ilike', display_name)], limit=1)
+            if existing:
+                # register ir.model.data if missing
+                IrModelData.create({'module': 'kassa_pos', 'name': xml_name, 'model': 'pos.payment.method', 'res_id': existing.id})
+                continue
+
+            # resolve journal
+            journal = None
+            try:
+                journal = env.ref(journal_xmlid, raise_if_not_found=False)
+            except Exception:
+                journal = None
+
+            vals = {'name': display_name, 'company_id': Company.id}
+            if journal:
+                vals['journal_id'] = journal.id
+            vals.update(extra)
+
+            pm = PaymentMethod.create(vals)
+            IrModelData.create({'module': 'kassa_pos', 'name': xml_name, 'model': 'pos.payment.method', 'res_id': pm.id})
+    except Exception:
+        try:
+            import logging
+            logging.getLogger('kassa_pos').exception('post_init: failed to ensure pos payment methods')
+        except Exception:
+            pass
     # ── 2. Ensure POS payment method links exist ────────────────────────────
     # Insert into pos_config_pos_payment_method_rel directly via SQL to avoid
     # triggering ORM 'write' checks about open sessions during module install.
