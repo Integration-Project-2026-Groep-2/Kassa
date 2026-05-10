@@ -61,9 +61,16 @@ patch(PaymentScreen.prototype, {
                 this._updateAvailableBalanceDisplay(result.balance);
             } catch (e) {}
 
+            // Pre-fill the payment line immediately to avoid transient 0.00
+            try {
+                if (topupLine.set_amount) {
+                    topupLine.set_amount(maxAmount);
+                }
+            } catch (e) {}
+
             const { confirmed, payload } = await this.popup.add(NumberPopup, {
                 title: 'Gebruik saldo',
-                startingValue: Math.min(maxAmount, topupLine.get_amount ? topupLine.get_amount() : maxAmount),
+                startingValue: topupLine.get_amount ? topupLine.get_amount() : maxAmount,
                 isInputSelected: true,
                 nbrDecimal: this.pos.currency.decimal_places,
                 inputSuffix: this.pos.currency.symbol,
