@@ -29,12 +29,25 @@ patch(PaymentScreen.prototype, {
             return;
         }
 
+        // Create the payment line first (POS adds it before calling selectPaymentMethod)
+        await super.selectPaymentMethod(paymentMethod);
+
         try {
             const result = await this.rpc('/kassa/balance/get', {
                 partner_id: partner.id,
             });
 
             if (!result.success || result.balance <= 0) {
+                // Remove the just-created payment line since we can't use Top Up
+                const paymentLines = order.get_paymentlines();
+                if (paymentLines.length > 0) {
+                    const lastLine = paymentLines[paymentLines.length - 1];
+                    if (lastLine && lastLine.payment_method && ['saldo', 'top up'].includes(lastLine.payment_method.name.toLowerCase())) {
+                        try {
+                            order.remove_paymentline(lastLine);
+                        } catch (e) {}
+                    }
+                }
                 this.notification.add(
                     `${partner.name} heeft geen saldo beschikbaar.`,
                     { type: 'warning', title: 'Onvoldoende saldo' }
@@ -42,9 +55,7 @@ patch(PaymentScreen.prototype, {
                 return;
             }
 
-            // Create the payment line first, then ask cashier how much of the
-            // available balance should be used (up to min(balance, due)).
-            await super.selectPaymentMethod(paymentMethod);
+            // Continue with Top Up amount selection
 
             const due = order.get_due();
             const maxAmount = Math.min(result.balance, due);
