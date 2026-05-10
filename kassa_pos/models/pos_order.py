@@ -260,6 +260,24 @@ class PosOrder(models.Model):
                 data['gks_vat_breakdown']['rates'][21]['net'] + data['gks_vat_breakdown']['rates'][21]['vat'], 2
             )
 
+            # Ensure paymentline names include chosen Top Up amounts so receipts
+            # and exports show e.g. "Top Up (gebruik €5.00)" instead of generic name.
+            try:
+                paymentlines = data.get('paymentlines') or []
+                for pl in paymentlines:
+                    try:
+                        name = pl.get('name') or ''
+                        amount = float(pl.get('amount') or 0.0)
+                        if isinstance(name, str) and ('top up' in name.lower() or 'saldo' in name.lower()):
+                            pl['name'] = f"{name} (gebruik €{amount:.2f})"
+                    except Exception:
+                        # non-fatal: leave paymentline as-is
+                        pass
+                if paymentlines:
+                    data['paymentlines'] = paymentlines
+            except Exception:
+                pass
+
         return data
 
     @api.model
