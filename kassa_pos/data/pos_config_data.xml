@@ -9,32 +9,7 @@
             <field name="company_id" ref="base.main_company"/>
         </record>
 
-        <!-- Payment Methods -->
-        <record id="payment_method_cash" model="pos.payment.method">
-            <field name="name">Cash</field>
-            <field name="journal_id" ref="account_journal_cash_kassa"/>
-            <field name="company_id" ref="base.main_company"/>
-        </record>
-
-        <record id="payment_method_card" model="pos.payment.method">
-            <field name="name">Bancontact</field>
-            <field name="journal_id" ref="account_journal_bancontact_kassa"/>
-            <field name="company_id" ref="base.main_company"/>
-        </record>
-
-        <record id="payment_method_invoice" model="pos.payment.method">
-            <field name="name">Invoice</field>
-            <field name="journal_id" ref="account_journal_bancontact_kassa"/>
-            <field name="company_id" ref="base.main_company"/>
-            <field name="split_transactions" eval="True"/>
-        </record>
-
-        <!-- Top Up payment method -->
-        <record id="pos_payment_method_topup" model="pos.payment.method">
-            <field name="name">Top Up</field>
-            <field name="journal_id" ref="account_journal_saldo_kassa"/>
-            <field name="company_id" ref="base.main_company"/>
-        </record>
+        <!-- Payment methods are created safely in post_init hook to avoid ORM write restrictions -->
 
     </data>
 </odoo>
