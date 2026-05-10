@@ -56,6 +56,11 @@ patch(PaymentScreen.prototype, {
                 return;
             }
 
+            // show available balance on the payment page
+            try {
+                this._updateAvailableBalanceDisplay(result.balance);
+            } catch (e) {}
+
             const { confirmed, payload } = await this.popup.add(NumberPopup, {
                 title: 'Gebruik saldo',
                 startingValue: Math.min(maxAmount, topupLine.get_amount ? topupLine.get_amount() : maxAmount),
@@ -102,6 +107,8 @@ patch(PaymentScreen.prototype, {
                 { type: 'info', title: 'Saldo' }
             );
 
+            try { this._updateAvailableBalanceDisplay(result.balance); } catch (e) {}
+
         } catch (e) {
             this.notification.add('Fout bij ophalen saldo: ' + e.message, { type: 'danger' });
         }
@@ -146,5 +153,32 @@ patch(PaymentScreen.prototype, {
         }
 
         return super.validateOrder(isForceValidate);
+    },
+
+    _updateAvailableBalanceDisplay(balance) {
+        try {
+            const text = `Beschikbaar saldo: €${(parseFloat(balance)||0).toFixed(2)}`;
+            let el = document.getElementById('kassa-available-balance');
+            if (!el) {
+                const selectors = ['.pos-left', '.left-column', '.pos .left', '.o_pos_ui', '.pos'];
+                let container = null;
+                for (const s of selectors) {
+                    const found = document.querySelector(s);
+                    if (found) { container = found; break; }
+                }
+                if (!container) container = document.body;
+                el = document.createElement('div');
+                el.id = 'kassa-available-balance';
+                el.className = 'kassa-available-balance';
+                el.style.padding = '8px 12px';
+                el.style.fontWeight = '600';
+                el.style.fontSize = '0.95rem';
+                el.style.color = '#333';
+                container.prepend(el);
+            }
+            el.textContent = text;
+        } catch (e) {
+            // ignore
+        }
     },
 });

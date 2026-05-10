@@ -194,6 +194,13 @@
     margin-right: 4px;
 }
 
+/* Small badge shown on the payment page with available balance */
+.kassa-available-balance {
+    background: #f5f7fb;
+    border-left: 3px solid #6c5ca6;
+    margin-bottom: 8px;
+}
+
 /* ── Balance Topup Modal ── */
 .balance-topup-body {
     min-width: 420px;
