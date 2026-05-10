@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import uuid
+import hashlib
+import logging
 from odoo import models, fields, api
 from ..utils import rabbitmq_sender
 
+_logger = logging.getLogger(__name__)
 
 class PosOrder(models.Model):
     _inherit = 'pos.order'
@@ -72,13 +75,32 @@ class PosOrder(models.Model):
     def _build_invoice_requested_data(self):
         """
         Bouw het data-dict voor Contract K-01 (InvoiceRequested → Facturatie).
-        Alleen aanroepen als paymentType=Invoice en klant gelinkt aan een bedrijf.
+        Nu voor private individuals (US-11) inclusief volledige gebruikersdata.
 
-        Verplichte velden: orderId, userId, companyId, amount, currency, orderedAt, items
+        Verplichte velden: orderId, user (nested), amount, currency, orderedAt, items
         """
         self.ensure_one()
 
         partner = self.partner_id
+        names = (partner.name or "").split(" ", 1)
+        first_name = names[0]
+        last_name = names[1] if len(names) > 1 else ""
+
+        raw_role = partner.role or 'VISITOR'
+        # Map 'Customer' naar een geldige waarde conform XSD schema
+        if raw_role == 'Customer':
+            role = 'COMPANY_CONTACT' if partner.company_id_custom else 'VISITOR'
+        else:
+            role = raw_role
+
+        user_data = {
+            'userId': partner.user_id_custom or '',
+            'firstName': first_name,
+            'lastName': last_name,
+            'email': partner.email or '',
+            'badgeCode': partner.badge_code or '',
+            'role': role,
+        }
 
         items = []
         for line in self.lines:
@@ -88,19 +110,157 @@ class PosOrder(models.Model):
                 'unitPrice': line.price_unit,
             })
 
-        company = partner.parent_id if (partner and partner.parent_id) else None
-
         return {
             'orderId': self.order_id_custom,
-            'userId': partner.user_id_custom if partner else '',
-            'companyId': partner.company_id_custom if partner else '',
+            'user': user_data,
             'amount': self.amount_total,
             'currency': 'EUR',
             'orderedAt': self.date_order.strftime('%Y-%m-%dT%H:%M:%SZ') if self.date_order else None,
             'items': items,
-            'email': partner.email if partner else None,
-            'companyName': company.name if company else None,
         }
+
+    def _get_tax_rate_for_product(self, product):
+        """
+        Map product category to VAT rate (6% for Food, 21% for Drinks/other).
+        
+        Args:
+            product: product.product record
+            
+        Returns:
+            float: Tax rate (6.0 or 21.0)
+        """
+        if not product or not product.categ_id:
+            return 21.0
+        
+        category_name = (product.categ_id.name or "").lower().strip()
+        
+        # Food → 6% VAT
+        if category_name == "food":
+            return 6.0
+        
+        # Drinks → 21% VAT (alcoholic beverages)
+        if category_name == "drinks":
+            return 21.0
+        
+        # Default to 21%
+        return 21.0
+
+    def _build_gks_vat_breakdown(self):
+        """
+        Bouw een VAT-breakdown payload geschikt voor het GKS ticket.
+
+        Retourneert een dict met netto en btw bedragen per tarief (6% en 21%),
+        plus totalen. Deze helper probeert eerst de tax info van de orderlijn
+        te gebruiken (`line.tax_ids`), en valt terug naar product category mapping.
+
+        Resultaatvoorbeeld:
+        {
+            'rates': {
+                6: {'net': 3.5, 'vat': 0.21},
+                21: {'net': 3.98, 'vat': 0.83}
+            },
+            'net_total': 7.48,
+            'vat_total': 1.04,
+            'gross_total': 8.52
+        }
+        """
+        self.ensure_one()
+
+        rates = {6: {'net': 0.0, 'vat': 0.0}, 21: {'net': 0.0, 'vat': 0.0}}
+        net_total = 0.0
+        vat_total = 0.0
+        gross_total = 0.0
+
+        for line in self.lines:
+            try:
+                qty = float(line.qty)
+            except Exception:
+                qty = 0.0
+
+            try:
+                unit_price = float(line.price_unit)
+            except Exception:
+                unit_price = 0.0
+
+            # Calculation: Qty × Unit Price = Gross (including VAT)
+            gross = unit_price * qty
+            gross_total += gross
+
+            # Determine VAT rate: 
+            # 1) Prefer line.tax_ids if available
+            rate = None
+            if hasattr(line, 'tax_ids') and line.tax_ids:
+                try:
+                    rate = float(line.tax_ids[0].amount)
+                except Exception:
+                    rate = None
+            
+            # 2) Fallback to product category mapping
+            if rate is None and line.product_id:
+                rate = self._get_tax_rate_for_product(line.product_id)
+            
+            # 3) Default to 21% if all else fails
+            if rate is None:
+                rate = 21.0
+
+            # Calculate net from gross: net = gross / (1 + rate/100)
+            net = gross / (1.0 + (rate / 100.0)) if rate >= 0 else gross
+            vat = gross - net
+
+            # Aggregate by rate group
+            key = 6 if int(round(rate)) == 6 else 21
+            rates[key]['net'] += round(net, 2)
+            rates[key]['vat'] += round(vat, 2)
+            net_total += net
+            vat_total += vat
+
+        return {
+            'rates': rates,
+            'net_total': round(net_total, 2),
+            'vat_total': round(vat_total, 2),
+            'gross_total': round(gross_total, 2)
+        }
+
+    def _build_vsc_code(self):
+        """Build a 20-character VAT Signature Code from order data."""
+        self.ensure_one()
+        timestamp = self.date_order.strftime('%Y-%m-%dT%H:%M:%SZ') if self.date_order else ''
+        source = f"{self.id}:{timestamp}:{self.amount_total}"
+        # In production this value would be generated by the Fiscal Data Module
+        # (Black Box) to keep the signature trusted and reduce tax fraud risk.
+        digest = hashlib.sha256(source.encode('utf-8')).hexdigest().upper()
+        return digest[:20]
+
+    def export_for_printing(self):
+        """Inject GKS receipt payload into the POS print data."""
+        _logger.info("🔵 export_for_printing CALLED for order_id=%s", self.id)
+        
+        data = super().export_for_printing()
+        _logger.info("🟡 export_for_printing: superclass returned %d keys: %s", len(data.keys()), list(data.keys()))
+        
+        if self:
+            breakdown = self._build_gks_vat_breakdown()
+            data['gks_vat_breakdown'] = breakdown
+            data['vsc_code'] = self._build_vsc_code()
+            data['gks_vsc'] = data['vsc_code']
+            data['gks_order_id'] = self.id
+            # Add id and server_id for frontend RPC lookups
+            data['id'] = self.id
+            data['server_id'] = self.id
+            
+            _logger.info("🟢 export_for_printing: ADDED id=%s server_id=%s vsc_code=%s", self.id, self.id, data['vsc_code'])
+            _logger.info("🟣 export_for_printing: Final data dict has %d keys: %s", len(data.keys()), list(data.keys()))
+
+            # Also expose per-group gross totals so the template can render totals
+            # directly from the backend-calculated groups if needed.
+            data['gks_vat_breakdown']['rates'][6]['gross'] = round(
+                data['gks_vat_breakdown']['rates'][6]['net'] + data['gks_vat_breakdown']['rates'][6]['vat'], 2
+            )
+            data['gks_vat_breakdown']['rates'][21]['gross'] = round(
+                data['gks_vat_breakdown']['rates'][21]['net'] + data['gks_vat_breakdown']['rates'][21]['vat'], 2
+            )
+
+        return data
 
     @api.model
     def create_from_ui(self, orders, draft=False):
@@ -112,6 +272,35 @@ class PosOrder(models.Model):
 
         for order_info in order_ids:
             order = self.browse(order_info['id'])
+
+            # Ensure the frontend receives the server-side print payload
+            # including the generated `vsc_code`. Some POS flows print
+            # immediately after create_from_ui and rely on the returned
+            # payload instead of making an extra RPC; attach it here so
+            # the receipt component can read `props.data.vsc_code`.
+            try:
+                exported = order.export_for_printing() or {}
+                _logger.info("🟦 create_from_ui: export_for_printing returned %d keys: %s", len(exported.keys()), list(exported.keys()))
+                
+                order_info['data'] = exported
+                _logger.info("🟪 create_from_ui: order_info['data'] now contains %d keys: %s", len(order_info.get('data', {}).keys()), list(order_info.get('data', {}).keys()))
+                
+                # Also expose the VSC directly at the top level for clients
+                # that don't inspect `data`.
+                if 'vsc_code' in exported:
+                    order_info['vsc_code'] = exported.get('vsc_code')
+                    _logger.info("🔷 create_from_ui: SET order_info['vsc_code']=%s and order_info['data']['vsc_code']=%s", order_info.get('vsc_code'), order_info.get('data', {}).get('vsc_code'))
+                # Log what we're returning so we can debug RPC responses
+                try:
+                    _logger.info("✅ create_from_ui COMPLETE: order_id=%s vsc=%s exported_keys=%s", order.id, order_info.get('vsc_code'), list(exported.keys()))
+                except Exception:
+                    # never fail the flow because of logging
+                    pass
+            except Exception as e:
+                # Defensive: don't fail the whole create_from_ui when export_for_printing
+                # has issues; leave order_info unchanged in that case.
+                _logger.error("❌ create_from_ui: export_for_printing FAILED for order_id=%s error=%s", order.id, str(e))
+                pass
 
             if order.state in ('paid', 'done', 'invoiced'):
                 self._trigger_rabbitmq_messages(order)
@@ -143,18 +332,17 @@ class PosOrder(models.Model):
         """
         Stuur de correcte berichten naar RabbitMQ op basis van paymentType:
 
-        - Altijd: PaymentConfirmed → kassa.payment.confirmed (Contract 16, naar CRM)
-        - Alleen bij Invoice + bedrijfskoppeling:
-          InvoiceRequested → kassa.invoice.requested (Contract K-01, naar Facturatie)
+        - PaymentConfirmed → kassa.payment.confirmed (Contract 16, naar CRM)
+          ALTIJD voor bezoekers, BEHALVE bij 'Invoice' (dat gaat via K-01).
+        - InvoiceRequested → kassa.invoice.requested (Contract K-01, naar Facturatie)
+          Alleen bij 'Invoice' voor bezoekers (US-11).
         """
-        # Contract 16 — alleen versturen voor bezoekers (NIET gelinkt aan bedrijf)
-        # Bedrijven worden nu via de dagelijkse Batch (K-02) verwerkt.
+        # Contract 16 — alleen voor bezoekers en NIET bij Invoice
         payment_data = order._build_payment_confirmed_data()
-        if payment_data.get('email') and not order.partner_id.company_id_custom:
+        if payment_data.get('email') and not order.partner_id.company_id_custom and order.payment_type != 'Invoice':
             rabbitmq_sender.send_payment_confirmed(payment_data)
 
-        # Contract K-01 — alleen bij Invoice-betaling voor bezoekers (NIET gelinkt aan bedrijf)
-        # Bedrijven worden nu via de dagelijkse Batch (K-02) verwerkt.
+        # Contract K-01 — US-11: factuurverzoek voor privépersonen (geen bedrijfskoppeling)
         if order.payment_type == 'Invoice' and order.partner_id and not order.partner_id.company_id_custom:
             invoice_data = order._build_invoice_requested_data()
             rabbitmq_sender.send_invoice_requested(invoice_data)

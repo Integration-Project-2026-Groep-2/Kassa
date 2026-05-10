@@ -9,7 +9,6 @@ The Kassa system uses RabbitMQ for message publishing and consuming between diff
 | Exchange Name      | Type   | Purpose                                       |
 | ------------------ | ------ | --------------------------------------------- |
 | `kassa.topic`      | topic  | Batch closing messages from POS to Facturatie |
-| `kassa.direct`     | direct | Other Kassa system messages                   |
 | `user.direct`      | direct | User CRUD events                              |
 | `user.dlx`         | direct | User dead letter exchange (errors)            |
 | `user.retry`       | direct | User message retry queue                      |
@@ -36,7 +35,6 @@ This script will:
 ```
 ✓ Connected to RabbitMQ
 ✓ Exchange 'kassa.topic' (topic) created/verified
-✓ Exchange 'kassa.direct' (direct) created/verified
 ✓ Exchange 'user.direct' (direct) created/verified
 ✓ Exchange 'user.dlx' (direct) created/verified
 ✓ Exchange 'user.retry' (direct) created/verified

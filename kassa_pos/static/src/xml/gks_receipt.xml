@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension" owl="1">
+        <xpath expr="//div[contains(concat(' ', normalize-space(@class), ' '), ' pos-receipt ')]" position="replace">
+            <div class="pos-receipt pos-gks-receipt">
+                <style>
+                    .pos-gks-receipt { font-family: monospace; font-size: 12px; }
+                    .pos-gks-center { text-align: center; }
+                    .pos-gks-title { font-weight: 800; font-size: 18px; line-height: 1.2; margin-bottom: 6px; letter-spacing: 0.4px; }
+                    .pos-gks-subtitle { font-size: 11px; margin-bottom: 2px; }
+                    .pos-gks-divider { border-top: 1px dashed #000; margin: 6px 0; }
+
+                    .pos-gks-items { margin-top: 6px; }
+                    .pos-gks-item { display:flex; justify-content:space-between; align-items:flex-start; margin:2px 0; white-space:nowrap; }
+                    .pos-gks-item-left { display:flex; gap:6px; align-items:center; flex:1; min-width:0; white-space:nowrap; }
+                    .pos-gks-item-left .qty { min-width: 30px; text-align:left; }
+                    .pos-gks-item-left .name { overflow:hidden; text-overflow:ellipsis; }
+                    .pos-gks-item-right { min-width:80px; text-align:right; }
+                    .pos-gks-item .indicator { font-size:10px; margin-left:6px; }
+
+                    .gks-vat-table { width:100%; border-collapse:collapse; margin-top:8px; }
+                    .gks-vat-table th, .gks-vat-table td { padding:4px 6px; border-bottom:1px solid rgba(0,0,0,0.08); }
+                    .gks-vat-table th { text-align:left; font-weight:700; }
+                    .gks-vat-table td.amount { text-align:right; font-family: monospace; }
+
+                    .pos-gks-total-row { display:flex; justify-content:space-between; margin-top:4px; }
+                    .pos-gks-total-row .label { font-weight:700; }
+                    .pos-gks-footer { text-align:center; margin-top:8px; }
+                    .pos-gks-vsc { font-size:10px; text-align:left; margin-top:6px; }
+                </style>
+                
+
+                <div class="pos-gks-center pos-gks-title"><b>Kassa-Ticket</b></div>
+                <div class="pos-gks-center pos-gks-subtitle"><b><t t-esc="gksCompanyName"/></b></div>
+                <div class="pos-gks-center pos-gks-subtitle">Straatnaam 1, 1000 Brussel</div>
+                <div class="pos-gks-center pos-gks-subtitle">VAT: <t t-esc="gksVatNumber"/></div>
+                <div class="pos-gks-center pos-gks-subtitle">TEL: 010 123 456 </div>
+                
+
+                <div class="pos-gks-divider"/>
+
+                <div class="pos-gks-items">
+                    <t t-foreach="gksReceiptLines" t-as="line" t-key="line.id || line.uid || line.uuid || (line.product_id &amp;&amp; line.product_id.id)">
+                        <div class="pos-gks-item">
+                            <div class="pos-gks-item-left">
+                                <div class="qty"><t t-esc="gksLineQty(line)"/>x</div>
+                                <div class="name"><t t-esc="gksLineName(line)"/></div>
+                                <div class="indicator">[<t t-esc="gksLineIndicator(line)"/>]</div>
+                            </div>
+                            <div class="pos-gks-item-right">
+                                <div class="price"><t t-esc="gksFormatCurrency(gksLineGross(line))"/></div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+                <div class="pos-gks-divider"/>
+
+                <div class="pos-gks-total-row">
+                    <div class="label">SUBTOTAAL</div>
+                    <div class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.netTotal)"/></div>
+                </div>
+                <div class="pos-gks-total-row">
+                    <div class="label">TOTAAL</div>
+                    <div class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.grossTotal)"/></div>
+                </div>
+
+                <div class="pos-gks-divider"/>
+
+                <table class="gks-vat-table" role="table">
+                    <thead>
+                        <tr>
+                            <th>Rate</th>
+                            <th style="text-align:right;">Net</th>
+                            <th style="text-align:right;">VAT</th>
+                            <th style="text-align:right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>6%</td>
+                            <td class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.rates[6].net)"/></td>
+                            <td class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.rates[6].vat)"/></td>
+                            <td class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.rates[6].gross || (gksTaxBreakdown.rates[6].net + gksTaxBreakdown.rates[6].vat))"/></td>
+                        </tr>
+                        <tr>
+                            <td>21%</td>
+                            <td class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.rates[21].net)"/></td>
+                            <td class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.rates[21].vat)"/></td>
+                            <td class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.rates[21].gross || (gksTaxBreakdown.rates[21].net + gksTaxBreakdown.rates[21].vat))"/></td>
+                        </tr>
+                        <tr style="font-weight:700;">
+                            <td>Total</td>
+                            <td class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.netTotal)"/></td>
+                            <td class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.vatTotal)"/></td>
+                            <td class="amount"><t t-esc="gksFormatCurrency(gksTaxBreakdown.grossTotal)"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="pos-gks-divider"/>
+
+                <div class="pos-gks-vsc">VSC: <t t-esc="gksVsc"/></div>
+                <div class="pos-gks-footer">GKS REGISTERED</div>
+                <div class="pos-gks-center pos-gks-subtitle"><t t-esc="gksCompanyName"/></div>
+                <div class="pos-gks-center pos-gks-subtitle">BTW: <t t-esc="gksVatNumber"/></div>
+            </div>
+        </xpath>
+    </t>
+</templates>

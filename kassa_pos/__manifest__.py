@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Kassa POS',
-    'version': '1.0',
+    'version': '1.0.3',
     'category': 'Point of Sale',
     'summary': 'Custom POS module voor schoolproject',
     'description': """
@@ -29,13 +29,13 @@
     'assets': {
         'point_of_sale._assets_pos': [
             'kassa_pos/static/src/css/user_registration.css',
+            'kassa_pos/static/src/css/gks_receipt.css',
             'kassa_pos/static/src/js/UserRegistration.js',
+            'kassa_pos/static/src/js/gks_receipt.js',
             'kassa_pos/static/src/js/ProductScreenUserButton.js',
             'kassa_pos/static/src/js/BadgeScanner.js',
             'kassa_pos/static/src/js/ClosingButton.js',
-            'kassa_pos/static/src/js/BalanceTopupModal.js',
-            'kassa_pos/static/src/js/BalanceButton.js',
-            'kassa_pos/static/src/js/BalanceValidation.js',
+            'kassa_pos/static/src/xml/gks_receipt.xml',
         ],
     },
     'external_dependencies': {
