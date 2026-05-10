@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-
-        <record id="pos_config_kassa_main" model="pos.config">
-            <field name="name">Kassa Main</field>
-            <field name="company_id" ref="base.main_company"/>
-            <field name="module_pos_restaurant" eval="False"/>
-            <field name="cash_control" eval="True"/>
-            <!-- payment_method_ids removed from XML to avoid ORM write during install
-                 Linking of payment methods to this pos.config is done in post_init via
-                 direct SQL to prevent UserError when sessions are open. -->
-        </record>
-
+        <!-- pos.config record is created safely in post_init hook to avoid ORM write restrictions -->
     </data>
 </odoo>
