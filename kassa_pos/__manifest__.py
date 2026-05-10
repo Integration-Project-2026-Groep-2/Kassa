@@ -22,7 +22,6 @@
         'security/ir.model.access.csv',
         'data/account_journal_data.xml',
         'data/pos_config_data.xml',
-        'data/product_product_data.xml',
         'views/kassa_pos_user_registration_view.xml',
         'views/pos_order_batch_views.xml',
     ],
