@@ -38,16 +38,16 @@ class KassaPosOrderController(http.Controller):
             
             if not order_id:
                 logger.warning("kassa_pos.get_vsc_code: missing_order_id")
-                return {'error': 'missing_order_id'}
+                return {'ok': False, 'error': 'missing_order_id'}
 
             order = request.env['pos.order'].sudo().browse(int(order_id))
             if not order or not order.exists():
                 logger.warning("kassa_pos.get_vsc_code: order_not_found for id=%s", order_id)
-                return {'error': 'order_not_found'}
+                return {'ok': False, 'error': 'order_not_found'}
 
             vsc_code = order._build_vsc_code()
             logger.info("kassa_pos.get_vsc_code: successfully built vsc=%s for order_id=%s", vsc_code, order_id)
-            return {'vsc_code': vsc_code}
+            return {'ok': True, 'vsc_code': vsc_code}
         except Exception as e:
             logger.exception("kassa_pos.get_vsc_code: exception for order_id=%s: %s", order_id, str(e))
-            return {'error': str(e)}
+            return {'ok': False, 'error': str(e)}
