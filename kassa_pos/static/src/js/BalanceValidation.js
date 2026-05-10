@@ -97,6 +97,13 @@ patch(PaymentScreen.prototype, {
                 } else if (topupLine.set_amount_raw) {
                     topupLine.set_amount_raw(chosen);
                 }
+                // Update the payment line label so it's visible in the Summary
+                try {
+                    const baseName = topupLine.payment_method && topupLine.payment_method.name ? topupLine.payment_method.name : 'Top Up';
+                    topupLine.name = `${baseName} (gebruik €${chosen.toFixed(2)})`;
+                } catch (e) {
+                    // ignore label update failures
+                }
             } catch (e) {
                 // fallback: try updating via order API
                 try { order.updateSelectedPaymentline(chosen); } catch (e) { }
