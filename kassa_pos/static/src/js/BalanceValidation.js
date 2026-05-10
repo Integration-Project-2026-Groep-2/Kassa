@@ -12,7 +12,8 @@ patch(PaymentScreen.prototype, {
     },
 
     async selectPaymentMethod(paymentMethod) {
-        if (paymentMethod.name.toLowerCase() !== 'saldo') {
+        const isTopUpMethod = ['saldo', 'top up'].includes(paymentMethod.name.toLowerCase());
+        if (!isTopUpMethod) {
             return super.selectPaymentMethod(paymentMethod);
         }
 
@@ -21,8 +22,8 @@ patch(PaymentScreen.prototype, {
 
         if (!partner) {
             this.notification.add(
-                'Selecteer eerst een klant om met saldo te betalen.',
-                { type: 'warning', title: 'Geen klant geselecteerd' }
+                'Selecteer eerst een klant om met Top Up te betalen.',
+                { type: 'warning', title: 'Klant vereist' }
             );
             return;
         }
@@ -45,9 +46,10 @@ patch(PaymentScreen.prototype, {
             const due = order.get_due();
             const maxAmount = Math.min(result.balance, due);
             const paymentLines = order.get_paymentlines();
-            const saldoLine = paymentLines[paymentLines.length - 1];
-            if (saldoLine && saldoLine.payment_method.name.toLowerCase() === 'saldo') {
-                saldoLine.set_amount(maxAmount);
+            const topupLine = paymentLines[paymentLines.length - 1];
+            const isTopUpPayment = ['saldo', 'top up'].includes(topupLine.payment_method.name.toLowerCase());
+            if (topupLine && isTopUpPayment) {
+                topupLine.set_amount(maxAmount);
             }
 
             this.notification.add(
@@ -64,14 +66,14 @@ patch(PaymentScreen.prototype, {
         const order = this.currentOrder;
         const partner = order.get_partner();
 
-        const saldoLine = order.get_paymentlines().find(
-            line => line.payment_method.name.toLowerCase() === 'saldo'
+        const topupLine = order.get_paymentlines().find(
+            line => ['saldo', 'top up'].includes(line.payment_method.name.toLowerCase())
         );
 
-        if (saldoLine) {
+        if (topupLine) {
             if (!partner) {
                 this.notification.add(
-                    'Selecteer een klant om met saldo te kunnen betalen.',
+                    'Selecteer een klant om met Top Up te kunnen betalen.',
                     { type: 'warning', title: 'Geen klant' }
                 );
                 return;
@@ -82,12 +84,12 @@ patch(PaymentScreen.prototype, {
                     partner_id: partner.id,
                 });
 
-                const saldoBedrag = saldoLine.get_amount();
+                const topupBedrag = topupLine.get_amount();
 
-                if (!result.success || result.balance < saldoBedrag) {
+                if (!result.success || result.balance < topupBedrag) {
                     const beschikbaar = result.success ? result.balance.toFixed(2) : '0.00';
                     this.notification.add(
-                        `Onvoldoende saldo. Beschikbaar: €${beschikbaar} — Vereist: €${saldoBedrag.toFixed(2)}`,
+                        `Onvoldoende saldo. Beschikbaar: €${beschikbaar} — Vereist: €${topupBedrag.toFixed(2)}`,
                         { type: 'danger', title: 'Onvoldoende saldo' }
                     );
                     return;

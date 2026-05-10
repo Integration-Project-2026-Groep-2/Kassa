@@ -22,8 +22,11 @@ import aio_pika
 from status import run_status
 from receiver import run_receiver
 
+_log_level_name = os.environ.get('LOG_LEVEL', 'INFO').upper()
+_log_level = getattr(logging, _log_level_name, logging.INFO)
+
 logging.basicConfig(
-    level=os.environ.get('LOG_LEVEL', 'INFO'),
+    level=_log_level,
     format='[%(levelname)s] %(asctime)s %(name)s: %(message)s',
 )
 logger = logging.getLogger(__name__)

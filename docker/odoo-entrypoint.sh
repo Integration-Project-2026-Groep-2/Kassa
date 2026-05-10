@@ -101,6 +101,19 @@ if [ -n "${ODOO_EXTRA_ARGS:-}" ]; then
   set -- "$@" ${ODOO_EXTRA_ARGS}
 fi
 
+# ── Wait for PostgreSQL to be ready ──────────────────────────────────────────
+# On VM restarts the DB container may take longer to accept connections.
+# We wait up to 60 s before giving up.
+echo "[entrypoint] Waiting for PostgreSQL at ${ODOO_DB_HOST}:${ODOO_DB_PORT}..."
+for i in $(seq 1 30); do
+  if pg_isready -h "${ODOO_DB_HOST}" -p "${ODOO_DB_PORT}" -U "${ODOO_DB_USER}" -q; then
+    echo "[entrypoint] PostgreSQL is ready."
+    break
+  fi
+  echo "[entrypoint] PostgreSQL not ready yet (attempt ${i}/30), retrying in 2s..."
+  sleep 2
+done
+
 if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
 
   # Check if kassa_pos is already installed in the database.
@@ -135,18 +148,36 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
     else
       "${SYNC_CMD[@]}"
     fi
-  elif [ -n "$ODOO_SYNC_MODULES" ]; then
-    echo "[entrypoint] kassa_pos already installed, upgrading explicitly listed modules: ${ODOO_SYNC_MODULES}"
-    SYNC_CMD=("${BASE_SYNC_ARGS[@]}" -u "${ODOO_SYNC_MODULES}")
+  else
+    # Always upgrade kassa_pos to ensure data files are loaded (pos_config_data.xml, etc.)
+    # Also upgrade any modules explicitly listed in ODOO_SYNC_MODULES
+    MODULES_TO_UPGRADE="kassa_pos"
+    if [ -n "$ODOO_SYNC_MODULES" ]; then
+      MODULES_TO_UPGRADE="${MODULES_TO_UPGRADE},${ODOO_SYNC_MODULES}"
+    fi
+    echo "[entrypoint] kassa_pos already installed, upgrading for data sync: ${MODULES_TO_UPGRADE}"
+    SYNC_CMD=("${BASE_SYNC_ARGS[@]}" -u "${MODULES_TO_UPGRADE}")
     if [ "$(id -u)" = "0" ]; then
       runuser -u odoo -- "${SYNC_CMD[@]}"
     else
       "${SYNC_CMD[@]}"
     fi
-  else
-    echo "[entrypoint] kassa_pos already installed, no explicit upgrade requested — skipping module sync"
   fi
 fi
+
+# Ensure Kassa payment methods are linked to Kassa Main pos_config
+echo "[entrypoint] Linking Kassa payment methods to Kassa Main pos_config"
+psql \
+  "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" \
+  -c "INSERT INTO pos_config_pos_payment_method_rel (pos_config_id, pos_payment_method_id)
+      SELECT pc.id, ppm.id
+      FROM pos_config pc, pos_payment_method ppm, account_journal aj
+      WHERE pc.name = 'Kassa Main'
+        AND ppm.journal_id = aj.id
+        AND aj.code IN ('KCASH', 'KBANC', 'KSAL')
+        AND ppm.company_id = pc.company_id
+      ON CONFLICT DO NOTHING;" 2>/dev/null || true
+
 
 # Initialize RabbitMQ topology (exchanges, queues, bindings)
 echo "[entrypoint] Initializing RabbitMQ topology via setup_rabbitmq.py"

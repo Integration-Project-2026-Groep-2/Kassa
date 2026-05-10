@@ -1,0 +1,952 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "git-add-changes",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-commit-topup",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"feat: rename balance button to 'Top Up' and add Top Up payment method"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-commit-topup-fix",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"feat: rename balance button to Top Up and add Top Up payment method"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-push-topup",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"main"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "local-rebuild-topup",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"up",
+				"-d",
+				"--build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-containers",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"ps"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-logs-topup",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"logs",
+				"--tail",
+				"80",
+				"odoo"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-and-health",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 10; (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "final-logs-check",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"logs",
+				"--tail",
+				"40",
+				"odoo"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-add-topup-fix",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-commit-topup-fix",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"fix: ensure Top Up payment method is added to existing POS config"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-push-topup-fix",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"main"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-compose-down",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"down"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-rebuild-topup",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"up",
+				"-d",
+				"--build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-odoo-ready",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 15; (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-topup-logs",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"logs",
+				"--tail",
+				"100",
+				"odoo"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-add-xml-topup",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-commit-xml-topup",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"fix: add Top Up payment method via XML data file"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-push-xml-topup",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"main"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-down-final",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"down"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-rebuild-xml-topup",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"up",
+				"-d",
+				"--build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-odoo-xml",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 20; (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-pos-load",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 10"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-logs-odoo",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"logs",
+				"-f",
+				"odoo"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-add-version-bump",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-commit-version-bump",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"fix: bump kassa_pos version to trigger module upgrade & post_init hook"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-push-version-bump",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"main"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-down-version-bump",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"down"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-up-version-bump",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"up",
+				"-d",
+				"--build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-odoo-upgrade",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 30; (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-pos-reload",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 10"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-upgrade-logs",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"logs",
+				"odoo",
+				"--tail=100"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "full-odoo-logs",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"logs",
+				"odoo"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "watch-odoo-logs-upgrade",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"logs",
+				"odoo",
+				"-f",
+				"--tail=50"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-module-state",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"-T",
+				"db",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT name, state, latest_version FROM ir_module_module WHERE name='kassa_pos'"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-module-state-v2",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"db",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT name, state, latest_version FROM ir_module_module WHERE name='kassa_pos'"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-modules-load",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 5"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-modules-load-v2",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 3"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-stop-odoo",
+			"type": "shell",
+			"command": "docker-compose",
+			"args": [
+				"stop",
+				"odoo"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-up-odoo-rebuild",
+			"type": "shell",
+			"command": "docker-compose",
+			"args": [
+				"up",
+				"-d",
+				"odoo",
+				"--build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-upgrade-complete",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 35; (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-pos-load-final",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 10"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-upgrade-in-logs",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"logs",
+				"odoo",
+				"--tail=200"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "full-logs-search",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"logs",
+				"odoo"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-payment-methods-db",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"-T",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT id, name, journal_id FROM pos_payment_method ORDER BY name;"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-payment-methods-db-v2",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT id, name, journal_id FROM pos_payment_method ORDER BY name;"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-config-payment-link",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT ppm.id, ppm.name, pm.name FROM pos_config_pos_payment_method_rel rel JOIN pos_payment_method ppm ON rel.pos_payment_method_id = ppm.id JOIN pos_config pm ON rel.pos_config_id = pm.id;"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "insert-topup-link",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"INSERT INTO pos_config_pos_payment_method_rel (pos_config_id, pos_payment_method_id) VALUES ((SELECT id FROM pos_config WHERE name = 'Kassa Main' LIMIT 1), 10) ON CONFLICT DO NOTHING;"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "find-kassa-config-id",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT id FROM pos_config WHERE name LIKE '%Kassa Main%';"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "psql-interactive",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-add-sql-fix",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-commit-sql-fix",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"fix: use SQL INSERT to link Top Up to pos_config in post_init hook"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-push-sql-fix",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"main"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "docker-stop-odoo-rebuild",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"stop",
+				"odoo"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "rebuild-and-wait",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 5; cd 'c:\\Users\\Sbou5\\Herd\\Kassa'; docker compose up -d --build odoo; Start-Sleep -Seconds 40; (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-health-final",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"(Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-and-check-health",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 20; (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8069/health).StatusCode"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-pos-final",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 10"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "check-topup-linked-final",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT ppm.id, ppm.name FROM pos_config_pos_payment_method_rel rel JOIN pos_payment_method ppm ON rel.pos_payment_method_id = ppm.id WHERE rel.pos_config_id IN (SELECT id FROM pos_config WHERE name LIKE '%Kassa%');"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "count-topup-relations",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT COUNT(*) FROM pos_config_pos_payment_method_rel WHERE pos_payment_method_id=10;"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "list-pos-configs",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"SELECT id, name FROM pos_config;"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "manual-sql-insert",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"exec",
+				"kassa-db-1",
+				"psql",
+				"-U",
+				"odoo",
+				"-d",
+				"kassa_db",
+				"-c",
+				"INSERT INTO pos_config_pos_payment_method_rel (pos_config_id, pos_payment_method_id) VALUES (3, 10);"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "wait-pos-reload-topup",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Sleep -Seconds 10"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-add-final",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-commit-topup-working",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"feat: Top Up payment method now appears in POS with balance deduction logic ready"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-push-topup-working",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"main"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git-add-entrypoint",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

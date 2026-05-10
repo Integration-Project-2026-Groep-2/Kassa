@@ -9,7 +9,7 @@ class BalanceButton extends Component {
     static template = xml`
         <button class="button kassa-balance-btn" t-on-click="openTopup" title="Saldo opladen">
             <i class="fa fa-wallet"/>
-            <span>Saldo</span>
+            <span>Top Up</span>
         </button>
     `;
 

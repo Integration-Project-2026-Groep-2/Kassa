@@ -312,21 +312,86 @@ class PosOrder(models.Model):
         """Verwerk saldo-betalingen: deducteer van partner balance en sla transactie op."""
         if not order.partner_id:
             return
-        for payment in order.payment_ids:
-            if payment.payment_method_id and 'saldo' in payment.payment_method_id.name.lower():
-                amount = payment.amount
-                partner = order.partner_id
-                new_balance = max(0.0, partner.balance - amount)
+        partner = order.partner_id
+
+        # Process payments sequentially; if a Top Up payment exceeds the available
+        # balance, deduct only the available amount and create a new payment for
+        # the remainder using a non-Top Up payment method from the POS config.
+        for payment in order.payment_ids.sorted(key=lambda r: r.id):
+            if not payment.payment_method_id:
+                continue
+
+            payment_name = (payment.payment_method_id.name or '').lower()
+            if 'saldo' not in payment_name and 'top up' not in payment_name:
+                continue
+
+            available = float(partner.balance or 0.0)
+            requested = float(payment.amount or 0.0)
+
+            # Determine how much to deduct from balance
+            if available <= 0.0:
+                deduct = 0.0
+                remaining = requested
+            elif requested <= available:
+                deduct = requested
+                remaining = 0.0
+            else:
+                deduct = available
+                remaining = requested - deduct
+
+            # Apply deduction (if any)
+            if deduct > 0.0:
+                new_balance = round(available - deduct, 2)
                 partner.write({'balance': new_balance})
                 self.env['balance.transaction'].create({
                     'partner_id': partner.id,
-                    'amount': -amount,
+                    'amount': -deduct,
                     'transaction_type': 'payment',
                     'payment_method': 'balance',
-                    'note': f'Betaling via saldo — order {order.name}',
+                    'note': f'Top Up betaling — order {order.name}',
                     'pos_order_id': order.id,
                     'balance_after': new_balance,
                 })
+                try:
+                    payment.write({'amount': deduct})
+                except Exception:
+                    _logger.exception('Failed to adjust Top Up payment amount for order %s', order.name)
+
+            # If there's a remainder, create a new payment using another payment method
+            if remaining > 0.0:
+                _logger.info('Top Up balance insufficient for order %s: deduct=%.2f remaining=%.2f', order.name, deduct, remaining)
+
+                # Try to find an alternative payment method from the POS config
+                alt_method = None
+                try:
+                    config = getattr(order.session_id, 'config_id', None) or getattr(order.session_id, 'config', None)
+                    if config and getattr(config, 'payment_method_ids', False):
+                        for m in config.payment_method_ids:
+                            mname = (m.name or '').lower()
+                            if 'saldo' in mname or 'top up' in mname:
+                                continue
+                            alt_method = m
+                            break
+
+                    if not alt_method:
+                        # Fallback: first non-Top Up method in system
+                        alt_method = self.env['pos.payment.method'].search([('name', 'not ilike', 'top up')], limit=1)
+                except Exception:
+                    _logger.exception('Error selecting alternative payment method for order %s', order.name)
+
+                if not alt_method or not alt_method.id:
+                    _logger.warning('No alternative payment method found for order %s; remaining amount %.2f will stay as unpaid', order.name, remaining)
+                else:
+                    try:
+                        self.env['pos.payment'].create({
+                            'order_id': order.id,
+                            'amount': remaining,
+                            'payment_method_id': alt_method.id,
+                            'journal_id': getattr(alt_method, 'journal_id', False) and alt_method.journal_id.id or False,
+                        })
+                        _logger.info('Created fallback payment (%.2f) using %s for order %s', remaining, alt_method.name, order.name)
+                    except Exception:
+                        _logger.exception('Failed to create fallback payment for order %s', order.name)
 
     def _trigger_rabbitmq_messages(self, order):
         """

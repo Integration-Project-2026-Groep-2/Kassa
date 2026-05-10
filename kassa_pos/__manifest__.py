@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Kassa POS',
-    'version': '1.0.3',
+    'version': '1.2',
     'category': 'Point of Sale',
     'summary': 'Custom POS module voor schoolproject',
     'description': """
@@ -20,6 +20,9 @@
     ],
     'data': [
         'security/ir.model.access.csv',
+        'data/account_journal_data.xml',
+        'data/pos_config_data.xml',
+        'data/pos_config_main_data.xml',
         'data/res_partner_data.xml',
         'data/user_contact_data.xml',
         'data/product_product_data.xml',
@@ -41,6 +44,7 @@
     'external_dependencies': {
         'python': ['pika'],
     },
+    'post_init_hook': 'post_init',
     'license': 'LGPL-3',
     'installable': True,
     'application': True,
