@@ -21,7 +21,6 @@
     'data': [
         'security/ir.model.access.csv',
         'data/account_journal_data.xml',
-        'data/pos_config_data.xml',
         'data/pos_config_main_data.xml',
         'data/res_partner_data.xml',
         'data/user_contact_data.xml',
