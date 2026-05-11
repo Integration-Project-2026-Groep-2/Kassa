@@ -2,12 +2,13 @@
    GLOBAL DARK POS THEME (FULL FIX)
    ========================================================= */
 
+/* Default DARK theme - always active unless light-theme class is present */
 .pos {
     background: #0b1220 !important;
     color: #e5e7eb !important;
 }
 
-/* SURFACES OVERRIDE */
+/* SURFACES OVERRIDE - default DARK */
 .pos .bg-white,
 .pos .bg-light,
 .pos .bg-100,
@@ -17,7 +18,7 @@
     background-color: #111827 !important;
 }
 
-/* graded surfaces */
+/* graded surfaces - default DARK */
 .pos .bg-100 { background-color: #0f172a !important; }
 .pos .bg-200 { background-color: #111827 !important; }
 .pos .bg-300 { background-color: #1f2937 !important; }
@@ -165,11 +166,72 @@
     background: #243244 !important;
 }
 
-.pos .paymentlines-container .total {
-    color: #22c55e !important;
-    font-size: 2.5rem !important;
+.pos .paymentlines-container {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
 }
 
+.pos .paymentlines-container .total,
+.pos .paymentlines-container .paymentlines,
+.pos .paymentlines-empty,
+.pos .paymentlines-empty .total {
+    background: #ffffff !important;
+    color: #0f172a !important;
+}
+
+.pos .paymentlines-container .total {
+    border-radius: 14px !important;
+    padding: 1rem !important;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08) !important;
+    color: #0f172a !important;
+}
+
+.pos .paymentlines-empty {
+    border: 1px solid #e2e8f0 !important;
+}
+
+.pos .customer-note,
+.pos .internal-note,
+.pos .info,
+.pos .control-buttons .control-button {
+    background: #1b2433 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #243244 !important;
+}
+
+.pos .control-buttons .control-button {
+    border-radius: 12px !important;
+    flex: 1 1 120px !important;
+    margin: 0.25rem !important;
+    min-width: 120px !important;
+}
+
+.pos .control-buttons {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+}
+
+.pos .control-buttons .control-button i,
+.pos .customer-note i,
+.pos .internal-note i {
+    color: #2563eb !important;
+}
+
+.pos .control-buttons .control-button:hover {
+    background: #f1f5f9 !important;
+}
+
+.pos .kassa-add-user-btn {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+.pos .kassa-add-user-btn:hover {
+    background: #f1f5f9 !important;
+}
 
 /* =========================================================
    CONTROL BUTTONS
@@ -470,12 +532,8 @@ select {
     color: #22c55e !important;
 }
 
-html, body, .pos {
-    background-color: #0b1220 !important;
-    color: #a8a9ab !important;
-}
-
 /* FIX ODOO BG VARIABLES OVERRIDING YOUR DARK MODE */
+/*
 .pos .bg-200,
 .pos .bg-100,
 .pos .bg-300,
@@ -484,6 +542,7 @@ html, body, .pos {
 .pos .bg-view {
     background-color: #111827 !important;
 }
+*/
 
 /* REMOVE WHITE BORDER LINES (GLOBAL FIX) */
 .pos .border,
@@ -919,4 +978,794 @@ html, body, .pos {
 /* active click feeling */
 .pos .product-information-tag:active {
     transform: scale(0.95);
+}
+
+/* =========================================================
+   LIGHT THEME (TOGGLE VERSION)
+   ========================================================= */
+
+body.light-theme .pos {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+}
+
+/* LIGHT THEME SURFACES */
+body.light-theme .pos .bg-white,
+body.light-theme .pos .bg-light,
+body.light-theme .pos .bg-100,
+body.light-theme .pos .bg-200,
+body.light-theme .pos .bg-300,
+body.light-theme .pos .bg-view {
+    background-color: #ffffff !important;
+}
+
+/* graded surfaces for light theme */
+body.light-theme .pos .bg-100 { background-color: #f1f5f9 !important; }
+body.light-theme .pos .bg-200 { background-color: #e2e8f0 !important; }
+body.light-theme .pos .bg-300 { background-color: #cbd5e1 !important; }
+body.light-theme .pos .bg-view { background-color: #ffffff !important; }
+
+/* LIGHT THEME TOP BAR */
+body.light-theme .pos .pos-topheader {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+/* LIGHT THEME PANELS */
+body.light-theme .pos .leftpane,
+body.light-theme .pos .rightpane {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+
+body.light-theme .pos .order-container {
+    background: #f8fafc !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* LIGHT THEME ORDER LINES */
+body.light-theme .pos .orderline {
+    background: transparent !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+    border-radius: 10px !important;
+    transition: all .2s ease;
+}
+
+body.light-theme .pos .orderline:hover {
+    background: #f1f5f9 !important;
+}
+
+body.light-theme .pos .orderline.selected {
+    background: #3b82f6 !important;
+    color: #fff !important;
+}
+
+/* LIGHT THEME PRODUCTS */
+body.light-theme .pos .product {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    color: #1e293b !important;
+    transition: all .2s ease;
+}
+
+body.light-theme .pos .product:hover {
+    transform: translateY(-3px);
+    background: #f8fafc !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* LIGHT THEME BUTTONS GLOBAL */
+body.light-theme .pos .btn,
+body.light-theme .pos .button,
+body.light-theme .pos button {
+    border-radius: 14px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    color: #1e293b !important;
+    transition: all .2s ease;
+}
+
+body.light-theme .pos .btn:hover,
+body.light-theme .pos .button:hover,
+body.light-theme .pos button:hover {
+    background: #f1f5f9 !important;
+    transform: translateY(-2px);
+}
+
+/* LIGHT THEME NUMPAD */
+body.light-theme .pos .numpad button,
+body.light-theme .pos .numpad .btn {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    border-radius: 16px !important;
+    font-weight: 700;
+    transition: all .15s ease;
+}
+
+body.light-theme .pos .numpad button:hover,
+body.light-theme .pos .numpad .btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #3b82f6 !important;
+    transform: scale(1.04);
+}
+
+body.light-theme .pos .numpad button.active {
+    background: #3b82f6 !important;
+    color: white !important;
+}
+
+/* LIGHT THEME PAYMENT SCREEN */
+body.light-theme .pos .payment-screen {
+    background: #f8fafc !important;
+}
+
+body.light-theme .pos .paymentmethods-container,
+body.light-theme .pos .paymentlines-container {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    border: 1px solid #ffffff !important;
+}
+
+body.light-theme .pos .paymentmethod {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .pos .paymentmethod:hover {
+    background: #f1f5f9 !important;
+}
+
+body.light-theme .pos .paymentlines-container .total {
+    color: #10b981 !important;
+    font-size: 2.5rem !important;
+}
+
+body.light-theme .pos .customer-note,
+body.light-theme .pos .internal-note,
+body.light-theme .pos .info,
+body.light-theme .pos .control-buttons .control-button {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .pos .popup,
+body.light-theme .pos .popup .body,
+body.light-theme .pos .popup .modal-header,
+body.light-theme .pos .popup .modal-body,
+body.light-theme .pos .popup .modal-footer,
+body.light-theme .pos .modal-content,
+body.light-theme .popup,
+body.light-theme .popup .modal-body,
+body.light-theme .popup .modal-header,
+body.light-theme .modal-content {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .pos .popup .modal-header,
+body.light-theme .popup .modal-header {
+    background: #f8fafc !important;
+}
+
+body.light-theme .pos .popup .modal-header .modal-title,
+body.light-theme .pos .popup .modal-header .btn,
+body.light-theme .pos .popup .modal-header .btn i,
+body.light-theme .popup .modal-header .modal-title,
+body.light-theme .popup .modal-header .btn,
+body.light-theme .popup .modal-header .btn i {
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .popup .section-product-info-title,
+body.light-theme .pos .popup .section-financials,
+body.light-theme .pos .popup .section-inventory,
+body.light-theme .pos .popup .section-order,
+body.light-theme .popup .section-product-info-title,
+body.light-theme .popup .section-financials,
+body.light-theme .popup .section-inventory,
+body.light-theme .popup .section-order {
+    background: #ffffff !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .popup .table,
+body.light-theme .popup .table {
+    background: transparent !important;
+}
+
+body.light-theme .pos .popup .table td,
+body.light-theme .pos .popup .table th,
+body.light-theme .popup .table td,
+body.light-theme .popup .table th {
+    color: #1e293b !important;
+}
+
+body.light-theme .modal-body,
+body.light-theme .pos .modal-body,
+body.light-theme .popup .modal-body,
+body.light-theme .pos .popup .modal-body {
+    background: #ffffff !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .modal-body textarea,
+body.light-theme .modal-body .form-control,
+body.light-theme .pos .modal-body textarea,
+body.light-theme .pos .modal-body .form-control,
+body.light-theme .popup .modal-body textarea,
+body.light-theme .popup .modal-body .form-control {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+body.light-theme .modal-body textarea::placeholder,
+body.light-theme .modal-body .form-control::placeholder,
+body.light-theme .popup .modal-body textarea::placeholder,
+body.light-theme .popup .modal-body .form-control::placeholder {
+    color: #64748b !important;
+}
+
+body.light-theme .popup .btn,
+body.light-theme .popup .button,
+body.light-theme .popup button,
+body.light-theme .popup .btn-light,
+body.light-theme .popup .button.btn-light,
+body.light-theme .pos .popup .btn,
+body.light-theme .pos .popup .button,
+body.light-theme .pos .popup button,
+body.light-theme .pos .popup .btn-light,
+body.light-theme .pos .popup .button.btn-light {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .popup .btn:hover,
+body.light-theme .popup .button:hover,
+body.light-theme .popup button:hover,
+body.light-theme .pos .popup .btn:hover,
+body.light-theme .pos .popup .button:hover,
+body.light-theme .pos .popup button:hover {
+    background: #f1f5f9 !important;
+    transform: translateY(-1px) !important;
+}
+
+body.light-theme .popup .text-info,
+body.light-theme .popup .text-primary,
+body.light-theme .popup .text-success,
+body.light-theme .popup .text-warning,
+body.light-theme .popup .text-danger,
+body.light-theme .popup .text-white,
+body.light-theme .popup .text-dark,
+body.light-theme .pos .popup .text-info,
+body.light-theme .pos .popup .text-primary,
+body.light-theme .pos .popup .text-success,
+body.light-theme .pos .popup .text-warning,
+body.light-theme .pos .popup .text-danger,
+body.light-theme .pos .popup .text-white,
+body.light-theme .pos .popup .text-dark {
+    color: #1e293b !important;
+}
+
+body.light-theme .popup .bg-info,
+body.light-theme .popup .bg-success,
+body.light-theme .popup .bg-warning,
+body.light-theme .popup .bg-danger,
+body.light-theme .popup .bg-primary,
+body.light-theme .popup .bg-secondary,
+body.light-theme .popup .bg-light,
+body.light-theme .popup .bg-white,
+body.light-theme .popup .bg-200,
+body.light-theme .popup .bg-300,
+body.light-theme .popup .bg-view,
+body.light-theme .pos .popup .bg-info,
+body.light-theme .pos .popup .bg-success,
+body.light-theme .pos .popup .bg-warning,
+body.light-theme .pos .popup .bg-danger,
+body.light-theme .pos .popup .bg-primary,
+body.light-theme .pos .popup .bg-secondary,
+body.light-theme .pos .popup .bg-light,
+body.light-theme .pos .popup .bg-white,
+body.light-theme .pos .popup .bg-200,
+body.light-theme .pos .popup .bg-300,
+body.light-theme .pos .popup .bg-view {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .popup .section-product-info-title,
+body.light-theme .popup .section-financials,
+body.light-theme .popup .section-inventory,
+body.light-theme .popup .section-order,
+body.light-theme .pos .popup .section-product-info-title,
+body.light-theme .pos .popup .section-financials,
+body.light-theme .pos .popup .section-inventory,
+body.light-theme .pos .popup .section-order {
+    background: #ffffff !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .btn:hover,
+body.light-theme .pos .button:hover,
+body.light-theme .pos button:hover {
+    transform: translateY(-1px) !important;
+}
+
+body.light-theme .pos .paymentlines-empty,
+body.light-theme .paymentlines-empty {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .pos .paymentlines-empty .total,
+body.light-theme .paymentlines-empty .total {
+    color: #10b981 !important;
+}
+
+body.light-theme .pos .orders,
+body.light-theme .orders {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .orders .header-row,
+body.light-theme .orders .header-row {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .pos .orders .header-row .col,
+body.light-theme .orders .header-row .col {
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .orders .order-row,
+body.light-theme .orders .order-row {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .pos .orders .order-row .col,
+body.light-theme .orders .order-row .col {
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .orders .order-row.highlight.bg-primary,
+body.light-theme .orders .order-row.highlight.bg-primary {
+    background: linear-gradient(135deg, #93c5fd, #3b82f6) !important;
+    color: #ffffff !important;
+}
+
+/* LIGHT THEME CONTROL BUTTONS */
+body.light-theme .pos .control-button {
+    border-radius: 12px !important;
+}
+
+/* LIGHT THEME ADD USER */
+body.light-theme .pos .kassa-add-user-btn {
+    background: linear-gradient(135deg, #ffffff, #f8fafc) !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .kassa-add-user-btn:hover {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+}
+
+/* LIGHT THEME CLOSE */
+body.light-theme .pos .kassa-closing-btn {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    border: none !important;
+    color: white !important;
+}
+
+body.light-theme .pos .kassa-closing-btn:hover {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+}
+
+/* LIGHT THEME SEARCH BAR */
+body.light-theme .pos .input-container,
+body.light-theme .pos .form-control {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    border-radius: 12px !important;
+}
+
+/* LIGHT THEME NOTIFICATIONS */
+body.light-theme .o_notification {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+}
+
+body.light-theme .o_notification.border-success {
+    border-left: 4px solid #10b981 !important;
+}
+
+body.light-theme .o_notification_title {
+    color: #10b981 !important;
+}
+
+body.light-theme .o_notification_close {
+    filter: none;
+    opacity: 0.8;
+}
+
+body.light-theme .o_notification_close:hover {
+    opacity: 1;
+}
+
+/* LIGHT THEME MODALS */
+body.light-theme .modal-content {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border-radius: 18px !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .modal-header,
+body.light-theme .modal-footer {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+body.light-theme .form-control,
+body.light-theme select {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    border-radius: 10px !important;
+}
+
+/* LIGHT THEME BORDER FIXES */
+body.light-theme .pads {
+    border-top: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .control-buttons {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .actionpad {
+    border-right: 1px solid #e2e8f0 !important;
+}
+
+/* LIGHT THEME PAYMENT BUTTON */
+body.light-theme .pos .next.validation,
+body.light-theme .pos .pay-order-button {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #3b82f6 !important;
+    border-radius: 14px !important;
+}
+
+body.light-theme .pos .next.validation:hover,
+body.light-theme .pos .pay-order-button:hover {
+    background: #f1f5f9 !important;
+    transform: translateY(-2px);
+}
+
+body.light-theme .pos .next.validation.disabled {
+    background: #f8fafc !important;
+    color: #94a3b8 !important;
+    opacity: 0.6 !important;
+}
+
+/* LIGHT THEME SCROLLBAR */
+body.light-theme ::-webkit-scrollbar {
+    width: 8px;
+}
+
+body.light-theme ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+body.light-theme ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+/* LIGHT THEME PAYMENT HEADER */
+body.light-theme .pos .top-content {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .top-content h2,
+body.light-theme .pos .top-content .back_text,
+body.light-theme .pos .top-content .button {
+    color: #1e293b !important;
+}
+
+/* LIGHT THEME PAYMENT MAIN BACKGROUND */
+body.light-theme .pos .payment-screen .main-content {
+    background: #ffffff !important;
+}
+
+body.light-theme .pos .left-content,
+body.light-theme .pos .center-content,
+body.light-theme .pos .right-content {
+    background: #ffffff !important;
+}
+
+/* LIGHT THEME PAYMENT METHOD PANEL */
+body.light-theme .pos .paymentmethods-container,
+body.light-theme .pos .paymentlines-container {
+    background: #ffffff !important;
+}
+
+body.light-theme .pos .paymentmethod {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .paymentmethod:hover {
+    background: #f1f5f9 !important;
+}
+
+/* LIGHT THEME SUMMARY TITLE */
+body.light-theme .pos .title-category {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+/* LIGHT THEME VALIDATION BUTTON */
+body.light-theme .pos .button.next.validation {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25) !important;
+}
+
+body.light-theme .pos .button.next.validation.disabled {
+    background: #3b82f6 !important;
+    opacity: 0.55 !important;
+}
+
+/* LIGHT THEME NUMPAD BORDER */
+body.light-theme .pos .numpad button,
+body.light-theme .pos .numpad .btn {
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border-radius: 14px !important;
+}
+
+/* LIGHT THEME SEARCH BAR */
+body.light-theme .pos .input-container,
+body.light-theme .pos .form-control,
+body.light-theme .pos input {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+}
+
+/* LIGHT THEME SCROLLBAR */
+body.light-theme .pos *::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+}
+body.light-theme .pos *::-webkit-scrollbar-track {
+    background: #f1f5f9 !important;
+}
+
+/* LIGHT THEME MENU BUTTON */
+body.light-theme .pos .navbar-button.menu-button {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    color: #475569 !important;
+    transition: all .2s ease;
+}
+
+body.light-theme .pos .modal-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .pos .modal-header .modal-title {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+}
+
+body.light-theme .pos .modal-header .btn {
+    background: transparent !important;
+    border: none !important;
+    color: #475569 !important;
+}
+
+body.light-theme .pos .modal-header .btn i {
+    color: #475569 !important;
+}
+
+body.light-theme .pos .modal-header .btn:hover i {
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .navbar-button.menu-button.btn {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    transition: all .2s ease;
+    color: #475569 !important;
+}
+
+body.light-theme .pos .navbar-button.menu-button,
+body.light-theme .pos .navbar-button.menu-button * {
+    color: #475569 !important;
+}
+
+body.light-theme .pos .navbar-button.menu-button i {
+    color: #475569 !important;
+}
+
+body.light-theme .pos .navbar-button.menu-button:hover {
+    background: #f1f5f9 !important;
+    transform: scale(1.03);
+}
+
+body.light-theme .pos .navbar-button.menu-button:hover,
+body.light-theme .pos .navbar-button.menu-button:hover * {
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .text-muted {
+    color: #64748b !important;
+    opacity: 0.95 !important;
+}
+
+body.light-theme .pos .text-muted h3,
+body.light-theme .pos .text-muted h1,
+body.light-theme .pos .text-muted h2,
+body.light-theme .pos .text-muted h4 {
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .text-muted i {
+    color: #64748b !important;
+}
+
+body.light-theme .pos .text-muted:hover {
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .modal-body {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    border-top: 1px solid #e2e8f0 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .pos .bg-100,
+body.light-theme .pos .bg-200,
+body.light-theme .pos .bg-300,
+body.light-theme .pos .bg-white,
+body.light-theme .pos .bg-light,
+body.light-theme .pos .bg-view,
+body.light-theme .pos .bg-400,
+body.light-theme .pos .bg-700 {
+    background-color: #ffffff !important;
+}
+
+body.light-theme .pos .leftpane,
+body.light-theme .pos .rightpane,
+body.light-theme .pos .pane-border,
+body.light-theme .pos .controls,
+body.light-theme .pos .payment-screen,
+body.light-theme .pos .pos-content {
+    background-color: #ffffff !important;
+}
+
+body.light-theme .pos .orders,
+body.light-theme .pos .order-row,
+body.light-theme .pos .header-row {
+    background-color: #ffffff !important;
+}
+
+body.light-theme .bg-300,
+body.light-theme .bg-200,
+body.light-theme .bg-100 {
+    background-color: #ffffff !important;
+}
+
+body.light-theme .pos * {
+    border-color: #e2e8f0 !important;
+}
+
+/* LIGHT THEME PRODUCT INFORMATION TAG */
+body.light-theme .pos .product-information-tag {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-size: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+
+body.light-theme .pos .product-information-tag .product-information-tag-logo {
+    color: #64748b !important;
+}
+
+/* LIGHT THEME PRODUCT TAG HOVER */
+body.light-theme .pos .product-information-tag:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+body.light-theme .pos .product-information-tag:hover .product-information-tag-logo {
+    color: #3b82f6 !important;
+}
+
+/* LIGHT THEME PRODUCT TAG ACTIVE */
+body.light-theme .pos .product-information-tag:active {
+    transform: scale(0.95);
+}
+
+/* =========================================================
+   THEME TOGGLE BUTTON
+   ========================================================= */
+
+.theme-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10001;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.95;
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 1;
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+/* Light theme toggle button */
+body.light-theme .theme-toggle-btn {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .theme-toggle-btn:hover {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
 }

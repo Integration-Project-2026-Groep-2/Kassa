@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
+        <!-- Theme Toggle Template -->
+        <template id="ThemeToggle" inherit_id="point_of_sale.chrome">
+            <xpath expr="//div[@class='pos']" position="inside">
+                <ThemeToggle/>
+            </xpath>
+        </template>
+
         <!-- Assets are loaded via __manifest__.py (point_of_sale._assets_pos). -->
     </data>
 </odoo>
