@@ -60,6 +60,7 @@ def create_exchanges():
         ("user.retry",         "direct", True),   # retry exchange
         ("user.topic",         "topic",  True),   # C36/C37/C38 Kassa → CRM user sync
         ("heartbeat.direct",   "direct", True),   # heartbeat (Contract 7)
+        ("logs.direct",        "direct", True),   # Controlroom centralized logs (ClickUp 2kyr1d3m-7235)
     ]
 
     for name, kind, durable in exchanges:

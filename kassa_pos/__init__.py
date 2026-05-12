@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
 
+# Append (not insert) so /app/src/odoo/ doesn't shadow the real Odoo package.
+import sys
+if '/app/src' not in sys.path:
+    sys.path.append('/app/src')
+try:
+    from logging_config import configure_logging
+    configure_logging()
+except ImportError as e:
+    print(f"kassa_pos: log handler not installed ({e})", file=sys.stderr)
+
 from odoo import SUPERUSER_ID, api
 
 from . import utils

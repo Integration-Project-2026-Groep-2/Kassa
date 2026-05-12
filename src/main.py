@@ -19,16 +19,11 @@ import os
 
 import aio_pika
 
+from logging_config import configure_logging
 from status import run_status
 from receiver import run_receiver
 
-_log_level_name = os.environ.get('LOG_LEVEL', 'INFO').upper()
-_log_level = getattr(logging, _log_level_name, logging.INFO)
-
-logging.basicConfig(
-    level=_log_level,
-    format='[%(levelname)s] %(asctime)s %(name)s: %(message)s',
-)
+configure_logging()
 logger = logging.getLogger(__name__)
 
 _host     = os.environ.get('RABBIT_HOST', 'localhost')

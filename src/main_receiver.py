@@ -1,6 +1,7 @@
 import logging
 import threading
 
+from logging_config import configure_logging
 from messaging.consumer import KassaConsumer
 from config import (
     RABBIT_HOST,
@@ -27,7 +28,7 @@ Queues (conform Docker-docs):
   R3: crm.user.deactivated, kassa.company.deactivated
 """
 
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+configure_logging()
 logger = logging.getLogger(__name__)
 
 
