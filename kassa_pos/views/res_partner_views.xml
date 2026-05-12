@@ -11,8 +11,8 @@
                 <xpath expr="//form" position="inside">
                     <header>
                         <button name="action_generate_qrcode" type="object" string="Toon QR Code"
-                                attrs="{'invisible': [('badge_code', '=', False)]}"
-                                class="btn-primary" icon="fa-qrcode"/>
+                            modifiers="{'invisible': [('badge_code', '=', False)]}"
+                            class="btn-primary" icon="fa-qrcode"/>
                     </header>
                 </xpath>
             </field>
@@ -25,9 +25,9 @@
             <field name="inherit_id" ref="base.res_partner_kanban_view"/>
             <field name="arch" type="xml">
                 <xpath expr="//a[@type='open']" position="after">
-                    <button name="action_generate_qrcode" type="object" 
+                        <button name="action_generate_qrcode" type="object" 
                             title="Toon QR Code" icon="fa-qrcode"
-                            attrs="{'invisible': [('badge_code', '=', False)]}"/>
+                            modifiers="{'invisible': [('badge_code', '=', False)]}"/>
                 </xpath>
             </field>
         </record>
