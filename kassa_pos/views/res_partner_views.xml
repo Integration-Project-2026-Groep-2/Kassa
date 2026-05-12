@@ -7,11 +7,13 @@
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
-                <!-- Insert into header to avoid fragile xpath on other community/enterprise builds -->
-                <xpath expr="//header" position="inside">
-                    <button name="action_generate_qrcode" type="object" string="Toon QR Code"
-                            attrs="{'invisible': [('badge_code', '=', False)]}"
-                            class="btn-primary" icon="fa-qrcode"/>
+                <!-- Ensure the button is present by creating a header inside the form if needed -->
+                <xpath expr="//form" position="inside">
+                    <header>
+                        <button name="action_generate_qrcode" type="object" string="Toon QR Code"
+                                attrs="{'invisible': [('badge_code', '=', False)]}"
+                                class="btn-primary" icon="fa-qrcode"/>
+                    </header>
                 </xpath>
             </field>
         </record>
