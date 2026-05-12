@@ -26,11 +26,17 @@ except ImportError:
     HAS_AIOPIKA = False
 
 
+# Spec splits FATAL and PANIC; Python's logging.FATAL aliases CRITICAL, so we register
+# a distinct level between ERROR and CRITICAL to keep both reachable.
+FATAL = 45
+logging.addLevelName(FATAL, "FATAL")
+
 SEVERITY_MAP = {
     logging.DEBUG: "DEBUG",
     logging.INFO: "INFO",
     logging.WARNING: "WARN",
     logging.ERROR: "ERROR",
+    FATAL: "FATAL",
     logging.CRITICAL: "PANIC",
 }
 
