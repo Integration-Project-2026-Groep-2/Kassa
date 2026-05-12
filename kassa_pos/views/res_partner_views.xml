@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Extend res.partner form view with QR code button -->
+        <record id="res_partner_form_inherit_qrcode" model="ir.ui.view">
+            <field name="name">res.partner.form.inherit.qrcode</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//button[@name='action_open_base_onboarding_company']" position="before">
+                    <button name="action_generate_qrcode" type="object" string="Toon QR Code" 
+                            attrs="{'invisible': [('badge_code', '=', False)]}"
+                            class="btn-primary" icon="fa-qrcode"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Extend res.partner kanban view with QR code button -->
+        <record id="res_partner_kanban_inherit_qrcode" model="ir.ui.view">
+            <field name="name">res.partner.kanban.inherit.qrcode</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.res_partner_kanban_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//a[@type='open']" position="after">
+                    <button name="action_generate_qrcode" type="object" 
+                            title="Toon QR Code" icon="fa-qrcode"
+                            attrs="{'invisible': [('badge_code', '=', False)]}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- QR Code Wizard Form View -->
+        <record id="res_partner_qrcode_wizard_form" model="ir.ui.view">
+            <field name="name">res.partner.qrcode.wizard.form</field>
+            <field name="model">res.partner.qrcode.wizard</field>
+            <field name="arch" type="xml">
+                <form string="QR Code">
+                    <group>
+                        <field name="partner_id"/>
+                        <field name="badge_code"/>
+                    </group>
+                    <group>
+                        <field name="qr_code_image" widget="image" options="{'size': [400, 400]}"/>
+                    </group>
+                    <footer>
+                        <button name="action_close" string="Sluiten" type="object" class="btn-primary"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
+
