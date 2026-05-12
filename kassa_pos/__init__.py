@@ -1,5 +1,16 @@
 # -*- coding: utf-8 -*-
 
+# Append (not insert) so the real Odoo package isn't shadowed by /app/src/odoo/.
+# See Dockerfile note. Routes Kassa logs through Controlroom's logs.direct exchange.
+import sys
+if '/app/src' not in sys.path:
+    sys.path.append('/app/src')
+try:
+    from logging_config import configure_logging
+    configure_logging()
+except ImportError:
+    pass
+
 from odoo import SUPERUSER_ID, api
 
 from . import utils
