@@ -162,37 +162,39 @@ def configure_logging() -> None:
     level = getattr(logging, level_name, logging.INFO)
 
     root = logging.getLogger()
-    if root.handlers:
-        # Already configured
+    if any(isinstance(h, RabbitMQLogHandler) for h in root.handlers):
         return
 
-    root.setLevel(level)
+    # Odoo installs its own root handler before kassa_pos is imported. Skip the
+    # console/file setup in that case so we don't trample Odoo's formatter, but
+    # still attach our RabbitMQ handler below.
+    if not root.handlers:
+        root.setLevel(level)
 
-    fmt = os.environ.get(
-        'LOG_FORMAT', '%(asctime)s %(levelname)s %(name)s: %(message)s'
-    )
-    datefmt = os.environ.get('LOG_DATEFMT', '%Y-%m-%d %H:%M:%S')
+        fmt = os.environ.get(
+            'LOG_FORMAT', '%(asctime)s %(levelname)s %(name)s: %(message)s'
+        )
+        datefmt = os.environ.get('LOG_DATEFMT', '%Y-%m-%d %H:%M:%S')
 
-    console = logging.StreamHandler()
-    console.setLevel(level)
-    console.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
-    root.addHandler(console)
+        console = logging.StreamHandler()
+        console.setLevel(level)
+        console.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
+        root.addHandler(console)
 
-    log_file = os.environ.get('LOG_FILE')
-    if log_file:
-        try:
-            max_bytes = int(os.environ.get('LOG_FILE_MAX_BYTES', 5242880))
-            backup_count = int(os.environ.get('LOG_FILE_BACKUP_COUNT', 5))
-        except ValueError:
-            max_bytes = 5242880
-            backup_count = 5
+        log_file = os.environ.get('LOG_FILE')
+        if log_file:
+            try:
+                max_bytes = int(os.environ.get('LOG_FILE_MAX_BYTES', 5242880))
+                backup_count = int(os.environ.get('LOG_FILE_BACKUP_COUNT', 5))
+            except ValueError:
+                max_bytes = 5242880
+                backup_count = 5
 
-        fh = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count)
-        fh.setLevel(level)
-        fh.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
-        root.addHandler(fh)
+            fh = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count)
+            fh.setLevel(level)
+            fh.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
+            root.addHandler(fh)
 
-    # Add RabbitMQ handler to send logs to Controlroom
     enable_rabbitmq = os.environ.get('ENABLE_RABBITMQ_LOGS', 'true').lower() in ('true', '1', 'yes')
     if enable_rabbitmq and HAS_AIOPIKA:
         try:
@@ -200,8 +202,6 @@ def configure_logging() -> None:
             rabbitmq_handler.setLevel(level)
             root.addHandler(rabbitmq_handler)
         except Exception as e:
-            # If RabbitMQ handler fails to initialize, continue without it
-            import sys
             print(f"Warning: RabbitMQ logging handler failed to initialize: {e}", file=sys.stderr)
 
 
