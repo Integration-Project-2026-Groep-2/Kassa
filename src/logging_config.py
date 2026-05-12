@@ -10,6 +10,7 @@ Reads environment variables:
 """
 import logging
 import os
+import sys
 import threading
 import queue
 from datetime import datetime, timezone
@@ -45,7 +46,10 @@ class RabbitMQLogHandler(logging.Handler):
         self.service_name = service_name
         self.log_queue = queue.Queue()
         self.stop_event = threading.Event()
-        
+        self._connection = None
+        self._channel = None
+        self._exchange = None
+
         # Start background thread for async publishing
         self.thread = threading.Thread(target=self._worker_thread, daemon=True)
         self.thread.start()
@@ -64,47 +68,58 @@ class RabbitMQLogHandler(logging.Handler):
             return
 
         loop = None
-        connection = None
-
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             while not self.stop_event.is_set():
                 try:
-                    # Get record with timeout
                     record = self.log_queue.get(timeout=1.0)
-                    
-                    # Publish asynchronously
-                    loop.run_until_complete(
-                        self._publish_to_rabbitmq(record)
-                    )
+                    loop.run_until_complete(self._publish_to_rabbitmq(record))
                 except queue.Empty:
                     continue
                 except Exception as e:
-                    # Log to stderr but don't crash
-                    import sys
                     print(f"RabbitMQLogHandler error: {e}", file=sys.stderr)
 
         finally:
             if loop:
+                if self._connection is not None:
+                    try:
+                        loop.run_until_complete(self._connection.close())
+                    except Exception:
+                        pass
                 loop.close()
 
-    async def _publish_to_rabbitmq(self, record: logging.LogRecord) -> None:
-        """Publish a log record as XML to RabbitMQ."""
+    async def _ensure_connected(self) -> None:
+        if self._channel is not None and not self._channel.is_closed:
+            return
+
+        # Dual-context import: setup_rabbitmq.py runs from /app (package), sidecars and
+        # the Odoo addon hook run with /app/src on sys.path (sibling import).
         try:
-            from config import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
-
-            connection = await aio_pika.connect_robust(
-                f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}:{RABBIT_PORT}/{RABBIT_VHOST}"
+            from src.config import (
+                RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST,
             )
-            channel = await connection.channel()
+        except ImportError:
+            from config import (
+                RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST,
+            )
 
-            # Build XML LogEvent
+        self._connection = await aio_pika.connect_robust(
+            f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}:{RABBIT_PORT}/{RABBIT_VHOST}"
+        )
+        self._channel = await self._connection.channel()
+        self._exchange = await self._channel.declare_exchange(
+            "logs.direct", "direct", durable=True,
+        )
+
+    async def _publish_to_rabbitmq(self, record: logging.LogRecord) -> None:
+        """Publish a log record as XML LogEvent to the logs.direct exchange."""
+        try:
+            await self._ensure_connected()
+
             root = etree.Element("LogEvent")
-            etree.SubElement(root, "level").text = SEVERITY_MAP.get(
-                record.levelno, "INFO"
-            )
+            etree.SubElement(root, "level").text = SEVERITY_MAP.get(record.levelno, "INFO")
             etree.SubElement(root, "timestamp").text = datetime.fromtimestamp(
                 record.created, tz=timezone.utc
             ).isoformat()
@@ -113,17 +128,15 @@ class RabbitMQLogHandler(logging.Handler):
 
             xml_bytes = etree.tostring(root, xml_declaration=True, encoding="UTF-8")
 
-            # Publish to logs.direct exchange
-            await channel.default_exchange.publish(
+            await self._exchange.publish(
                 aio_pika.Message(body=xml_bytes),
                 routing_key="routing.log",
             )
-
-            await connection.close()
-
-        except Exception:
-            # Silently fail to avoid disrupting the logging system
-            pass
+        except Exception as e:
+            print(f"RabbitMQLogHandler publish failed: {e}", file=sys.stderr)
+            self._connection = None
+            self._channel = None
+            self._exchange = None
 
     def close(self) -> None:
         """Stop the worker thread and clean up."""
