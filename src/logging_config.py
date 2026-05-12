@@ -10,6 +10,7 @@ Reads environment variables:
 """
 import logging
 import os
+import re
 import sys
 import threading
 import queue
@@ -34,6 +35,9 @@ SEVERITY_MAP = {
     logging.CRITICAL: "PANIC",
 }
 
+# XML 1.0 disallows these; one dirty log line would otherwise loop-fail the publisher.
+_XML_CTRL_CHARS = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F]")
+
 
 class RabbitMQLogHandler(logging.Handler):
     """
@@ -44,7 +48,7 @@ class RabbitMQLogHandler(logging.Handler):
     def __init__(self, service_name: str = "KASSA"):
         super().__init__()
         self.service_name = service_name
-        self.log_queue = queue.Queue()
+        self.log_queue = queue.Queue(maxsize=10_000)
         self.stop_event = threading.Event()
         self._connection = None
         self._channel = None
@@ -124,7 +128,7 @@ class RabbitMQLogHandler(logging.Handler):
                 record.created, tz=timezone.utc
             ).isoformat()
             etree.SubElement(root, "service").text = self.service_name
-            etree.SubElement(root, "data").text = record.getMessage()
+            etree.SubElement(root, "data").text = _XML_CTRL_CHARS.sub("?", record.getMessage())
 
             xml_bytes = etree.tostring(root, xml_declaration=True, encoding="UTF-8")
 
@@ -134,6 +138,12 @@ class RabbitMQLogHandler(logging.Handler):
             )
         except Exception as e:
             print(f"RabbitMQLogHandler publish failed: {e}", file=sys.stderr)
+            if self._connection is not None:
+                # Release TCP socket + heartbeat task before the next reconnect attempt.
+                try:
+                    await self._connection.close()
+                except Exception:
+                    pass
             self._connection = None
             self._channel = None
             self._exchange = None
