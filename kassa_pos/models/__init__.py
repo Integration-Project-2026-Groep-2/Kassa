@@ -6,4 +6,3 @@ from . import user_registration
 from . import pos_order_batch
 from . import pos_session
 from . import balance_transaction
-from . import qrcode_wizard

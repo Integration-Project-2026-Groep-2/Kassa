@@ -26,7 +26,6 @@
         'data/res_partner_data.xml',
         'data/user_contact_data.xml',
         'data/product_product_data.xml',
-        'views/res_partner_views.xml',
         'views/kassa_pos_user_registration_view.xml',
         'views/pos_order_batch_views.xml',
     ],
