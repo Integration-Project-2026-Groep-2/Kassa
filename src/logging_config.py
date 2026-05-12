@@ -26,7 +26,6 @@ except ImportError:
     HAS_AIOPIKA = False
 
 
-# Mapping from Python logging levels to XML LogEvent severity types
 SEVERITY_MAP = {
     logging.DEBUG: "DEBUG",
     logging.INFO: "INFO",
@@ -54,7 +53,6 @@ class RabbitMQLogHandler(logging.Handler):
         self._channel = None
         self._exchange = None
 
-        # Start background thread for async publishing
         self.thread = threading.Thread(target=self._worker_thread, daemon=True)
         self.thread.start()
 
@@ -206,5 +204,4 @@ def configure_logging() -> None:
 
 
 
-# Configure on import so modules don't have to call this explicitly.
 configure_logging()
