@@ -11,40 +11,21 @@ patch(PaymentScreen.prototype, {
         this.rpc = useService("rpc");
         this.notification = useService("notification");
         
-        // Intercept RPC calls to detect Invoice errors before they bubble up
+        // Intercept RPC calls to provide cleaner error feedback for kassa-specific errors
         const notificationService = this.notification;
         const rpcService = this.rpc;
         const origCall = rpcService.call.bind(rpcService);
         
         rpcService.call = async function(model, method, args, kwargs) {
             try {
-                const result = await origCall(model, method, args, kwargs);
-                
-                // If call succeeded but result has error_msg, handle it
-                if (result && typeof result === 'object' && result.error_msg) {
-                    const msg = (result.error_msg || '').toString().toLowerCase();
-                    if (msg.includes('user niet gelinkt') || msg.includes('invoice')) {
-                        notificationService.add(
-                            'User niet gelinkt aan een bedrijf.',
-                            { type: 'danger', title: 'Invoice niet toegestaan' }
-                        );
-                        throw new Error('INVOICE_BLOCKED');
-                    }
-                }
-                return result;
+                return await origCall(model, method, args, kwargs);
             } catch (err) {
-                // Check error message for Invoice block
                 const errMsg = (err && (err.message || (err.data && err.data.message)) || '').toString().toLowerCase();
                 if (errMsg.includes('user niet gelinkt')) {
-                    try {
-                        notificationService.add(
-                            'User niet gelinkt aan een bedrijf.',
-                            { type: 'danger', title: 'Invoice niet toegestaan' }
-                        );
-                        throw new Error('INVOICE_BLOCKED');
-                    } catch (nn) {
-                        console.warn('notification failed', nn);
-                    }
+                    notificationService.add(
+                        'User niet gelinkt aan een bedrijf.',
+                        { type: 'danger', title: 'Invoice fout' }
+                    );
                 }
                 throw err;
             }
@@ -53,25 +34,8 @@ patch(PaymentScreen.prototype, {
 
 
     async selectPaymentMethod(paymentMethod) {
-        // Prevent Invoice payment for partners without a linked company
-        try {
-            const isInvoiceMethod = (paymentMethod.name || '').toLowerCase().includes('invoice');
-            if (isInvoiceMethod) {
-                const order = this.currentOrder;
-                const partner = order.get_partner();
-                if (!partner || !partner.company_id_custom) {
-                    this.notification.add(
-                        'User niet gelinkt aan een bedrijf.',
-                        { type: 'danger', title: 'Invoice niet toegestaan' }
-                    );
-                    return;
-                }
-                return super.selectPaymentMethod(paymentMethod);
-            }
-        } catch (e) {
-            // defensive: if anything goes wrong, fall back to default behaviour
-            console.error('Invoice check failed', e);
-        }
+        // No pre-selection block for Invoice; let backend decide routing
+        // based on partner data during _trigger_rabbitmq_messages.
 
         const isTopUpMethod = ['saldo', 'top up'].includes(paymentMethod.name.toLowerCase());
         if (!isTopUpMethod) {
@@ -233,19 +197,6 @@ patch(PaymentScreen.prototype, {
         }
 
         try {
-            // Check for Invoice with company_id_custom BEFORE validateOrder
-            const invoiceLine = order.get_paymentlines().find(
-                line => line.payment_method && (line.payment_method.name || '').toLowerCase().includes('invoice')
-            );
-            
-            if (invoiceLine && partner && !partner.company_id_custom) {
-                this.notification.add(
-                    'User niet gelinkt aan een bedrijf.',
-                    { type: 'danger', title: 'Invoice niet toegestaan' }
-                );
-                return;
-            }
-            
             return await super.validateOrder(isForceValidate);
         } catch (e) {
             console.error('validateOrder error:', e);
@@ -257,7 +208,7 @@ patch(PaymentScreen.prototype, {
             if (msgStr.includes('user niet gelinkt')) {
                 this.notification.add(
                     'User niet gelinkt aan een bedrijf.',
-                    { type: 'danger', title: 'Invoice niet toegestaan' }
+                    { type: 'danger', title: 'Invoice Fout' }
                 );
                 return;
             }

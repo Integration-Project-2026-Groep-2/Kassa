@@ -329,12 +329,13 @@ class PosOrder(models.Model):
                 
                 if partner_id:
                     partner = self.env['res.partner'].browse(partner_id)
+                    user_id = partner.user_id_custom if partner else False
                     has_company = partner.company_id_custom if partner else False
-                    _logger.error("❌ create_from_ui: INVOICE + partner_id=%s company_id_custom=%s", partner_id, has_company)
+                    _logger.info("🟢 create_from_ui: INVOICE + partner_id=%s user_id_custom=%s company_id_custom=%s", 
+                                 partner_id, user_id, has_company)
                     
                     if partner and not partner.company_id_custom:
-                        _logger.error("❌❌❌ create_from_ui: BLOCKING Invoice payment for partner WITHOUT company")
-                        raise UserError('User niet gelinkt aan een bedrijf.')
+                        _logger.info("ℹ️ create_from_ui: Invoice payment for partner WITHOUT company (Particulier/US-11 path)")
         
         # Now create orders
         order_ids = super().create_from_ui(orders, draft=draft)
