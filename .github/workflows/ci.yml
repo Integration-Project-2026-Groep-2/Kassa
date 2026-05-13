@@ -43,6 +43,8 @@ jobs:
           flake8 src/ kassa_pos/ --count --select=E9,F63,F7,F82 --show-source --statistics || true
 
       - name: Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
         run: |
           pytest tests/ src/tests/ -v --cov=src --cov=kassa_pos --cov-report=xml --cov-report=html
 
