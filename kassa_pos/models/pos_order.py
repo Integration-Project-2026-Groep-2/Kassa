@@ -4,6 +4,7 @@ import uuid
 import hashlib
 import logging
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 from ..utils import rabbitmq_sender
 
 _logger = logging.getLogger(__name__)
@@ -286,6 +287,56 @@ class PosOrder(models.Model):
         Override van de POS frontend call.
         Na het verwerken van de order → stuur berichten naar RabbitMQ en verwerk saldo.
         """
+        # Server-side guard: FIRST check Invoice payment restrictions BEFORE creating orders
+        for order_data in orders:
+            # Order data structure has payment info in order_data['data']
+            order_dict = order_data.get('data', {})
+            
+            # Get payment lines from order data - stored in statement_ids
+            payments = order_dict.get('statement_ids', [])
+            _logger.info("🔍 create_from_ui: statement_ids=%s", payments)
+            
+            # Check if any payment is Invoice
+            is_invoice = False
+            for payment_line in payments:
+                _logger.info("🔍 create_from_ui: payment_line=%s", payment_line)
+                
+                # payment_line format: (0, False, {dict_with_payment_data})
+                if isinstance(payment_line, (list, tuple)) and len(payment_line) >= 3:
+                    payment_data = payment_line[2]
+                    payment_method_id = payment_data.get('payment_method_id')
+                    _logger.info("🔍 create_from_ui: payment_method_id=%s from data=%s", payment_method_id, payment_data)
+                    
+                    if payment_method_id:
+                        try:
+                            payment_method = self.env['pos.payment.method'].browse(payment_method_id)
+                            method_name = payment_method.name if payment_method else 'NOT_FOUND'
+                            _logger.warning("🔍 create_from_ui: payment_method.name=%s", method_name)
+                            
+                            if payment_method and 'invoice' in (method_name or '').lower():
+                                is_invoice = True
+                                _logger.error("❌ create_from_ui: INVOICE METHOD DETECTED: %s", method_name)
+                                break
+                        except Exception as e:
+                            _logger.warning("🔍 create_from_ui: exception browsing payment method: %s", e)
+            
+            _logger.info("🔍 create_from_ui: is_invoice=%s", is_invoice)
+            
+            # Check partner company_id_custom
+            if is_invoice:
+                partner_id = order_dict.get('partner_id')
+                _logger.info("🔍 create_from_ui: partner_id=%s for invoice order", partner_id)
+                
+                if partner_id:
+                    partner = self.env['res.partner'].browse(partner_id)
+                    has_company = partner.company_id_custom if partner else False
+                    _logger.error("❌ create_from_ui: INVOICE + partner_id=%s company_id_custom=%s", partner_id, has_company)
+                    
+                    if partner and not partner.company_id_custom:
+                        _logger.error("❌❌❌ create_from_ui: BLOCKING Invoice payment for partner WITHOUT company")
+                        raise UserError('User niet gelinkt aan een bedrijf.')
+        
+        # Now create orders
         order_ids = super().create_from_ui(orders, draft=draft)
 
         for order_info in order_ids:
