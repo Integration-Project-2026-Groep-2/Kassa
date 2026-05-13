@@ -46,7 +46,7 @@ def post_init(env):
         journals = [
             ('account_journal_cash_kassa', 'Kassa Cash', 'KCASH', 'cash'),
             ('account_journal_bancontact_kassa', 'Kassa Bancontact', 'KBANC', 'bank'),
-            ('account_journal_saldo_kassa', 'Kassa Top Up', 'KSAL', 'bank'),
+            ('account_journal_saldo_kassa', 'Kassa Saldo', 'KSAL', 'bank'),
         ]
 
         for xml_name, display_name, code, journal_type in journals:
@@ -139,7 +139,7 @@ def post_init(env):
             ('payment_method_cash', 'Cash', 'account_journal_cash_kassa'),
             ('payment_method_card', 'Bancontact', 'account_journal_bancontact_kassa'),
             ('payment_method_invoice', 'Invoice', 'account_journal_bancontact_kassa'),
-            ('pos_payment_method_topup', 'Top Up', 'account_journal_saldo_kassa'),
+            ('pos_payment_method_topup', 'Saldo', 'account_journal_saldo_kassa'),
         ]
         
         for xml_name, display_name, journal_xmlid in payment_methods:

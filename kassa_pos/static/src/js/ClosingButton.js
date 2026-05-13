@@ -7,7 +7,7 @@ import { ProductScreen } from '@point_of_sale/app/screens/product_screen/product
 
 class ClosingButton extends Component {
     static template = xml`
-        <button class="button kassa-closing-btn" t-on-click="onClosingClick" title="Dagafsluiting versturen naar facturatie">
+        <button class="button kassa-pos-control-btn kassa-pos-control-btn--slate kassa-closing-btn" t-on-click="onClosingClick" title="Dagafsluiting versturen naar facturatie">
             <i class="fa fa-save"/>
             <span>Afsluitknop</span>
         </button>
@@ -59,6 +59,7 @@ class ClosingButton extends Component {
 
 ProductScreen.addControlButton({
     component: ClosingButton,
+    position: ["after", "AddUserButton"],
     condition: function () {
         return true;
     },
