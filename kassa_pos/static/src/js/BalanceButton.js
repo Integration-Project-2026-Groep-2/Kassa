@@ -7,7 +7,7 @@ import { BalanceTopupModal } from "./BalanceTopupModal";
 
 class BalanceButton extends Component {
     static template = xml`
-        <button class="button kassa-balance-btn" t-on-click="openTopup" title="Saldo opladen">
+        <button class="button kassa-pos-control-btn kassa-pos-control-btn--green kassa-balance-btn" t-on-click="openTopup" title="Saldo opladen">
             <i class="fa fa-wallet"/>
             <span>Top Up</span>
         </button>
@@ -24,6 +24,7 @@ class BalanceButton extends Component {
 
 ProductScreen.addControlButton({
     component: BalanceButton,
+    position: ["after", "ClosingButton"],
     condition: function () {
         return true;
     },
