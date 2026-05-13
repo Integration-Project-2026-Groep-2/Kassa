@@ -22,7 +22,7 @@ def post_init(env):
 
     Responsibilities:
     1. Ensure the res.partner.balance column exists (schema migration).
-    2. Create pos.config and payment methods safely to avoid ORM write restrictions.
+    2. Create journals, pos.config and payment methods safely to avoid ORM write restrictions.
     """
     cr = env.cr
 
@@ -37,7 +37,58 @@ def post_init(env):
             ADD COLUMN balance numeric(10,2) DEFAULT 0.0
         """)
 
-    # ── 2. Create pos.config safely ──────────────────────────────────────────
+    # ── 2. Create account journals safely ────────────────────────────────────
+    try:
+        Journal = env['account.journal'].sudo()
+        IrModelData = env['ir.model.data'].sudo()
+        Company = env.ref('base.main_company')
+
+        journals = [
+            ('account_journal_cash_kassa', 'Kassa Cash', 'KCASH', 'cash'),
+            ('account_journal_bancontact_kassa', 'Kassa Bancontact', 'KBANC', 'bank'),
+            ('account_journal_saldo_kassa', 'Kassa Top Up', 'KSAL', 'bank'),
+        ]
+
+        for xml_name, display_name, code, journal_type in journals:
+            try:
+                IrModelData.get_object('kassa_pos', xml_name)
+                continue
+            except Exception:
+                pass
+
+            existing = Journal.search([('code', '=', code)], limit=1)
+            if existing:
+                try:
+                    IrModelData.create({
+                        'module': 'kassa_pos',
+                        'name': xml_name,
+                        'model': 'account.journal',
+                        'res_id': existing.id,
+                    })
+                except Exception:
+                    pass
+                continue
+
+            journal = Journal.create({
+                'name': display_name,
+                'code': code,
+                'type': journal_type,
+                'company_id': Company.id,
+            })
+            IrModelData.create({
+                'module': 'kassa_pos',
+                'name': xml_name,
+                'model': 'account.journal',
+                'res_id': journal.id,
+            })
+    except Exception:
+        try:
+            import logging
+            logging.getLogger('kassa_pos').exception('post_init: failed to create account journals')
+        except Exception:
+            pass
+
+    # ── 3. Create pos.config safely ──────────────────────────────────────────
     try:
         PosConfig = env['pos.config'].sudo()
         IrModelData = env['ir.model.data'].sudo()
@@ -77,7 +128,7 @@ def post_init(env):
             logging.getLogger('kassa_pos').exception('post_init: failed to create pos.config')
         except Exception:
             pass
-    # ── 3. Create POS payment methods safely ─────────────────────────────────
+    # ── 4. Create POS payment methods safely ─────────────────────────────────
     try:
         PaymentMethod = env['pos.payment.method'].sudo()
         IrModelData = env['ir.model.data'].sudo()
@@ -144,7 +195,7 @@ def post_init(env):
         except Exception:
             pass
 
-    # ── 4. Link payment methods to pos.config ────────────────────────────────
+    # ── 5. Link payment methods to pos.config ────────────────────────────────
     try:
         cr.execute("SELECT res_id FROM ir_model_data WHERE module='kassa_pos' AND name='pos_config_kassa_main'")
         row = cr.fetchone()
