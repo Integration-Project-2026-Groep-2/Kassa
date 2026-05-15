@@ -4,7 +4,7 @@ import time
 from logging_config import configure_logging
 from messaging.producer import KassaProducer
 from messaging.message_builders import build_heartbeat_xml
-from src.settings import (
+from settings import (
     RABBIT_HOST,
     HEARTBEAT_INTERVAL_SECONDS,
     HEARTBEAT_EXCHANGE,
