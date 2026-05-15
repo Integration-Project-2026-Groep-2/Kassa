@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import Mock
 
 from messaging.user_consumer import UserConsumer
-from odoo.user_repository import OdooUserRepository
+from odoo_integration.user_repository import OdooUserRepository
 from models.user import User
 
 

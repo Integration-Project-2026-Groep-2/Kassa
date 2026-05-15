@@ -14,7 +14,7 @@ import uuid
 import xml.etree.ElementTree as ET
 from models.user import User, UserRole
 from messaging.message_builders import build_user_xml, parse_user_xml
-from odoo.user_repository import OdooUserRepository
+from odoo_integration.user_repository import OdooUserRepository
 
 
 class DummyOdooConnection:

@@ -22,8 +22,8 @@ from lxml import etree
 
 from xml_validator import validate_xml
 from messaging.user_consumer import UserConsumer
-from odoo.odoo_connection import OdooConnection
-from odoo.user_repository import OdooUserRepository
+from odoo_integration.odoo_connection import OdooConnection
+from odoo_integration.user_repository import OdooUserRepository
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import pika
 import time
 import logging
-from config import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
+from src.settings import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
 
 
 logger = logging.getLogger(__name__)

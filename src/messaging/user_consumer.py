@@ -17,7 +17,7 @@ from typing import Optional, Callable
 from models.user import User
 from messaging.message_builders import parse_user_xml
 from xml_validator import validate_xml
-from odoo.user_repository import OdooUserRepository
+from odoo_integration.user_repository import OdooUserRepository
 
 logger = logging.getLogger(__name__)
 
