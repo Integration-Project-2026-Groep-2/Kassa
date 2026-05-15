@@ -1,6 +1,6 @@
 from messaging.producer import KassaProducer
 from messaging.message_builders import build_heartbeat_xml
-from config import RABBIT_HOST, HEARTBEAT_EXCHANGE, HEARTBEAT_ROUTING_KEY
+from src.settings import RABBIT_HOST, HEARTBEAT_EXCHANGE, HEARTBEAT_ROUTING_KEY
 import logging
 
 

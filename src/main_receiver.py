@@ -3,7 +3,7 @@ import threading
 
 from logging_config import configure_logging
 from messaging.consumer import KassaConsumer
-from config import (
+from src.settings import (
     RABBIT_HOST,
     WARNING_QUEUE,
     PERSON_LOOKUP_RESPONSE_QUEUE,
