@@ -3,7 +3,7 @@ import threading
 
 from logging_config import configure_logging
 from messaging.consumer import KassaConsumer
-from src.settings import RABBIT_HOST, PAYMENT_CONFIRMED_QUEUE, INVOICE_REQUESTED_QUEUE
+from settings import RABBIT_HOST, PAYMENT_CONFIRMED_QUEUE, INVOICE_REQUESTED_QUEUE
 
 """
 Test-receiver die berichten logt van de queues die Kassa publiceert.

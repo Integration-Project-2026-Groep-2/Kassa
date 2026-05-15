@@ -105,11 +105,11 @@ class RabbitMQLogHandler(logging.Handler):
         # Dual-context import: setup_rabbitmq.py runs from /app (package), sidecars and
         # the Odoo addon hook run with /app/src on sys.path (sibling import).
         try:
-            from src.settings import (
+            from settings import (
                 RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST,
             )
         except ImportError:
-            from src.settings import (
+            from settings import (
                 RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST,
             )
 
