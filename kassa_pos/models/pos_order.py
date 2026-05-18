@@ -25,17 +25,19 @@ class PosOrder(models.Model):
         ('Invoice', 'Invoice')
     ], string='Payment Type', compute='_compute_payment_type', store=True, readonly=True)
 
-    @api.depends('payment_ids', 'payment_ids.payment_method_id')
+    @api.depends('payment_ids', 'payment_ids.payment_method_id', 'to_invoice')
     def _compute_payment_type(self):
         """
-        Bepaal payment type op basis van payment methods:
+        Bepaal payment type op basis van payment methods en factuurstatus:
         - Cash of Bancontact = Direct
         - Invoice = Invoice
         """
         for order in self:
             payment_type = 'Direct'  # Default
 
-            if order.payment_ids:
+            if order.to_invoice:
+                payment_type = 'Invoice'
+            elif order.payment_ids:
                 for payment in order.payment_ids:
                     if payment.payment_method_id:
                         payment_name = payment.payment_method_id.name.lower()
