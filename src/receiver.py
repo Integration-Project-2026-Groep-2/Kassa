@@ -252,9 +252,9 @@ async def on_user_message(message: aio_pika.IncomingMessage) -> None:
 # (queue_name, durable, exclusive, handler, routing_key)
 CONTACT_TOPIC_EXCHANGE = "contact.topic"
 QUEUE_HANDLERS = [
-    ("kassa.person.lookup.responded",   False, True, on_person_lookup_response, "crm.person.lookup.responded"),
+    ("kassa.person.lookup.responded",   True,  False, on_person_lookup_response, "crm.person.lookup.responded"),
     ("kassa.user.confirmed",            True,  False, on_user_confirmed,         "crm.user.confirmed"),
-    ("kassa.unpaid.responded",          False, True, on_unpaid_response,        "crm.unpaid.responded"),
+    ("kassa.unpaid.responded",          True,  False, on_unpaid_response,        "crm.unpaid.responded"),
     ("kassa.user.updated",              True,  False, on_user_updated,           "crm.user.updated"),
     ("kassa.user.deactivated",          True,  False, on_user_deactivated,       "crm.user.deactivated"),
 ]

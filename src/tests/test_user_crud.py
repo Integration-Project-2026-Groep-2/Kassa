@@ -61,7 +61,7 @@ class DummyOdooConnection:
     def get_default_company_id(self):
         return 1  # Simulate default company
 
-    def write(self, model, ids, values):
+    def write(self, model, ids, values, **kwargs):
         self.written_values = values
         return True
 
@@ -308,8 +308,8 @@ class TestOdooUserRepository(unittest.TestCase):
         repo.create_user(self.user)
 
         self.assertIsNotNone(repo.odoo.created_values)
-        # Verify company_id is set to the default (1)
-        self.assertEqual(repo.odoo.created_values.get('company_id'), 1)
+        # Verify company_id is set to False (visible across all Odoo companies)
+        self.assertEqual(repo.odoo.created_values.get('company_id'), False)
         self.assertEqual(repo.odoo.created_values['customer_rank'], 1)
         self.assertFalse(repo.odoo.created_values['is_company'])
 
