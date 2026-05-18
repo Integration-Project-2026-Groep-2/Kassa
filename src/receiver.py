@@ -249,14 +249,14 @@ async def on_user_message(message: aio_pika.IncomingMessage) -> None:
     # (end dev variant)
 # ── Queue configuratie ─────────────────────────────────────────────────────────
 
-# (queue_name, durable, handler, routing_key)
+# (queue_name, durable, exclusive, handler, routing_key)
 CONTACT_TOPIC_EXCHANGE = "contact.topic"
 QUEUE_HANDLERS = [
-    ("kassa.person.lookup.responded",   False, on_person_lookup_response, "crm.person.lookup.responded"),
-    ("kassa.user.confirmed",            True,  on_user_confirmed,         "crm.user.confirmed"),
-    ("kassa.unpaid.responded",          False, on_unpaid_response,        "crm.unpaid.responded"),
-    ("kassa.user.updated",              True,  on_user_updated,           "crm.user.updated"),
-    ("kassa.user.deactivated",          True,  on_user_deactivated,       "crm.user.deactivated"),
+    ("kassa.person.lookup.responded",   False, True, on_person_lookup_response, "crm.person.lookup.responded"),
+    ("kassa.user.confirmed",            True,  False, on_user_confirmed,         "crm.user.confirmed"),
+    ("kassa.unpaid.responded",          False, True, on_unpaid_response,        "crm.unpaid.responded"),
+    ("kassa.user.updated",              True,  False, on_user_updated,           "crm.user.updated"),
+    ("kassa.user.deactivated",          True,  False, on_user_deactivated,       "crm.user.deactivated"),
 ]
 
 
@@ -313,8 +313,8 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
         durable=True,
     )
 
-    for queue_name, durable, handler, routing_key in QUEUE_HANDLERS:
-        queue = await channel.declare_queue(queue_name, durable=durable)
+    for queue_name, durable, exclusive, handler, routing_key in QUEUE_HANDLERS:
+        queue = await channel.declare_queue(queue_name, durable=durable, exclusive=exclusive)
         if routing_key:
             await queue.bind(contact_exchange, routing_key=routing_key)
         else:
