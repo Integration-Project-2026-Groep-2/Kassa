@@ -1,48 +1,21 @@
-/* =========================================================
-   GLOBAL DARK POS THEME (FULL FIX)
-   ========================================================= */
-
-/* Default DARK theme - always active unless light-theme class is present */
 .pos {
     background: #0b1220 !important;
     color: #e5e7eb !important;
 }
 
-/* SURFACES OVERRIDE - default DARK */
-.pos .bg-white,
-.pos .bg-light,
-.pos .bg-100,
-.pos .bg-200,
-.pos .bg-300,
-.pos .bg-view {
+.bg-100, .bg-200, .bg-300, .pos .bg-100, .pos .bg-200, .pos .bg-300, .pos .bg-400, .pos .bg-700, .pos .bg-light, .pos .bg-view, .pos .bg-white, .pos .controls, .pos .pane-border {
     background-color: #111827 !important;
 }
-
-/* graded surfaces - default DARK */
-.pos .bg-100 { background-color: #0f172a !important; }
-.pos .bg-200 { background-color: #111827 !important; }
-.pos .bg-300 { background-color: #1f2937 !important; }
-.pos .bg-view { background-color: #1b2433 !important; }
-
-
-/* =========================================================
-   TOP BAR
-   ========================================================= */
 
 .pos .pos-topheader {
     background: #0f172a !important;
     border-bottom: 1px solid #1f2937 !important;
 }
 
-
-/* =========================================================
-   PANELS
-   ========================================================= */
-
-.pos .leftpane,
-.pos .rightpane {
+.pos .leftpane, .pos .rightpane {
     background: #111827 !important;
     border-color: #1f2937 !important;
+    background-color: #111827 !important;
 }
 
 .pos .order-container {
@@ -50,11 +23,6 @@
     border-radius: 16px !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.45);
 }
-
-
-/* =========================================================
-   ORDER LINES
-   ========================================================= */
 
 .pos .orderline {
     background: transparent !important;
@@ -73,11 +41,6 @@
     color: #fff !important;
 }
 
-
-/* =========================================================
-   PRODUCTS
-   ========================================================= */
-
 .pos .product {
     background: #1b2433 !important;
     border: 1px solid #243244 !important;
@@ -93,14 +56,7 @@
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-
-/* =========================================================
-   BUTTONS GLOBAL
-   ========================================================= */
-
-.pos .btn,
-.pos .button,
-.pos button {
+.pos .btn, .pos .button, .pos button {
     border-radius: 14px !important;
     border: 1px solid #243244 !important;
     background: #1b2433 !important;
@@ -108,41 +64,33 @@
     transition: all .2s ease;
 }
 
-.pos .btn-light,
-.pos button.btn-light,
-.pos .button.btn-light,
-.pos .popup .btn-light,
-.pos .popup button.btn-light,
-.pos .popup .button.btn-light {
+.pos .btn-light, .pos .button.btn-light, .pos .popup .btn-light, .pos .popup .button.btn-light, .pos .popup button.btn-light, .pos button.btn-light {
     background: #1b2433 !important;
     color: #e5e7eb !important;
     border-color: #243244 !important;
 }
 
-.pos .btn:hover,
-.pos .button:hover,
-.pos button:hover {
+.pos .btn:hover {
+    background: #243244 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+
+.pos .button:hover, .pos .next.validation:hover, .pos .pay-order-button:hover, .pos button:hover {
     background: #243244 !important;
     transform: translateY(-2px);
 }
 
-
-/* =========================================================
-   NUMPAD (REKENMACHINE)
-   ========================================================= */
-
-.pos .numpad button,
-.pos .numpad .btn {
+.pos .numpad .btn, .pos .numpad button {
     background: #1b2433 !important;
     border: 1px solid #2b3a50 !important;
     color: #e5e7eb !important;
-    border-radius: 16px !important;
+    border-radius: 14px !important;
     font-weight: 700;
     transition: all .15s ease;
 }
 
-.pos .numpad button:hover,
-.pos .numpad .btn:hover {
+.pos .numpad .btn:hover, .pos .numpad button:hover {
     background: #243244 !important;
     border-color: #3b82f6 !important;
     transform: scale(1.04);
@@ -153,150 +101,157 @@
     color: white !important;
 }
 
-
-/* =========================================================
-   PAYMENT SCREEN
-   ========================================================= */
-
-.pos .payment-screen {
+.pos .payment-screen, .pos .pos-content {
     background: #0b1220 !important;
+    background-color: #111827 !important;
 }
 
-.pos .paymentmethods-container,
-.pos .paymentlines-container {
+.pos .paymentmethods-container {
     background: #111827 !important;
     border-radius: 16px !important;
+}
+
+.pos .paymentlines-container {
+    background: #f8fafc !important;
+    border-radius: 16px !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
 }
 
 .pos .paymentmethod {
     background: #1b2433 !important;
     border-bottom: 1px solid #243244 !important;
+    color: #e5e7eb !important;
 }
 
-.pos .paymentmethod:hover {
+.pos .paymentmethod.btn-light:hover, .pos .paymentmethod:hover, .pos .top-content .btn-secondary:hover {
     background: #243244 !important;
 }
 
-.pos .paymentlines-container {
-    background: #f8fafc !important;
+.pos .paymentlines-container .total {
+    background: #ffffff !important;
     color: #0f172a !important;
-    border: 1px solid #cbd5e1 !important;
+    border-radius: 14px !important;
+    padding: 1rem !important;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08) !important;
 }
 
-.pos .paymentlines-container .total,
-.pos .paymentlines-container .paymentlines,
-.pos .paymentlines-empty,
-.pos .paymentlines-empty .total {
+.pos .paymentlines-container .paymentlines {
     background: #ffffff !important;
     color: #0f172a !important;
 }
 
-.pos .paymentlines-container .total {
-    border-radius: 14px !important;
-    padding: 1rem !important;
-    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08) !important;
-    color: #0f172a !important;
-}
-
 .pos .paymentlines-empty {
+    background: #111827 !important;
+    color: #e5e7eb !important;
     border: 1px solid #e2e8f0 !important;
 }
 
-.pos .customer-note,
-.pos .internal-note,
-.pos .info,
-.pos .control-buttons .control-button {
+.pos .paymentlines-empty .total {
+    background: #ffffff !important;
+    color: #22c55e !important;
+}
+
+.pos .customer-note, .pos .info, .pos .internal-note {
     background: #1b2433 !important;
     color: #e5e7eb !important;
     border: 1px solid #243244 !important;
 }
 
 .pos .control-buttons .control-button {
+    background: #1b2433 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #243244 !important;
     border-radius: 12px !important;
-    flex: 1 1 120px !important;
+    flex: 1 1 auto !important;
+    padding: 0.75rem 1rem !important;
     margin: 0.25rem !important;
-    min-width: 120px !important;
+    min-height: 44px !important;
+    font-size: 0.95rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .pos .control-buttons {
     display: flex !important;
     flex-wrap: wrap !important;
     gap: 0.5rem !important;
+    padding: 0.5rem !important;
 }
 
-.pos .control-buttons .control-button i,
-.pos .customer-note i,
-.pos .internal-note i {
+.pos .control-buttons .control-button i, .pos .customer-note i, .pos .internal-note i {
     color: #2563eb !important;
 }
 
-.pos .control-buttons .control-button:hover,
-.pos .customer-note:hover,
-.pos .internal-note:hover,
-.pos .kassa-add-user-btn:hover,
-.pos .refund-button:hover {
+.pos .control-buttons .control-button:hover, .pos .customer-note:hover, .pos .internal-note:hover, .pos .refund-button:hover {
     background: #243244 !important;
     color: #e5e7eb !important;
     border-color: #1f2937 !important;
 }
 
-.pos .kassa-add-user-btn {
-    background: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    color: #0f172a !important;
-}
-
 .pos .kassa-add-user-btn:hover {
-    background: #243244 !important;
+    background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+    color: #e5e7eb !important;
+    border-color: #1f2937 !important;
 }
 
-/* =========================================================
-   CONTROL BUTTONS
-   ========================================================= */
-
-.pos .control-button {
-    border-radius: 12px !important;
-}
-
-/* ADD USER */
 .pos .kassa-add-user-btn {
     background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
     border: none !important;
     color: white !important;
+    flex: 1 1 auto !important;
+    padding: 0.75rem 1rem !important;
+    min-height: 44px !important;
+    font-size: 0.95rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-.pos .kassa-add-user-btn:hover {
-    background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+.pos .control-button, body.light-theme .pos .control-button {
+    border-radius: 12px !important;
 }
 
-/* CLOSE */
-.pos .kassa-closing-btn {
+.pos .kassa-closing-btn, body.light-theme .pos .kassa-closing-btn {
     background: linear-gradient(135deg, #10b981, #059669) !important;
     border: none !important;
     color: white !important;
+    flex: 1 1 auto !important;
+    padding: 0.75rem 1rem !important;
+    min-height: 44px !important;
+    font-size: 0.95rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-.pos .kassa-closing-btn:hover {
+.pos .kassa-closing-btn:hover, body.light-theme .pos .kassa-closing-btn:hover {
     background: linear-gradient(135deg, #059669, #047857) !important;
 }
 
+.pos .input-container {
+    background: #111827 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #e5e7eb !important;
+    border-radius: 12px !important;
+    background-color: #0f172a !important;
+}
 
-/* =========================================================
-   SEARCH BAR
-   ========================================================= */
-
-.pos .input-container,
 .pos .form-control {
+    background: #111827 !important;
+    border: 1px solid #243244 !important;
+    color: #e5e7eb !important;
+    border-radius: 12px !important;
+    background-color: #0f172a !important;
+}
+
+.pos .products-widget-control .form-control, .pos .products-widget-control .input-container {
     background: #1b2433 !important;
     border: 1px solid #2b3a50 !important;
     color: #e5e7eb !important;
     border-radius: 12px !important;
 }
-
-
-/* =========================================================
-   NOTIFICATIONS (POPUPS)
-   ========================================================= */
 
 .o_notification_manager {
     z-index: 9999;
@@ -323,40 +278,36 @@
     opacity: 0.8;
 }
 
-.o_notification_close:hover {
+.o_notification_close:hover, body.light-theme .o_notification_close:hover {
     opacity: 1;
 }
-
-
-/* =========================================================
-   MODALS
-   ========================================================= */
 
 .modal-content {
     background: #111827 !important;
     color: #e5e7eb !important;
     border-radius: 18px !important;
     border: 1px solid #243244 !important;
+    background-color: #111827 !important;
 }
 
-.modal-header,
+.modal-header {
+    background: #0f172a !important;
+    border-color: #243244 !important;
+    color: #f1f5f9 !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
 .modal-footer {
     background: #0f172a !important;
     border-color: #243244 !important;
 }
 
-.form-control,
-select {
+.form-control, select {
     background: #1b2433 !important;
     border: 1px solid #2b3a50 !important;
     color: #e5e7eb !important;
     border-radius: 10px !important;
 }
-
-
-/* =========================================================
-   BORDER FIXES (NO WHITE LINES)
-   ========================================================= */
 
 .pads {
     border-top: 1px solid #243244 !important;
@@ -370,23 +321,11 @@ select {
     border-right: 1px solid #243244 !important;
 }
 
-
-/* =========================================================
-   NEXT / PAYMENT BUTTON FIX
-   ========================================================= */
-
-.pos .next.validation,
-.pos .pay-order-button {
+.pos .next.validation, .pos .pay-order-button {
     background: #1b2433 !important;
     border: 1px solid #2b3a50 !important;
     color: #93c5fd !important;
     border-radius: 14px !important;
-}
-
-.pos .next.validation:hover,
-.pos .pay-order-button:hover {
-    background: #243244 !important;
-    transform: translateY(-2px);
 }
 
 .pos .next.validation.disabled {
@@ -395,28 +334,18 @@ select {
     opacity: 0.6 !important;
 }
 
-
-/* =========================================================
-   SCROLLBAR
-   ========================================================= */
-
-::-webkit-scrollbar {
+::-webkit-scrollbar, body.light-theme ::-webkit-scrollbar {
     width: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: #334155 !important;
     border-radius: 10px;
 }
 
-::-webkit-scrollbar-track {
-    background: #0f172a;
+.pos *::-webkit-scrollbar-track, .pos .main-content, ::-webkit-scrollbar-track {
+    background: #0b1220 !important;
 }
-
-
-/* =========================================================
-   PAYMENT SCREEN HEADER (TITLE + BACK)
-   ========================================================= */
 
 .pos .top-content {
     background: #111827 !important;
@@ -424,51 +353,13 @@ select {
     color: #e5e7eb !important;
 }
 
-.pos .top-content h2,
-.pos .top-content .back_text,
-.pos .top-content .button {
+.pos .modal-body table, .pos .section-financials *, .pos .section-inventory *, .pos .section-order *, .pos .section-product-info-title *, .pos .text-bg-view *, .pos .text-muted h1, .pos .text-muted h2, .pos .text-muted h3, .pos .text-muted h4, .pos .text-muted:hover, .pos .top-content *, .pos .top-content .back_text, .pos .top-content .button, .pos .top-content h2 {
     color: #e5e7eb !important;
 }
 
-
-/* =========================================================
-   PAYMENT MAIN BACKGROUND FORCE FIX
-   ========================================================= */
-
-.pos .payment-screen .main-content {
+.pos .center-content, .pos .left-content, .pos .payment-screen .bg-300, .pos .payment-screen .bg-400, .pos .payment-screen .bg-view, .pos .payment-screen .main-content, .pos .right-content {
     background: #111827 !important;
 }
-
-.pos .left-content,
-.pos .center-content,
-.pos .right-content {
-    background: #111827 !important;
-}
-
-
-/* =========================================================
-   PAYMENT METHOD PANEL FIX
-   ========================================================= */
-
-.pos .paymentmethods-container,
-.pos .paymentlines-container {
-    background: #111827 !important;
-}
-
-.pos .paymentmethod {
-    background: #1b2433 !important;
-    border-bottom: 1px solid #243244 !important;
-    color: #e5e7eb !important;
-}
-
-.pos .paymentmethod:hover {
-    background: #243244 !important;
-}
-
-
-/* =========================================================
-   SUMMARY TITLE FIX
-   ========================================================= */
 
 .pos .title-category {
     background: #111827 !important;
@@ -476,17 +367,13 @@ select {
     border-bottom: 1px solid #243244 !important;
 }
 
-
-/* =========================================================
-   VALIDATION BUTTON (KEEP BLUE - DO NOT FOLLOW THEME)
-   ========================================================= */
-
 .pos .button.next.validation {
-    background: #1d4ed8 !important; /* same blue as qty */
-    color: #ffffff !important;
+    background: #1d4ed8 !important;
+    color: white !important;
     border: none !important;
-    border-radius: 14px !important;
+    border-radius: 16px !important;
     opacity: 1 !important;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25) !important;
 }
 
 .pos .button.next.validation:hover {
@@ -494,25 +381,10 @@ select {
     transform: translateY(-2px);
 }
 
-
-/* force disable state not to go grey theme style */
 .pos .button.next.validation.disabled {
-    background: #1d4ed8 !important;
-    color: #93c5fd !important;
-    opacity: 0.5 !important;
-}
-
-
-/* =========================================================
-   SEARCH BAR (UNIFIED DARK STYLE)
-   ========================================================= */
-
-.pos .products-widget-control .input-container,
-.pos .products-widget-control .form-control {
-    background: #1b2433 !important;
-    border: 1px solid #2b3a50 !important;
-    color: #e5e7eb !important;
-    border-radius: 12px !important;
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    opacity: 0.9 !important;
 }
 
 .pos .products-widget-control input {
@@ -520,63 +392,14 @@ select {
     color: #e5e7eb !important;
 }
 
-
-/* =========================================================
-   REMOVE WHITE OVERRIDES FROM THIS SECTION ONLY
-   ========================================================= */
-
-.pos .payment-screen .bg-view,
-.pos .payment-screen .bg-300,
-.pos .payment-screen .bg-400 {
-    background: #111827 !important;
-}
-
-
-/* =========================================================
-   PAYMENT LINES AREA FIX
-   ========================================================= */
-
-.pos .paymentlines-empty {
-    background: #111827 !important;
-    color: #e5e7eb !important;
-}
-
 .pos .paymentlines-empty .message {
     color: #9ca3af !important;
 }
 
-.pos .paymentlines-empty .total {
-    color: #22c55e !important;
-}
-
-/* FIX ODOO BG VARIABLES OVERRIDING YOUR DARK MODE */
-/*
-.pos .bg-200,
-.pos .bg-100,
-.pos .bg-300,
-.pos .bg-white,
-.pos .bg-light,
-.pos .bg-view {
-    background-color: #111827 !important;
-}
-*/
-
-/* REMOVE WHITE BORDER LINES (GLOBAL FIX) */
-.pos .border,
-.pos .border-bottom,
-.pos .border-top,
-.pos .border-start,
-.pos .border-end {
+.pos *, .pos .border, .pos .border-bottom, .pos .border-end, .pos .border-start, .pos .border-top, .pos .modal-body td {
     border-color: #243244 !important;
 }
 
-/* TOP PAYMENT HEADER TEXT FIX (Back + Payment title white) */
-.pos .top-content,
-.pos .top-content * {
-    color: #e5e7eb !important;
-}
-
-/* BACK BUTTON KEEP STYLE BUT FIX TEXT VISIBILITY */
 .pos .top-content .btn-secondary {
     color: #e5e7eb !important;
     background: #1f2937 !important;
@@ -584,18 +407,6 @@ select {
     border-radius: 12px !important;
 }
 
-.pos .top-content .btn-secondary:hover {
-    background: #243244 !important;
-}
-
-/* PAYMENT SCREEN MAIN BACKGROUND HARD FIX */
-.pos .payment-screen,
-.pos .pos-content,
-.pos .main-content {
-    background: #0b1220 !important;
-}
-
-/* PAYMENT METHODS CARDS FIX (remove light bootstrap override) */
 .pos .paymentmethod.btn-light {
     background: #1b2433 !important;
     color: #e5e7eb !important;
@@ -603,63 +414,28 @@ select {
     border-radius: 12px !important;
 }
 
-.pos .paymentmethod.btn-light:hover {
-    background: #243244 !important;
-}
-
-/* VALIDATE BUTTON FIX (IMPORTANT: stays blue, not theme changing) */
-.pos .button.next.validation {
-    background: #2563eb !important;   /* strong blue */
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 16px !important;
-    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25) !important;
-}
-
-/* prevent disabled grey weird override */
-.pos .button.next.validation.disabled {
-    background: #1d4ed8 !important;
-    opacity: 0.55 !important;
-}
-
-/* NUMPAD BORDER CLEAN FIX (no white grid lines) */
-.pos .numpad button,
-.pos .numpad .btn {
-    border: 1px solid #2b3a50 !important;
-    background: #1b2433 !important;
-    color: #e5e7eb !important;
-    border-radius: 14px !important;
-}
-
-/* SEARCH BAR FIX (entire input group dark) */
-.pos .input-container,
-.pos .form-control,
 .pos input {
     background: #111827 !important;
     color: #e5e7eb !important;
-    border: 1px solid #2b3a50 !important;
+    border: 1px solid #243244 !important;
     border-radius: 12px !important;
+    background-color: #0f172a !important;
 }
 
-/* FORCE ODOO CSS VARIABLES THAT BREAK DARK MODE */
 :root {
     --o-cc5-bg: #0b1220 !important;
     --o-cc4-bg: #0b1220 !important;
 }
 
-/* SCROLLBAR CLEAN DARK */
 .pos *::-webkit-scrollbar-thumb {
     background: #334155 !important;
-}
-.pos *::-webkit-scrollbar-track {
-    background: #0b1220 !important;
 }
 
 .pos .navbar-button.menu-button {
     background: #1b2433 !important;
     border: 1px solid #243244 !important;
     border-radius: 12px !important;
-    color: #cbd5e1 !important; /* lichtere grijze tint */
+    color: #cbd5e1 !important;
     transition: all .2s ease;
 }
 
@@ -668,26 +444,24 @@ select {
     border-bottom: 1px solid #243244 !important;
 }
 
-/* titel wit maken */
 .pos .modal-header .modal-title {
     color: #e5e7eb !important;
     font-weight: 600 !important;
 }
 
-/* close button (X) */
 .pos .modal-header .btn {
     background: transparent !important;
     border: none !important;
     color: #cbd5e1 !important;
 }
 
-.pos .modal-header .btn i {
+.pos .modal-header .btn i, .pos .navbar-button.menu-button *, .pos .navbar-button.menu-button i {
     color: #cbd5e1 !important;
 }
 
-.pos .modal-header .btn:hover i {
+.pos .modal-header .btn:hover i, .pos .navbar-button.menu-button:hover *, .pos .product-information-tag:hover .product-information-tag-logo {
     color: #ffffff !important;
-} 
+}
 
 .pos .navbar-button.menu-button.btn {
     background: #1b2433 !important;
@@ -697,44 +471,21 @@ select {
     color: #cbd5e1 !important;
 }
 
-.pos .navbar-button.menu-button,
-.pos .navbar-button.menu-button * {
-    color: #cbd5e1 !important;
-}
-
-.pos .navbar-button.menu-button i {
-    color: #cbd5e1 !important;
-}
-
 .pos .navbar-button.menu-button:hover {
     background: #243244 !important;
     transform: scale(1.03);
-}
-
-.pos .navbar-button.menu-button:hover,
-.pos .navbar-button.menu-button:hover * {
     color: #ffffff !important;
 }
 
 .pos .text-muted {
-    color: #cbd5e1 !important;  
+    color: #cbd5e1 !important;
     opacity: 0.95 !important;
-}
-
-.pos .text-muted h3,
-.pos .text-muted h1,
-.pos .text-muted h2,
-.pos .text-muted h4 {
-    color: #e5e7eb !important;  
 }
 
 .pos .text-muted i {
     color: #94a3b8 !important;
 }
 
-.pos .text-muted:hover {
-    color: #e5e7eb !important;
-}
 .pos .modal-body {
     background-color: #111827 !important;
     color: #e5e7eb !important;
@@ -742,81 +493,24 @@ select {
     border-bottom: 1px solid #243244 !important;
 }
 
-.pos .bg-100,
-.pos .bg-200,
-.pos .bg-300,
-.pos .bg-white,
-.pos .bg-light,
-.pos .bg-view,
-.pos .bg-400,
-.pos .bg-700 {
+.pos .orders {
     background-color: #111827 !important;
+    background: #111827 !important;
 }
 
-.pos .leftpane,
-.pos .rightpane,
-.pos .pane-border,
-.pos .controls,
-.pos .payment-screen,
-.pos .pos-content {
+.pos .order-row {
     background-color: #111827 !important;
+    border-bottom: 1px solid #243244 !important;
+    padding: 6px 0;
 }
 
-.pos .orders,
-.pos .order-row,
 .pos .header-row {
-    background-color: #111827 !important;
-}
-
-.bg-300, .bg-200, .bg-100 {
-    background-color: #111827 !important;
-}
-
-.pos * {
-    border-color: #243244 !important;
-}
-
-.pos .border,
-.pos .border-top,
-.pos .border-bottom,
-.pos .border-start,
-.pos .border-end {
-    border-color: #243244 !important;
-}
-
-.pos {
+    background-color: #0f172a !important;
+    border-bottom: 2px solid #334155 !important;
     color: #e5e7eb !important;
 }
 
-.pos .text-muted {
-    color: #cbd5e1 !important;
-}
-
-.pos .form-control,
-.pos input {
-    background-color: #0f172a !important;
-    color: #e5e7eb !important;
-    border: 1px solid #243244 !important;
-}
-
-.pos .input-container {
-    background-color: #0f172a !important;
-}
-
-.pos .button.next.validation {
-    background: #1d4ed8 !important;
-    color: white !important;
-    border: none !important;
-}
-
-.pos .button.next.validation.disabled {
-    background: #1e293b !important;
-    color: #94a3b8 !important;
-    opacity: 0.9 !important;
-}
-
-.modal,
-.modal-content {
+.modal, .pos .section-product-info-title.bg-info, .pos .section-product-info-title.text-info {
     background-color: #111827 !important;
     color: #e5e7eb !important;
 }
@@ -827,54 +521,19 @@ select {
     padding: 1.25rem !important;
 }
 
-.modal-header,
 .modal-title {
     color: #f1f5f9 !important;
     border-bottom: 1px solid #243244 !important;
 }
 
-.pos .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-}
-
-::-webkit-scrollbar-track {
-    background: #0b1220 !important;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #334155 !important;
-}
-
-.pos .orders {
-    background: #111827 !important;
-}
-
-/* elke row duidelijk scheiden */
-.pos .order-row {
-    background-color: #111827 !important;
-    border-bottom: 1px solid #243244 !important;
-    padding: 6px 0;
-}
-
-/* header iets sterker onderscheiden */
-.pos .header-row {
-    background-color: #0f172a !important;
-    border-bottom: 2px solid #334155 !important;
-    color: #e5e7eb !important;
-}
-
-/* hover effect zodat je weet waar je zit */
 .pos .order-row:hover {
     background-color: #1b2433 !important;
 }
 
-/* optioneel: zebra effect (maakt het nog leesbaarder) */
 .pos .order-row:nth-child(even) {
     background-color: #0f172a !important;
 }
 
-/* kill bootstrap “col padding blending” visueel probleem */
 .pos .order-row > div {
     border-right: 1px solid #1f2937 !important;
 }
@@ -884,13 +543,9 @@ select {
 }
 
 .pos .text-bg-view {
-    background-color: #0f172a !important;  /* zelfde als dark panels */
-    color: #e5e7eb !important;            /* wit/grijs zoals rest UI */
-    border-bottom: 1px solid #243244 !important;
-}
-
-.pos .text-bg-view * {
+    background-color: #0f172a !important;
     color: #e5e7eb !important;
+    border-bottom: 1px solid #243244 !important;
 }
 
 .pos .leftpane .text-bg-view {
@@ -898,66 +553,30 @@ select {
     letter-spacing: 0.2px;
 }
 
-.pos .section-product-info-title,
-.pos .section-financials,
-.pos .section-inventory,
-.pos .section-order {
+.pos .section-financials, .pos .section-inventory, .pos .section-order, .pos .section-product-info-title {
     background-color: #111827 !important;
     color: #e5e7eb !important;
     border-color: #243244 !important;
 }
 
-/* kill Bootstrap contextual styling */
-.pos .section-product-info-title.bg-info,
-.pos .section-product-info-title.text-info {
-    background-color: #111827 !important;
-    color: #e5e7eb !important;
-}
-
-/* text consistency everywhere */
-.pos .section-product-info-title *,
-.pos .section-financials *,
-.pos .section-inventory *,
-.pos .section-order * {
-    color: #e5e7eb !important;
-}
-
-/* headings iets sterker contrast */
 .pos .section-title {
     color: #f1f5f9 !important;
     font-weight: 700;
 }
 
-body.light-theme .pos .section-title,
-body.light-theme .popup .section-title,
-body.light-theme .section-title {
+body.light-theme .popup .section-title, body.light-theme .pos .section-title, body.light-theme .section-title {
     color: #1f2937 !important;
 }
 
-/* tables dark readable */
-.pos .modal-body table {
-    color: #e5e7eb !important;
-}
-
-.pos .modal-body td {
-    border-color: #243244 !important;
-}
-
-/* price highlight */
 .pos .product-info-price-with-tax {
     color: #60a5fa !important;
     font-weight: 700;
 }
 
-/* remove Bootstrap opacity wash */
 .pos .bg-opacity-25 {
     opacity: 1 !important;
     background-color: #111827 !important;
 }
-
-/* =========================================================
-   PRODUCT INFO BADGE (MODERN DARK STYLE)
-   ========================================================= */
 
 .pos .product-information-tag {
     position: absolute;
@@ -968,25 +587,20 @@ body.light-theme .section-title {
     display: flex;
     align-items: center;
     justify-content: center;
-
-    background: rgba(59, 130, 246, 0.15); /* soft blue glass */
+    background: rgba(59, 130, 246, 0.15);
     border: 1px solid rgba(59, 130, 246, 0.35);
     border-radius: 10px;
-
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-
     transition: all .2s ease;
     cursor: pointer;
 }
 
-/* icon styling */
 .pos .product-information-tag-logo {
     font-size: 12px;
-    color: #93c5fd !important; /* soft blue */
+    color: #93c5fd !important;
 }
 
-/* hover effect */
 .pos .product-information-tag:hover {
     background: rgba(59, 130, 246, 0.25);
     border-color: #3b82f6;
@@ -994,50 +608,38 @@ body.light-theme .section-title {
     box-shadow: 0 6px 18px rgba(0,0,0,0.35);
 }
 
-.pos .product-information-tag:hover .product-information-tag-logo {
-    color: #ffffff !important;
-}
-
-/* active click feeling */
-.pos .product-information-tag:active {
+.pos .product-information-tag:active, .theme-toggle-btn:active, body.light-theme .pos .product-information-tag:active {
     transform: scale(0.95);
 }
 
-/* =========================================================
-   LIGHT THEME (TOGGLE VERSION)
-   ========================================================= */
-
-body.light-theme .pos {
+body.light-theme .orders, body.light-theme .pos, body.light-theme .pos .orders {
     background: #f8fafc !important;
     color: #1e293b !important;
 }
 
-/* LIGHT THEME SURFACES */
-body.light-theme .pos .bg-white,
-body.light-theme .pos .bg-light,
-body.light-theme .pos .bg-100,
-body.light-theme .pos .bg-200,
-body.light-theme .pos .bg-300,
-body.light-theme .pos .bg-view {
+body.light-theme .bg-100, body.light-theme .bg-200, body.light-theme .bg-300, body.light-theme .pos .bg-400, body.light-theme .pos .bg-700, body.light-theme .pos .bg-light, body.light-theme .pos .bg-view, body.light-theme .pos .bg-white {
     background-color: #ffffff !important;
 }
 
-/* graded surfaces for light theme */
-body.light-theme .pos .bg-100 { background-color: #f1f5f9 !important; }
-body.light-theme .pos .bg-200 { background-color: #e2e8f0 !important; }
-body.light-theme .pos .bg-300 { background-color: #cbd5e1 !important; }
-body.light-theme .pos .bg-view { background-color: #ffffff !important; }
+body.light-theme .pos .bg-100 {
+    background-color: #f1f5f9 !important;
+}
 
-/* LIGHT THEME TOP BAR */
-body.light-theme .pos .pos-topheader {
+body.light-theme .pos .bg-200 {
+    background-color: #e2e8f0 !important;
+}
+
+body.light-theme .pos .bg-300 {
+    background-color: #cbd5e1 !important;
+}
+
+body.light-theme .pos .pos-topheader, body.light-theme .pos .top-content {
     background: #ffffff !important;
     border-bottom: 1px solid #e2e8f0 !important;
     color: #1e293b !important;
 }
 
-/* LIGHT THEME PANELS */
-body.light-theme .pos .leftpane,
-body.light-theme .pos .rightpane {
+body.light-theme .pos .leftpane, body.light-theme .pos .rightpane {
     background: #ffffff !important;
     border-color: #e2e8f0 !important;
 }
@@ -1048,7 +650,6 @@ body.light-theme .pos .order-container {
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-/* LIGHT THEME ORDER LINES */
 body.light-theme .pos .orderline {
     background: transparent !important;
     border-bottom: 1px solid #e2e8f0 !important;
@@ -1057,7 +658,7 @@ body.light-theme .pos .orderline {
     transition: all .2s ease;
 }
 
-body.light-theme .pos .orderline:hover {
+body.light-theme .pos *::-webkit-scrollbar-track, body.light-theme .pos .orderline:hover, body.light-theme .pos .paymentmethod:hover {
     background: #f1f5f9 !important;
 }
 
@@ -1066,7 +667,6 @@ body.light-theme .pos .orderline.selected {
     color: #fff !important;
 }
 
-/* LIGHT THEME PRODUCTS */
 body.light-theme .pos .product {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
@@ -1082,10 +682,7 @@ body.light-theme .pos .product:hover {
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
-/* LIGHT THEME BUTTONS GLOBAL */
-body.light-theme .pos .btn,
-body.light-theme .pos .button,
-body.light-theme .pos button {
+body.light-theme .pos .btn, body.light-theme .pos .button, body.light-theme .pos button {
     border-radius: 14px !important;
     border: 1px solid #e2e8f0 !important;
     background: #ffffff !important;
@@ -1093,27 +690,22 @@ body.light-theme .pos button {
     transition: all .2s ease;
 }
 
-body.light-theme .pos .btn:hover,
-body.light-theme .pos .button:hover,
-body.light-theme .pos button:hover {
+body.light-theme .pos .btn:hover, body.light-theme .pos .button:hover, body.light-theme .pos button:hover {
     background: #f1f5f9 !important;
-    transform: none !important;
+    transform: translateY(-1px) !important;
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
 }
 
-/* LIGHT THEME NUMPAD */
-body.light-theme .pos .numpad button,
-body.light-theme .pos .numpad .btn {
+body.light-theme .pos .numpad .btn, body.light-theme .pos .numpad button {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     color: #1e293b !important;
-    border-radius: 16px !important;
+    border-radius: 14px !important;
     font-weight: 700;
     transition: all .15s ease;
 }
 
-body.light-theme .pos .numpad button:hover,
-body.light-theme .pos .numpad .btn:hover {
+body.light-theme .pos .numpad .btn:hover, body.light-theme .pos .numpad button:hover {
     background: #f1f5f9 !important;
     border-color: #3b82f6 !important;
     transform: scale(1.04);
@@ -1124,13 +716,11 @@ body.light-theme .pos .numpad button.active {
     color: white !important;
 }
 
-/* LIGHT THEME PAYMENT SCREEN */
 body.light-theme .pos .payment-screen {
     background: #f8fafc !important;
 }
 
-body.light-theme .pos .paymentmethods-container,
-body.light-theme .pos .paymentlines-container {
+body.light-theme .pos .paymentlines-container, body.light-theme .pos .paymentmethods-container {
     background: #ffffff !important;
     border-radius: 16px !important;
     border: 1px solid #ffffff !important;
@@ -1139,10 +729,7 @@ body.light-theme .pos .paymentlines-container {
 body.light-theme .pos .paymentmethod {
     background: #f8fafc !important;
     border-bottom: 1px solid #e2e8f0 !important;
-}
-
-body.light-theme .pos .paymentmethod:hover {
-    background: #f1f5f9 !important;
+    color: #1e293b !important;
 }
 
 body.light-theme .pos .paymentlines-container .total {
@@ -1150,359 +737,166 @@ body.light-theme .pos .paymentlines-container .total {
     font-size: 2.5rem !important;
 }
 
-body.light-theme .pos .customer-note,
-body.light-theme .pos .internal-note,
-body.light-theme .pos .info,
-body.light-theme .pos .control-buttons .control-button {
+body.light-theme .pos .customer-note {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #e2e8f0 !important;
+    border-color: #243244 !important;
+}
+
+body.light-theme .popup, body.light-theme .popup .modal-body, body.light-theme .pos .control-buttons .control-button, body.light-theme .pos .info, body.light-theme .pos .internal-note, body.light-theme .pos .modal-content, body.light-theme .pos .popup, body.light-theme .pos .popup .body, body.light-theme .pos .popup .modal-body, body.light-theme .pos .popup .modal-footer {
     background: #ffffff !important;
     color: #1e293b !important;
     border: 1px solid #e2e8f0 !important;
 }
 
-body.light-theme .pos .popup,
-body.light-theme .pos .popup .body,
-body.light-theme .pos .popup .modal-header,
-body.light-theme .pos .popup .modal-body,
-body.light-theme .pos .popup .modal-footer,
-body.light-theme .pos .modal-content,
-body.light-theme .popup,
-body.light-theme .popup .modal-body,
-body.light-theme .popup .modal-header,
+body.light-theme .popup .modal-header, body.light-theme .pos .popup .modal-header {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
 body.light-theme .modal-content {
     background: #ffffff !important;
     color: #1e293b !important;
     border: 1px solid #e2e8f0 !important;
+    border-radius: 18px !important;
 }
 
-body.light-theme .pos .popup .modal-header,
-body.light-theme .popup .modal-header {
-    background: #f8fafc !important;
-}
-
-body.light-theme .pos .popup .modal-header .modal-title,
-body.light-theme .pos .popup .modal-header .btn,
-body.light-theme .pos .popup .modal-header .btn i,
-body.light-theme .popup .modal-header .modal-title,
-body.light-theme .popup .modal-header .btn,
-body.light-theme .popup .modal-header .btn i {
+body.light-theme .orders .header-row .col, body.light-theme .orders .order-row .col, body.light-theme .popup .modal-header .btn, body.light-theme .popup .modal-header .btn i, body.light-theme .popup .modal-header .modal-title, body.light-theme .popup .section-financials *, body.light-theme .popup .section-inventory *, body.light-theme .popup .section-order *, body.light-theme .popup .section-product-info-title *, body.light-theme .popup .section-product-info-title.bg-info *, body.light-theme .popup .section-product-info-title.text-info *, body.light-theme .popup .table td, body.light-theme .popup .table th, body.light-theme .popup .text-danger, body.light-theme .popup .text-dark, body.light-theme .popup .text-info, body.light-theme .popup .text-primary, body.light-theme .popup .text-success, body.light-theme .popup .text-warning, body.light-theme .popup .text-white, body.light-theme .pos .modal-header .btn:hover i, body.light-theme .pos .navbar-button.menu-button:hover *, body.light-theme .pos .orders .header-row .col, body.light-theme .pos .orders .order-row .col, body.light-theme .pos .popup .modal-header .btn, body.light-theme .pos .popup .modal-header .btn i, body.light-theme .pos .popup .modal-header .modal-title, body.light-theme .pos .popup .section-financials *, body.light-theme .pos .popup .section-inventory *, body.light-theme .pos .popup .section-order *, body.light-theme .pos .popup .section-product-info-title *, body.light-theme .pos .popup .section-product-info-title.bg-info *, body.light-theme .pos .popup .section-product-info-title.text-info *, body.light-theme .pos .popup .table td, body.light-theme .pos .popup .table th, body.light-theme .pos .popup .text-danger, body.light-theme .pos .popup .text-dark, body.light-theme .pos .popup .text-info, body.light-theme .pos .popup .text-primary, body.light-theme .pos .popup .text-success, body.light-theme .pos .popup .text-warning, body.light-theme .pos .popup .text-white, body.light-theme .pos .text-bg-view *, body.light-theme .pos .text-muted h1, body.light-theme .pos .text-muted h2, body.light-theme .pos .text-muted h3, body.light-theme .pos .text-muted h4, body.light-theme .pos .text-muted:hover, body.light-theme .pos .top-content .back_text, body.light-theme .pos .top-content .button, body.light-theme .pos .top-content h2, body.light-theme .text-bg-view * {
     color: #1e293b !important;
 }
 
-body.light-theme .pos .popup .section-product-info-title,
-body.light-theme .pos .popup .section-financials,
-body.light-theme .pos .popup .section-inventory,
-body.light-theme .pos .popup .section-order,
-body.light-theme .popup .section-product-info-title,
-body.light-theme .popup .section-financials,
-body.light-theme .popup .section-inventory,
-body.light-theme .popup .section-order {
+body.light-theme .modal-body, body.light-theme .popup .section-financials, body.light-theme .popup .section-inventory, body.light-theme .popup .section-order, body.light-theme .popup .section-product-info-title, body.light-theme .pos .popup .section-financials, body.light-theme .pos .popup .section-inventory, body.light-theme .pos .popup .section-order, body.light-theme .pos .popup .section-product-info-title {
     background: #ffffff !important;
     color: #1e293b !important;
 }
 
-body.light-theme .pos .popup .section-product-info-title *,
-body.light-theme .pos .popup .section-financials *,
-body.light-theme .pos .popup .section-inventory *,
-body.light-theme .pos .popup .section-order *,
-body.light-theme .popup .section-product-info-title *,
-body.light-theme .popup .section-financials *,
-body.light-theme .popup .section-inventory *,
-body.light-theme .popup .section-order * {
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .popup .table,
-body.light-theme .popup .table {
+body.light-theme .popup .table, body.light-theme .pos .popup .table {
     background: transparent !important;
 }
 
-body.light-theme .pos .popup .table td,
-body.light-theme .pos .popup .table th,
-body.light-theme .popup .table td,
-body.light-theme .popup .table th {
-    color: #1e293b !important;
-}
-
-body.light-theme .modal-body,
-body.light-theme .pos .modal-body,
-body.light-theme .popup .modal-body,
-body.light-theme .pos .popup .modal-body {
+body.light-theme .pos .modal-body {
     background: #ffffff !important;
     color: #1e293b !important;
+    border-top: 1px solid #e2e8f0 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
 }
 
-body.light-theme .modal-body textarea,
-body.light-theme .modal-body .form-control,
-body.light-theme .pos .modal-body textarea,
-body.light-theme .pos .modal-body .form-control,
-body.light-theme .popup .modal-body textarea,
-body.light-theme .popup .modal-body .form-control {
+body.light-theme .modal-body .form-control, body.light-theme .modal-body textarea, body.light-theme .popup .modal-body .form-control, body.light-theme .popup .modal-body textarea, body.light-theme .pos .modal-body .form-control, body.light-theme .pos .modal-body textarea {
     background: #ffffff !important;
     color: #1e293b !important;
     border: 1px solid #cbd5e1 !important;
 }
 
-body.light-theme .modal-body textarea::placeholder,
-body.light-theme .modal-body .form-control::placeholder,
-body.light-theme .popup .modal-body textarea::placeholder,
-body.light-theme .popup .modal-body .form-control::placeholder {
+body.light-theme .modal-body .form-control::placeholder, body.light-theme .modal-body textarea::placeholder, body.light-theme .popup .modal-body .form-control::placeholder, body.light-theme .popup .modal-body textarea::placeholder, body.light-theme .pos .product-information-tag .product-information-tag-logo, body.light-theme .pos .text-muted i {
     color: #64748b !important;
 }
 
-body.light-theme .popup .btn,
-body.light-theme .popup .button,
-body.light-theme .popup button,
-body.light-theme .popup .btn-light,
-body.light-theme .popup .button.btn-light,
-body.light-theme .pos .popup .btn,
-body.light-theme .pos .popup .button,
-body.light-theme .pos .popup button,
-body.light-theme .pos .popup .btn-light,
-body.light-theme .pos .popup .button.btn-light {
+body.light-theme .popup .btn, body.light-theme .popup .button, body.light-theme .popup button, body.light-theme .pos .popup .btn, body.light-theme .pos .popup .button, body.light-theme .pos .popup button {
     background: #ffffff !important;
     color: #1e293b !important;
     border: 1px solid #e2e8f0 !important;
     box-shadow: none !important;
 }
 
-body.light-theme .popup .btn-primary,
-body.light-theme .pos .popup .btn-primary {
+body.light-theme .popup .btn-primary, body.light-theme .pos .popup .btn-primary {
     background: #2563eb !important;
     color: #ffffff !important;
     border-color: #2563eb !important;
 }
 
-body.light-theme .popup .section-product-info-title.bg-info,
-body.light-theme .pos .popup .section-product-info-title.bg-info,
-body.light-theme .popup .section-product-info-title.text-info,
-body.light-theme .pos .popup .section-product-info-title.text-info {
+body.light-theme .popup .section-product-info-title.bg-info, body.light-theme .popup .section-product-info-title.text-info, body.light-theme .pos .popup .section-product-info-title.bg-info, body.light-theme .pos .popup .section-product-info-title.text-info {
     background-color: rgba(59, 130, 246, 0.16) !important;
     color: #1e293b !important;
 }
 
-body.light-theme .popup .section-product-info-title.bg-info *,
-body.light-theme .pos .popup .section-product-info-title.bg-info *,
-body.light-theme .popup .section-product-info-title.text-info *,
-body.light-theme .pos .popup .section-product-info-title.text-info * {
-    color: #1e293b !important;
-}
-
-body.light-theme .popup .btn-secondary,
-body.light-theme .pos .popup .btn-secondary {
+body.light-theme .popup .btn-secondary, body.light-theme .pos .popup .btn-secondary {
     background: #e2e8f0 !important;
     color: #1e293b !important;
     border-color: #d1d5db !important;
 }
 
-body.light-theme .popup .btn-outline-light,
-body.light-theme .pos .popup .btn-outline-light {
+body.light-theme .popup .btn-outline-light, body.light-theme .pos .popup .btn-outline-light {
     background: transparent !important;
     color: #1e293b !important;
     border-color: #e2e8f0 !important;
 }
 
-body.light-theme .popup .btn-close,
-body.light-theme .popup .close,
-body.light-theme .pos .popup .btn-close,
-body.light-theme .pos .popup .close,
-body.light-theme .popup .modal-header .btn-close,
-body.light-theme .pos .popup .modal-header .btn-close {
+body.light-theme .popup .btn-close, body.light-theme .popup .close, body.light-theme .pos .popup .btn-close, body.light-theme .pos .popup .close {
     background: transparent !important;
     border: none !important;
     color: #1e293b !important;
     box-shadow: none !important;
 }
 
-body.light-theme .popup .btn:hover,
-body.light-theme .popup .button:hover,
-body.light-theme .popup button:hover,
-body.light-theme .pos .popup .btn:hover,
-body.light-theme .pos .popup .button:hover,
-body.light-theme .pos .popup button:hover,
-body.light-theme .popup .btn-primary:hover,
-body.light-theme .pos .popup .btn-primary:hover,
-body.light-theme .popup .btn-secondary:hover,
-body.light-theme .pos .popup .btn-secondary:hover,
-body.light-theme .popup .btn-outline-light:hover,
-body.light-theme .pos .popup .btn-outline-light:hover {
+body.light-theme .popup .btn-outline-light:hover, body.light-theme .popup .btn-secondary:hover, body.light-theme .popup .btn:hover, body.light-theme .popup .button:hover, body.light-theme .popup button:hover, body.light-theme .pos .popup .btn-outline-light:hover, body.light-theme .pos .popup .btn-secondary:hover, body.light-theme .pos .popup .btn:hover, body.light-theme .pos .popup .button:hover, body.light-theme .pos .popup button:hover {
     background: #f1f5f9 !important;
     transform: none !important;
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
 }
 
-body.light-theme .popup .btn-primary:hover,
-body.light-theme .pos .popup .btn-primary:hover {
+body.light-theme .popup .btn-primary:hover, body.light-theme .pos .popup .btn-primary:hover {
     background: #1d4ed8 !important;
     border-color: #1d4ed8 !important;
 }
 
-body.light-theme .popup input[type="radio"],
-body.light-theme .popup input[type="checkbox"],
-body.light-theme .pos .popup input[type="radio"],
-body.light-theme .pos .popup input[type="checkbox"],
-body.light-theme input[type="radio"],
-body.light-theme input[type="checkbox"] {
+body.light-theme .popup input[type="checkbox"], body.light-theme .popup input[type="radio"], body.light-theme .pos .popup input[type="checkbox"], body.light-theme .pos .popup input[type="radio"], body.light-theme input[type="checkbox"], body.light-theme input[type="radio"] {
     accent-color: #2563eb !important;
     color: #1e293b !important;
 }
 
-body.light-theme .popup .text-info,
-body.light-theme .popup .text-primary,
-body.light-theme .popup .text-success,
-body.light-theme .popup .text-warning,
-body.light-theme .popup .text-danger,
-body.light-theme .popup .text-white,
-body.light-theme .popup .text-dark,
-body.light-theme .pos .popup .text-info,
-body.light-theme .pos .popup .text-primary,
-body.light-theme .pos .popup .text-success,
-body.light-theme .pos .popup .text-warning,
-body.light-theme .pos .popup .text-danger,
-body.light-theme .pos .popup .text-white,
-body.light-theme .pos .popup .text-dark {
-    color: #1e293b !important;
-}
-
-body.light-theme .popup .bg-info,
-body.light-theme .popup .bg-success,
-body.light-theme .popup .bg-warning,
-body.light-theme .popup .bg-danger,
-body.light-theme .popup .bg-primary,
-body.light-theme .popup .bg-secondary,
-body.light-theme .popup .bg-light,
-body.light-theme .popup .bg-white,
-body.light-theme .popup .bg-200,
-body.light-theme .popup .bg-300,
-body.light-theme .popup .bg-view,
-body.light-theme .pos .popup .bg-info,
-body.light-theme .pos .popup .bg-success,
-body.light-theme .pos .popup .bg-warning,
-body.light-theme .pos .popup .bg-danger,
-body.light-theme .pos .popup .bg-primary,
-body.light-theme .pos .popup .bg-secondary,
-body.light-theme .pos .popup .bg-light,
-body.light-theme .pos .popup .bg-white,
-body.light-theme .pos .popup .bg-200,
-body.light-theme .pos .popup .bg-300,
-body.light-theme .pos .popup .bg-view {
+body.light-theme .popup .bg-200, body.light-theme .popup .bg-300, body.light-theme .popup .bg-danger, body.light-theme .popup .bg-info, body.light-theme .popup .bg-light, body.light-theme .popup .bg-primary, body.light-theme .popup .bg-secondary, body.light-theme .popup .bg-success, body.light-theme .popup .bg-view, body.light-theme .popup .bg-warning, body.light-theme .popup .bg-white, body.light-theme .pos .popup .bg-200, body.light-theme .pos .popup .bg-300, body.light-theme .pos .popup .bg-danger, body.light-theme .pos .popup .bg-info, body.light-theme .pos .popup .bg-light, body.light-theme .pos .popup .bg-primary, body.light-theme .pos .popup .bg-secondary, body.light-theme .pos .popup .bg-success, body.light-theme .pos .popup .bg-view, body.light-theme .pos .popup .bg-warning, body.light-theme .pos .popup .bg-white {
     background-color: #ffffff !important;
     color: #1e293b !important;
 }
 
-body.light-theme .popup .section-product-info-title,
-body.light-theme .popup .section-financials,
-body.light-theme .popup .section-inventory,
-body.light-theme .popup .section-order,
-body.light-theme .pos .popup .section-product-info-title,
-body.light-theme .pos .popup .section-financials,
-body.light-theme .pos .popup .section-inventory,
-body.light-theme .pos .popup .section-order {
-    background: #ffffff !important;
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .btn:hover,
-body.light-theme .pos .button:hover,
-body.light-theme .pos button:hover {
-    transform: translateY(-1px) !important;
-}
-
-body.light-theme .pos .paymentlines-empty,
-body.light-theme .paymentlines-empty {
+body.light-theme .paymentlines-empty, body.light-theme .pos .paymentlines-empty {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
 }
 
-body.light-theme .pos .paymentlines-empty .total,
-body.light-theme .paymentlines-empty .total {
+body.light-theme .o_notification_title, body.light-theme .paymentlines-empty .total, body.light-theme .pos .paymentlines-empty .total {
     color: #10b981 !important;
 }
 
-body.light-theme .pos .orders,
-body.light-theme .orders {
-    background: #f8fafc !important;
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .orders .header-row,
-body.light-theme .orders .header-row {
+body.light-theme .orders .header-row, body.light-theme .pos .orders .header-row {
     background: #f1f5f9 !important;
     color: #1e293b !important;
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
-body.light-theme .pos .orders .header-row .col,
-body.light-theme .orders .header-row .col {
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .orders .order-row,
-body.light-theme .orders .order-row {
+body.light-theme .orders .order-row, body.light-theme .pos .orders .order-row, body.light-theme .pos .title-category {
     background: #ffffff !important;
     color: #1e293b !important;
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
-body.light-theme .pos .orders .order-row .col,
-body.light-theme .orders .order-row .col {
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .orders .order-row.highlight.bg-primary,
-body.light-theme .orders .order-row.highlight.bg-primary {
+body.light-theme .orders .order-row.highlight.bg-primary, body.light-theme .pos .orders .order-row.highlight.bg-primary {
     background: linear-gradient(135deg, #93c5fd, #3b82f6) !important;
     color: #ffffff !important;
 }
 
-/* LIGHT THEME CONTROL BUTTONS */
-body.light-theme .pos .control-button {
-    border-radius: 12px !important;
-}
-
-/* LIGHT THEME ADD USER */
 body.light-theme .pos .kassa-add-user-btn {
-    background: linear-gradient(135deg, #ffffff, #f8fafc) !important;
+    background: #111827 !important;
     border: 1px solid #e2e8f0 !important;
-    color: #1e293b !important;
+    color: #e5e7eb !important;
+    border-color: #243244 !important;
 }
 
-body.light-theme .pos .kassa-add-user-btn:hover {
-    background: #f1f5f9 !important;
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .kassa-add-user-btn,
-body.light-theme .pos .refund-button,
-body.light-theme .pos .customer-note,
-body.light-theme .pos .kassa-add-user-btn:hover,
-body.light-theme .pos .refund-button:hover,
-body.light-theme .pos .customer-note:hover {
+body.light-theme .pos .customer-note:hover, body.light-theme .pos .kassa-add-user-btn:hover, body.light-theme .pos .refund-button, body.light-theme .pos .refund-button:hover {
     background: #111827 !important;
     color: #e5e7eb !important;
     border-color: #243244 !important;
 }
 
-/* LIGHT THEME CLOSE */
-body.light-theme .pos .kassa-closing-btn {
-    background: linear-gradient(135deg, #10b981, #059669) !important;
-    border: none !important;
-    color: white !important;
-}
-
-body.light-theme .pos .kassa-closing-btn:hover {
-    background: linear-gradient(135deg, #059669, #047857) !important;
-}
-
-/* LIGHT THEME SEARCH BAR */
-body.light-theme .pos .input-container,
-body.light-theme .pos .form-control {
+body.light-theme .pos .form-control, body.light-theme .pos .input-container {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     color: #1e293b !important;
     border-radius: 12px !important;
 }
 
-/* LIGHT THEME NOTIFICATIONS */
 body.light-theme .o_notification {
     background: #ffffff !important;
     color: #1e293b !important;
@@ -1515,47 +909,29 @@ body.light-theme .o_notification.border-success {
     border-left: 4px solid #10b981 !important;
 }
 
-body.light-theme .o_notification_title {
-    color: #10b981 !important;
-}
-
 body.light-theme .o_notification_close {
     filter: none;
     opacity: 0.8;
 }
 
-body.light-theme .o_notification_close:hover {
-    opacity: 1;
-}
-
-/* LIGHT THEME MODALS */
-body.light-theme .modal-content {
-    background: #ffffff !important;
-    color: #1e293b !important;
-    border-radius: 18px !important;
-    border: 1px solid #e2e8f0 !important;
-}
-
-body.light-theme .modal-header,
-body.light-theme .modal-footer {
+body.light-theme .modal-footer, body.light-theme .modal-header {
     background: #f8fafc !important;
     border-color: #e2e8f0 !important;
 }
 
-body.light-theme .form-control,
-body.light-theme select {
+body.light-theme .form-control, body.light-theme select {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
     color: #1e293b !important;
     border-radius: 10px !important;
 }
 
-/* LIGHT THEME BORDER FIXES */
 body.light-theme .pads {
     border-top: 1px solid #e2e8f0 !important;
 }
 
 body.light-theme .control-buttons {
+    background: #ffffff !important;
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
@@ -1563,17 +939,14 @@ body.light-theme .actionpad {
     border-right: 1px solid #e2e8f0 !important;
 }
 
-/* LIGHT THEME PAYMENT BUTTON */
-body.light-theme .pos .next.validation,
-body.light-theme .pos .pay-order-button {
+body.light-theme .pos .next.validation, body.light-theme .pos .pay-order-button {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
     color: #3b82f6 !important;
     border-radius: 14px !important;
 }
 
-body.light-theme .pos .next.validation:hover,
-body.light-theme .pos .pay-order-button:hover {
+body.light-theme .pos .next.validation:hover, body.light-theme .pos .pay-order-button:hover {
     background: #f1f5f9 !important;
     transform: translateY(-2px);
 }
@@ -1582,11 +955,6 @@ body.light-theme .pos .next.validation.disabled {
     background: #f8fafc !important;
     color: #94a3b8 !important;
     opacity: 0.6 !important;
-}
-
-/* LIGHT THEME SCROLLBAR */
-body.light-theme ::-webkit-scrollbar {
-    width: 8px;
 }
 
 body.light-theme ::-webkit-scrollbar-thumb {
@@ -1598,54 +966,10 @@ body.light-theme ::-webkit-scrollbar-track {
     background: #f1f5f9;
 }
 
-/* LIGHT THEME PAYMENT HEADER */
-body.light-theme .pos .top-content {
-    background: #ffffff !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .top-content h2,
-body.light-theme .pos .top-content .back_text,
-body.light-theme .pos .top-content .button {
-    color: #1e293b !important;
-}
-
-/* LIGHT THEME PAYMENT MAIN BACKGROUND */
-body.light-theme .pos .payment-screen .main-content {
+body.light-theme .pos .center-content, body.light-theme .pos .left-content, body.light-theme .pos .payment-screen .main-content, body.light-theme .pos .right-content {
     background: #ffffff !important;
 }
 
-body.light-theme .pos .left-content,
-body.light-theme .pos .center-content,
-body.light-theme .pos .right-content {
-    background: #ffffff !important;
-}
-
-/* LIGHT THEME PAYMENT METHOD PANEL */
-body.light-theme .pos .paymentmethods-container,
-body.light-theme .pos .paymentlines-container {
-    background: #ffffff !important;
-}
-
-body.light-theme .pos .paymentmethod {
-    background: #f8fafc !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .paymentmethod:hover {
-    background: #f1f5f9 !important;
-}
-
-/* LIGHT THEME SUMMARY TITLE */
-body.light-theme .pos .title-category {
-    background: #ffffff !important;
-    color: #1e293b !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-}
-
-/* LIGHT THEME VALIDATION BUTTON */
 body.light-theme .pos .button.next.validation {
     background: #3b82f6 !important;
     color: #ffffff !important;
@@ -1659,18 +983,6 @@ body.light-theme .pos .button.next.validation.disabled {
     opacity: 0.55 !important;
 }
 
-/* LIGHT THEME NUMPAD BORDER */
-body.light-theme .pos .numpad button,
-body.light-theme .pos .numpad .btn {
-    border: 1px solid #cbd5e1 !important;
-    background: #ffffff !important;
-    color: #1e293b !important;
-    border-radius: 14px !important;
-}
-
-/* LIGHT THEME SEARCH BAR */
-body.light-theme .pos .input-container,
-body.light-theme .pos .form-control,
 body.light-theme .pos input {
     background: #ffffff !important;
     color: #1e293b !important;
@@ -1678,15 +990,10 @@ body.light-theme .pos input {
     border-radius: 12px !important;
 }
 
-/* LIGHT THEME SCROLLBAR */
 body.light-theme .pos *::-webkit-scrollbar-thumb {
     background: #cbd5e1 !important;
 }
-body.light-theme .pos *::-webkit-scrollbar-track {
-    background: #f1f5f9 !important;
-}
 
-/* LIGHT THEME MENU BUTTON */
 body.light-theme .pos .navbar-button.menu-button {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
@@ -1711,12 +1018,8 @@ body.light-theme .pos .modal-header .btn {
     color: #475569 !important;
 }
 
-body.light-theme .pos .modal-header .btn i {
+body.light-theme .pos .modal-header .btn i, body.light-theme .pos .navbar-button.menu-button *, body.light-theme .pos .navbar-button.menu-button i {
     color: #475569 !important;
-}
-
-body.light-theme .pos .modal-header .btn:hover i {
-    color: #1e293b !important;
 }
 
 body.light-theme .pos .navbar-button.menu-button.btn {
@@ -1727,22 +1030,9 @@ body.light-theme .pos .navbar-button.menu-button.btn {
     color: #475569 !important;
 }
 
-body.light-theme .pos .navbar-button.menu-button,
-body.light-theme .pos .navbar-button.menu-button * {
-    color: #475569 !important;
-}
-
-body.light-theme .pos .navbar-button.menu-button i {
-    color: #475569 !important;
-}
-
 body.light-theme .pos .navbar-button.menu-button:hover {
     background: #f1f5f9 !important;
     transform: scale(1.03);
-}
-
-body.light-theme .pos .navbar-button.menu-button:hover,
-body.light-theme .pos .navbar-button.menu-button:hover * {
     color: #1e293b !important;
 }
 
@@ -1751,77 +1041,16 @@ body.light-theme .pos .text-muted {
     opacity: 0.95 !important;
 }
 
-body.light-theme .pos .text-muted h3,
-body.light-theme .pos .text-muted h1,
-body.light-theme .pos .text-muted h2,
-body.light-theme .pos .text-muted h4 {
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .text-muted i {
-    color: #64748b !important;
-}
-
-body.light-theme .pos .text-muted:hover {
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .text-bg-view,
-body.light-theme .text-bg-view {
+body.light-theme .pos .text-bg-view, body.light-theme .text-bg-view {
     background-color: #f8fafc !important;
     color: #1e293b !important;
     border-color: #e2e8f0 !important;
-}
-
-body.light-theme .pos .text-bg-view *,
-body.light-theme .text-bg-view * {
-    color: #1e293b !important;
-}
-
-body.light-theme .pos .modal-body {
-    background-color: #ffffff !important;
-    color: #1e293b !important;
-    border-top: 1px solid #e2e8f0 !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-}
-
-body.light-theme .pos .bg-100,
-body.light-theme .pos .bg-200,
-body.light-theme .pos .bg-300,
-body.light-theme .pos .bg-white,
-body.light-theme .pos .bg-light,
-body.light-theme .pos .bg-view,
-body.light-theme .pos .bg-400,
-body.light-theme .pos .bg-700 {
-    background-color: #ffffff !important;
-}
-
-body.light-theme .pos .leftpane,
-body.light-theme .pos .rightpane,
-body.light-theme .pos .pane-border,
-body.light-theme .pos .controls,
-body.light-theme .pos .payment-screen,
-body.light-theme .pos .pos-content {
-    background-color: #ffffff !important;
-}
-
-body.light-theme .pos .orders,
-body.light-theme .pos .order-row,
-body.light-theme .pos .header-row {
-    background-color: #ffffff !important;
-}
-
-body.light-theme .bg-300,
-body.light-theme .bg-200,
-body.light-theme .bg-100 {
-    background-color: #ffffff !important;
 }
 
 body.light-theme .pos * {
     border-color: #e2e8f0 !important;
 }
 
-/* LIGHT THEME PRODUCT INFORMATION TAG */
 body.light-theme .pos .product-information-tag {
     background: #f1f5f9 !important;
     border: 1px solid #cbd5e1 !important;
@@ -1832,11 +1061,6 @@ body.light-theme .pos .product-information-tag {
     box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
 }
 
-body.light-theme .pos .product-information-tag .product-information-tag-logo {
-    color: #64748b !important;
-}
-
-/* LIGHT THEME PRODUCT TAG HOVER */
 body.light-theme .pos .product-information-tag:hover {
     background: rgba(59, 130, 246, 0.1);
     border-color: #3b82f6;
@@ -1847,15 +1071,6 @@ body.light-theme .pos .product-information-tag:hover {
 body.light-theme .pos .product-information-tag:hover .product-information-tag-logo {
     color: #3b82f6 !important;
 }
-
-/* LIGHT THEME PRODUCT TAG ACTIVE */
-body.light-theme .pos .product-information-tag:active {
-    transform: scale(0.95);
-}
-
-/* =========================================================
-   THEME TOGGLE BUTTON
-   ========================================================= */
 
 .theme-toggle-btn {
     position: fixed;
@@ -1885,11 +1100,6 @@ body.light-theme .pos .product-information-tag:active {
     opacity: 1;
 }
 
-.theme-toggle-btn:active {
-    transform: scale(0.95);
-}
-
-/* Light theme toggle button */
 body.light-theme .theme-toggle-btn {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
