@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Preserve the original PYTHONPATH (e.g. /app/src) for receiver scripts
+# and unset it for Odoo server processes to prevent the `/app/src/odoo` namespace
+# directory from shadowing the core Odoo system package.
+ORIGINAL_PYTHONPATH="${PYTHONPATH:-}"
+export PYTHONPATH=""
+
 ODOO_DB_HOST="${DB_HOST:-${HOST:-db}}"
 ODOO_DB_PORT="${DB_PORT:-5432}"
 ODOO_DB_USER="${POSTGRES_USER:-${USER:-odoo}}"
@@ -182,11 +188,11 @@ psql \
 # Initialize RabbitMQ topology (exchanges, queues, bindings)
 echo "[entrypoint] Initializing RabbitMQ topology via setup_rabbitmq.py"
 if [ "$(id -u)" = "0" ]; then
-  runuser -u odoo -- python3 /app/setup_rabbitmq.py || {
+  runuser -u odoo -- env PYTHONPATH="$ORIGINAL_PYTHONPATH" python3 /app/setup_rabbitmq.py || {
     echo "[entrypoint] WARNING: RabbitMQ setup failed, but continuing with Odoo startup"
   }
 else
-  python3 /app/setup_rabbitmq.py || {
+  PYTHONPATH="$ORIGINAL_PYTHONPATH" python3 /app/setup_rabbitmq.py || {
     echo "[entrypoint] WARNING: RabbitMQ setup failed, but continuing with Odoo startup"
   }
 fi
@@ -194,6 +200,7 @@ fi
 if [ "$HEARTBEAT_ENABLED" = "true" ]; then
   (
     cd /app/src
+    export PYTHONPATH="$ORIGINAL_PYTHONPATH"
     python3 main_heartbeat.py
   ) &
   HB_PID="$!"
@@ -203,6 +210,7 @@ fi
 if [ "$RECEIVER_ENABLED" = "true" ]; then
   (
     cd /app/src
+    export PYTHONPATH="$ORIGINAL_PYTHONPATH"
     python3 main.py
   ) &
   REC_PID="$!"
