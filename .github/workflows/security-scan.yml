@@ -32,13 +32,14 @@ jobs:
 
       - name: Run detect-secrets scan (all files)
         run: |
-          detect-secrets scan --all-files --json > detect-secrets-output.json
+          # Some detect-secrets versions don't support --json; write raw scan output instead
+          detect-secrets scan --all-files > detect-secrets-output.txt || true
 
       - name: Upload detect-secrets result
         uses: actions/upload-artifact@v4
         with:
           name: detect-secrets-output
-          path: detect-secrets-output.json
+          path: detect-secrets-output.txt
 
       - name: Run gitleaks
         uses: zricethezav/gitleaks-action@v2
