@@ -98,12 +98,14 @@ def post_init(env):
         existing = PosConfig.search([('name', '=', 'Kassa Main')], limit=1)
         if not existing:
             # Create pos.config record
-            pos_config = PosConfig.create({
+            vals = {
                 'name': 'Kassa Main',
                 'company_id': Company.id,
                 'module_pos_restaurant': False,
-                'cash_control': True,
-            })
+            }
+            if 'cash_control' in PosConfig._fields:
+                vals['cash_control'] = True
+            pos_config = PosConfig.create(vals)
             # Register in ir.model.data
             IrModelData.create({
                 'module': 'kassa_pos',
@@ -178,7 +180,7 @@ def post_init(env):
                 vals['journal_id'] = journal.id
             
             # Special handling for Invoice
-            if xml_name == 'payment_method_invoice':
+            if xml_name == 'payment_method_invoice' and 'split_transactions' in PaymentMethod._fields:
                 vals['split_transactions'] = True
             
             pm = PaymentMethod.create(vals)
