@@ -105,6 +105,14 @@ def post_init(env):
             }
             if 'cash_control' in PosConfig._fields:
                 vals['cash_control'] = True
+            if 'journal_id' in PosConfig._fields:
+                # Odoo 17 requires a Sales journal for pos.config.
+                sales_journal = env['account.journal'].sudo().search([
+                    ('type', '=', 'sale'),
+                    ('company_id', '=', Company.id)
+                ], limit=1)
+                if sales_journal:
+                    vals['journal_id'] = sales_journal.id
             pos_config = PosConfig.create(vals)
             # Register in ir.model.data
             IrModelData.create({
