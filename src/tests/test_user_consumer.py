@@ -229,6 +229,27 @@ class TestUserConsumer(unittest.TestCase):
         self.assertIsNotNone(connection.written_values)
         self.assertEqual(connection.written_values.get('active'), False)
 
+    def test_out_of_order_user_updated_then_confirmed(self):
+        """If UserUpdated arrives before UserConfirmed, ensure no duplicate partner is created."""
+        connection = DummyOdooConnection(existing_ids=[])
+        repository = OdooUserRepository(connection)
+        consumer = UserConsumer(repository)
+
+        # Process update first (will create)
+        first = consumer.process_user_message(USER_UPDATED_XML)
+        # Simulate Odoo now has the partner
+        connection.existing_ids = [42]
+
+        # Process confirm later (should update existing, not create new)
+        second = consumer.process_user_message(USER_CONFIRMED_XML)
+
+        self.assertTrue(first)
+        self.assertTrue(second)
+        # created_values should be set by the first call
+        self.assertIsNotNone(connection.created_values)
+        # written_values should be set by the second call (update path)
+        self.assertIsNotNone(connection.written_values)
+
     def test_process_user_deactivated_message_calls_deactivate_user(self):
         """Test that UserDeactivated message calls deactivate_user on OdooUserRepository."""
         success = self.consumer.process_user_message(USER_DEACTIVATED_XML)
