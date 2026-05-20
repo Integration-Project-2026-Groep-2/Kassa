@@ -281,11 +281,28 @@ def post_init(env):
                     vals['identify_customer'] = True
 
             if pm_id:
-                # Update existing record if any values differ
+                # Update existing record if any values differ.
+                # Many2one fields return a recordset, so compare by .id to
+                # avoid the "unsupported operand for ==" UserWarning.
                 pm = PaymentMethod.browse(pm_id)
-                update_vals = {k: v for k, v in vals.items() if getattr(pm, k) != v}
+                update_vals = {}
+                for k, v in vals.items():
+                    current = getattr(pm, k)
+                    current_val = current.id if hasattr(current, 'id') else current
+                    if current_val != v:
+                        update_vals[k] = v
                 if update_vals:
-                    pm.write(update_vals)
+                    try:
+                        pm.write(update_vals)
+                    except Exception as write_err:
+                        import logging
+                        _log = logging.getLogger('kassa_pos')
+                        _log.warning(
+                            'post_init: skipping update of payment method %r — %s '
+                            '(likely an open POS session is blocking the write; '
+                            'close the session and restart to apply the update).',
+                            display_name, write_err,
+                        )
             else:
                 # Create a new payment method
                 create_vals = {
