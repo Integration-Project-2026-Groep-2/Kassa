@@ -313,6 +313,15 @@ class TestOdooUserRepository(unittest.TestCase):
         self.assertEqual(repo.odoo.written_values['customer_rank'], 1)
         self.assertFalse(repo.odoo.written_values['is_company'])
 
+    def test_update_user_raises_when_user_missing(self):
+        repo = OdooUserRepository(DummyOdooConnection(existing_ids=[]))
+
+        with self.assertRaises(ValueError) as context:
+            repo.update_user(self.user)
+
+        self.assertIn('User not found in Odoo', str(context.exception))
+        self.assertIsNone(repo.odoo.written_values)
+
     def test_create_user_sets_company_id(self):
         """Test that create_user sets the standard Odoo company_id field."""
         repo = OdooUserRepository(DummyOdooConnection())
