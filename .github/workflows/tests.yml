@@ -27,3 +27,8 @@ jobs:
         with:
           name: coverage-xml
           path: coverage.xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+        # If the repo is private, set `CODECOV_TOKEN` in repository secrets.

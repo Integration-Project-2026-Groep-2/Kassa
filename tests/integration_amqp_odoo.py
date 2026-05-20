@@ -1,7 +1,11 @@
+import os
 import pytest
 
-pytest.skip("Integration AMQP+Odoo tests are scaffolded and skipped by default; set RUN_INTEGRATION=1 to run.", allow_module_level=True)
+# Skip integration tests by default — enable by setting RUN_INTEGRATION=1 in the environment.
+if os.environ.get("RUN_INTEGRATION", "0") != "1":
+    pytest.skip("Integration tests skipped by default; set RUN_INTEGRATION=1 to run.", allow_module_level=True)
 
-# Placeholder for future integration tests using testcontainers or a mocked AMQP + fake Odoo.
+
 def test_placeholder_integration():
+    # TODO: implement real integration using testcontainers (RabbitMQ + Fake Odoo)
     assert True
