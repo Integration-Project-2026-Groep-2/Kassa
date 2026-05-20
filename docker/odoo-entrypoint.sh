@@ -120,22 +120,44 @@ for i in $(seq 1 30); do
   sleep 2
 done
 
-  # Reset all database sequences to prevent unique constraint violations (e.g., mail_message_pkey)
-  # that can happen when the database is restored/cloned/imported and sequences fall out of sync.
+  # Reset all database sequences to prevent unique constraint violations (e.g., mail_followers_pkey, mail_message_pkey)
+  # that can happen when the database is restored/cloned/imported and sequence ownership is not preserved.
   if [ -n "$ODOO_DB_NAME" ]; then
     echo "[entrypoint] Resetting all database sequences to prevent unique constraint violations..."
     psql "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" << 'EOF' 2>/dev/null || true
 DO $$
 DECLARE
     r RECORD;
+    t_name TEXT;
+    c_name TEXT;
+    s_name TEXT;
+    max_id BIGINT;
 BEGIN
     FOR r IN
-        SELECT table_name, column_name, pg_get_serial_sequence(table_name, column_name) AS seq_name
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-          AND pg_get_serial_sequence(table_name, column_name) IS NOT NULL
+        SELECT c.relname AS seq_name
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relkind = 'S' AND n.nspname = 'public'
     LOOP
-        EXECUTE 'SELECT setval(''' || r.seq_name || ''', COALESCE((SELECT MAX(' || quote_ident(r.column_name) || ') FROM ' || quote_ident(r.table_name) || '), 0) + 1, false)';
+        s_name := r.seq_name;
+        t_name := NULL;
+        c_name := 'id'; -- Default Odoo primary key column
+        
+        -- Try to deduce table name by stripping '_id_seq'
+        IF s_name LIKE '%_id_seq' THEN
+            t_name := substring(s_name from 1 for length(s_name) - 7);
+        END IF;
+
+        -- If table exists, fetch its max ID and align the sequence
+        IF t_name IS NOT NULL THEN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = t_name
+            ) THEN
+                EXECUTE format('SELECT COALESCE(MAX(%I), 0) FROM %I', c_name, t_name) INTO max_id;
+                EXECUTE format('SELECT setval(%L, %s, false)', 'public.' || s_name, max_id + 1);
+            END IF;
+        END IF;
     END LOOP;
 END $$;
 EOF

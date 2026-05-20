@@ -30,6 +30,9 @@ _fake_settings.RABBIT_PASSWORD = "guest"
 _fake_settings.RABBIT_VHOST = "/"
 sys.modules.setdefault("settings", _fake_settings)
 
+import os
+os.environ['ENABLE_RABBITMQ_LOGS'] = 'false'
+
 from src.logging_config import RabbitMQLogHandler
 
 
