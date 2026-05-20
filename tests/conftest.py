@@ -3,6 +3,11 @@ import types
 import importlib
 from pathlib import Path
 import pytest
+import os
+
+# Ensure tests do not try to connect to a local RabbitMQ via the
+# logging handler — disable RabbitMQ log publishing in the test env.
+os.environ.setdefault('ENABLE_RABBITMQ_LOGS', 'false')
 
 # Ensure the repository root is on sys.path so imports like `src.xml_validator`
 # work both locally and in CI runners where the working directory may differ.
