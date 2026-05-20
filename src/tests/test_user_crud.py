@@ -301,6 +301,18 @@ class TestOdooUserRepository(unittest.TestCase):
         self.assertFalse(repo.odoo.written_values['is_company'])
         self.assertEqual(repo.odoo.written_values['company_type'], 'person')
 
+    def test_update_user_updates_existing_record(self):
+        repo = OdooUserRepository(DummyOdooConnection(existing_ids=[99]))
+
+        result = repo.update_user(self.user)
+
+        self.assertTrue(result)
+        self.assertIsNotNone(repo.odoo.written_values)
+        self.assertEqual(repo.odoo.written_values['user_id_custom'], self.user.userId)
+        self.assertEqual(repo.odoo.written_values['company_id_custom'], self.user.companyId)
+        self.assertEqual(repo.odoo.written_values['customer_rank'], 1)
+        self.assertFalse(repo.odoo.written_values['is_company'])
+
     def test_create_user_sets_company_id(self):
         """Test that create_user sets the standard Odoo company_id field."""
         repo = OdooUserRepository(DummyOdooConnection())
