@@ -23,3 +23,6 @@ __pycache__/
 scripts/create_user.py
 scripts/create_user.sql
 odoo_logs_kassa.txt
+coverage.xml
+.coverage
+.coverage
