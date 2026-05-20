@@ -66,11 +66,12 @@ def post_init(env):
         ]
 
         for xml_name, display_name, code, journal_type in journals:
-            try:
-                IrModelData.get_object('kassa_pos', xml_name)
-                continue
-            except Exception:
-                pass
+            existing_xml = IrModelData.search([('module', '=', 'kassa_pos'), ('name', '=', xml_name)], limit=1)
+            if existing_xml:
+                if env['account.journal'].browse(existing_xml.res_id).exists():
+                    continue
+                else:
+                    existing_xml.unlink()
 
             existing = Journal.search([('code', '=', code)], limit=1)
             if existing:
@@ -142,9 +143,8 @@ def post_init(env):
             })
         else:
             # Register existing in ir.model.data if missing
-            try:
-                IrModelData.get_object('kassa_pos', 'pos_config_kassa_main')
-            except Exception:
+            existing_xml = IrModelData.search([('module', '=', 'kassa_pos'), ('name', '=', 'pos_config_kassa_main')], limit=1)
+            if not existing_xml:
                 IrModelData.create({
                     'module': 'kassa_pos',
                     'name': 'pos_config_kassa_main',
@@ -152,6 +152,9 @@ def post_init(env):
                     'res_id': existing.id,
                     'noupdate': True,
                 })
+            else:
+                if existing_xml.res_id != existing.id:
+                    existing_xml.write({'res_id': existing.id})
     except Exception:
         try:
             import logging
@@ -175,23 +178,25 @@ def post_init(env):
         for xml_name, display_name, journal_xmlid in payment_methods:
             # Try to resolve the existing record ID
             pm_id = None
-            try:
-                pm_id = IrModelData.get_object('kassa_pos', xml_name).id
-            except Exception:
+            existing_xml = IrModelData.search([('module', '=', 'kassa_pos'), ('name', '=', xml_name)], limit=1)
+            if existing_xml:
+                if env['pos.payment.method'].browse(existing_xml.res_id).exists():
+                    pm_id = existing_xml.res_id
+                else:
+                    existing_xml.unlink()
+
+            if not pm_id:
                 existing = PaymentMethod.search([('name', '=', display_name)], limit=1)
                 if existing:
                     pm_id = existing.id
                     # Register in ir.model.data
-                    try:
-                        IrModelData.create({
-                            'module': 'kassa_pos',
-                            'name': xml_name,
-                            'model': 'pos.payment.method',
-                            'res_id': pm_id,
-                            'noupdate': True,
-                        })
-                    except Exception:
-                        pass
+                    IrModelData.create({
+                        'module': 'kassa_pos',
+                        'name': xml_name,
+                        'model': 'pos.payment.method',
+                        'res_id': pm_id,
+                        'noupdate': True,
+                    })
 
             # Resolve journal ref
             journal = None
