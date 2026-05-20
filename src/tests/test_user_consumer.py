@@ -199,6 +199,36 @@ class TestUserConsumer(unittest.TestCase):
         self.assertEqual(connection.created_values['user_id_custom'], "8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11")
         self.assertEqual(connection.written_values['user_id_custom'], "8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11")
 
+    def test_idempotent_processing_of_duplicate_user_updated(self):
+        """Test that duplicate UserUpdated messages perform update without duplication."""
+        connection = DummyOdooConnection(existing_ids=[])
+        repository = OdooUserRepository(connection)
+        consumer = UserConsumer(repository)
+
+        first = consumer.process_user_message(USER_UPDATED_XML)
+        connection.existing_ids = [42]
+        second = consumer.process_user_message(USER_UPDATED_XML)
+
+        self.assertTrue(first)
+        self.assertTrue(second)
+        self.assertIsNotNone(connection.created_values)
+        self.assertIsNotNone(connection.written_values)
+        self.assertEqual(connection.written_values.get('user_id_custom'), "8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11")
+
+    def test_idempotent_processing_of_duplicate_user_deactivated(self):
+        """Test that duplicate UserDeactivated messages don't cause errors and set active=False."""
+        connection = DummyOdooConnection(existing_ids=[42])
+        repository = OdooUserRepository(connection)
+        consumer = UserConsumer(repository)
+
+        first = consumer.process_user_message(USER_DEACTIVATED_XML)
+        second = consumer.process_user_message(USER_DEACTIVATED_XML)
+
+        self.assertTrue(first)
+        self.assertTrue(second)
+        self.assertIsNotNone(connection.written_values)
+        self.assertEqual(connection.written_values.get('active'), False)
+
     def test_process_user_deactivated_message_calls_deactivate_user(self):
         """Test that UserDeactivated message calls deactivate_user on OdooUserRepository."""
         success = self.consumer.process_user_message(USER_DEACTIVATED_XML)
