@@ -21,6 +21,15 @@ _fake_config.RABBIT_PASSWORD = "guest"
 _fake_config.RABBIT_VHOST = "/"
 sys.modules.setdefault("src.config", _fake_config)
 
+# Also stub the top-level `settings` module that `src.logging_config` imports.
+_fake_settings = types.ModuleType("settings")
+_fake_settings.RABBIT_HOST = "localhost"
+_fake_settings.RABBIT_PORT = 5672
+_fake_settings.RABBIT_USER = "guest"
+_fake_settings.RABBIT_PASSWORD = "guest"
+_fake_settings.RABBIT_VHOST = "/"
+sys.modules.setdefault("settings", _fake_settings)
+
 from src.logging_config import RabbitMQLogHandler
 
 
