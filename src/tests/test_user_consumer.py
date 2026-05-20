@@ -68,6 +68,44 @@ USER_DEACTIVATED_XML = """<?xml version="1.0" encoding="UTF-8"?>
 </UserDeactivated>"""
 
 
+class DummyOdooConnection:
+    def __init__(self, existing_ids=None):
+        self.existing_ids = existing_ids or []
+        self.created_values = None
+        self.written_values = None
+
+    def is_connected(self):
+        return True
+
+    def search(self, model, domain, **kwargs):
+        return list(self.existing_ids)
+
+    def create(self, model, values):
+        self.created_values = values
+        return 42
+
+    def read(self, model, ids, fields=None):
+        source_values = self.written_values or self.created_values
+        if source_values is None:
+            return []
+
+        return [{
+            'id': 42,
+            'name': source_values.get('name'),
+            'email': source_values.get('email'),
+            'active': source_values.get('active', True),
+            'customer_rank': source_values.get('customer_rank', 1),
+            'is_company': source_values.get('is_company', False),
+            'company_id': source_values.get('company_id', False),
+            'user_id_custom': source_values.get('user_id_custom'),
+            'badge_code': source_values.get('badge_code'),
+        }]
+
+    def write(self, model, ids, values, **kwargs):
+        self.written_values = values
+        return True
+
+
 class TestUserConsumer(unittest.TestCase):
     def setUp(self):
         # Mock OdooUserRepository
@@ -143,6 +181,23 @@ class TestUserConsumer(unittest.TestCase):
         error_callback.assert_called_once()
         self.assertEqual(error_callback.call_args[0][0], 'User')
         self.assertIn('Element', error_callback.call_args[0][1])
+
+    def test_idempotent_processing_of_duplicate_messages(self):
+        """Test that duplicate CRM messages resolve to create once, then update once."""
+        connection = DummyOdooConnection(existing_ids=[])
+        repository = OdooUserRepository(connection)
+        consumer = UserConsumer(repository)
+
+        first = consumer.process_user_message(USER_CONFIRMED_XML)
+        connection.existing_ids = [42]
+        second = consumer.process_user_message(USER_CONFIRMED_XML)
+
+        self.assertTrue(first)
+        self.assertTrue(second)
+        self.assertIsNotNone(connection.created_values)
+        self.assertIsNotNone(connection.written_values)
+        self.assertEqual(connection.created_values['user_id_custom'], "8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11")
+        self.assertEqual(connection.written_values['user_id_custom'], "8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11")
 
     def test_process_user_deactivated_message_calls_deactivate_user(self):
         """Test that UserDeactivated message calls deactivate_user on OdooUserRepository."""
