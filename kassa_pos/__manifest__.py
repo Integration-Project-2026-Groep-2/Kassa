@@ -32,6 +32,7 @@
         'point_of_sale._assets_pos': [
             'kassa_pos/static/src/css/user_registration.css',
             'kassa_pos/static/src/css/gks_receipt.css',
+            'kassa_pos/static/src/css/qr_scanner.css',
             'kassa_pos/static/src/js/UserRegistration.js',
             'kassa_pos/static/src/js/gks_receipt.js',
             'kassa_pos/static/src/js/ProductScreenUserButton.js',
@@ -40,6 +41,7 @@
             'kassa_pos/static/src/js/BalanceValidation.js',
             'kassa_pos/static/src/js/BalanceTopupModal.js',
             'kassa_pos/static/src/js/BalanceButton.js',
+            'kassa_pos/static/src/js/QrScannerButton.js',
             'kassa_pos/static/src/xml/gks_receipt.xml',
         ],
     },

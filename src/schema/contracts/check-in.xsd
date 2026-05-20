@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+    <!--
+        CheckIn — IoT scanner → Kassa
+        Verstuurd door de fysieke IoT QR-scanner wanneer een gebruiker
+        zijn QR-code toont. De <id> is de CRM UUID (user_id_custom).
+    -->
+    <xs:element name="CheckIn">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="id"        type="xs:string"/>
+                <xs:element name="timestamp" type="xs:dateTime"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
