@@ -36,12 +36,16 @@ class DummyOdooConnection:
         return 42
 
     def read(self, model, ids, fields=None):
-        # If an explicit read_response is provided, return it (wrapped in a list)
-        if self.read_response is not None:
+        # If a write has occurred, prefer the written values for readback
+        if self.written_values is not None:
+            source_values = self.written_values
+        elif self.read_response is not None:
+            # Initially, simulate Odoo returning a pre-existing record
             return [self.read_response]
+        else:
+            # Use created_values if available
+            source_values = self.created_values
 
-        # Use written_values if available (from update), otherwise use created_values
-        source_values = self.written_values or self.created_values
         if source_values is None:
             return []
 
@@ -352,6 +356,32 @@ class TestOdooUserRepository(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             repo.create_user(self.user)
+
+    def test_create_user_reactivates_inactive_partner(self):
+        """If a partner exists but is inactive, create_user should update (reactivate) it."""
+        # Simulate existing partner id and an initial read showing active=False
+        inactive_read = {
+            'id': 99,
+            'name': 'Inactive User',
+            'email': 'inactive@example.com',
+            'active': False,
+            'customer_rank': 0,
+            'is_company': False,
+            'company_id': None,
+            'user_id_custom': self.user.userId,
+            'badge_code': self.user.badgeCode,
+        }
+
+        conn = DummyOdooConnection(existing_ids=[99], read_response=inactive_read)
+        repo = OdooUserRepository(conn)
+
+        # Calling create_user should detect existing and call update_user which writes active=True
+        partner_id = repo.create_user(self.user)
+
+        self.assertEqual(partner_id, 99)
+        # After update, the connection.written_values should include active True
+        self.assertIsNotNone(conn.written_values)
+        self.assertTrue(conn.written_values.get('active'))
 
 
 if __name__ == '__main__':
