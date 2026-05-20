@@ -243,8 +243,17 @@ def post_init(env):
         ]
         
         for xml_name, display_name, journal_xmlid in payment_methods:
-            # Try to resolve the existing record ID
+            # ── Resolve the journal we intend to use ────────────────────────
+            journal = None
+            try:
+                journal = env.ref('kassa_pos.' + journal_xmlid, raise_if_not_found=False)
+            except Exception:
+                journal = None
+
+            # ── Try to resolve an existing PM record (3-stage lookup) ───────
             pm_id = None
+
+            # Stage 1: XML ID in ir.model.data
             existing_xml = IrModelData.search([('module', '=', 'kassa_pos'), ('name', '=', xml_name)], limit=1)
             if existing_xml:
                 if env['pos.payment.method'].browse(existing_xml.res_id).exists():
@@ -252,13 +261,12 @@ def post_init(env):
                 else:
                     existing_xml.unlink()
 
+            # Stage 2: search by display name
             if not pm_id:
                 existing = PaymentMethod.search([('name', '=', display_name)], limit=1)
                 if existing:
-                    # Guard: a cash-type payment method may only belong to one POS.
-                    # If this record is already linked exclusively to a different POS
-                    # config (not Kassa Main), don't reuse it — let the else-branch
-                    # create a fresh dedicated one.
+                    # Guard: a cash PM may only belong to one POS.
+                    # Skip if already exclusively owned by a different POS.
                     kassa_main = env['pos.config'].sudo().search([('name', '=', 'Kassa Main')], limit=1)
                     is_cash_type = existing.journal_id and existing.journal_id.type == 'cash'
                     already_owned_by_other = False
@@ -270,7 +278,6 @@ def post_init(env):
 
                     if not already_owned_by_other:
                         pm_id = existing.id
-                        # Register in ir.model.data
                         IrModelData.create({
                             'module': 'kassa_pos',
                             'name': xml_name,
@@ -279,12 +286,27 @@ def post_init(env):
                             'noupdate': True,
                         })
 
-            # Resolve journal ref
-            journal = None
-            try:
-                journal = env.ref('kassa_pos.' + journal_xmlid, raise_if_not_found=False)
-            except Exception:
-                journal = None
+            # Stage 3: search by journal — catches renamed/leftover PMs that
+            # still use our journal (e.g. old 'Cash' → KCASH after cleanup).
+            # Prevents the "same journal on multiple cash PMs" constraint error.
+            if not pm_id and journal:
+                by_journal = PaymentMethod.search([('journal_id', '=', journal.id)], limit=1)
+                if by_journal:
+                    pm_id = by_journal.id
+                    # Rename it to our canonical name if it differs
+                    if by_journal.name != display_name:
+                        try:
+                            by_journal.write({'name': display_name})
+                        except Exception:
+                            pass
+                    IrModelData.create({
+                        'module': 'kassa_pos',
+                        'name': xml_name,
+                        'model': 'pos.payment.method',
+                        'res_id': pm_id,
+                        'noupdate': True,
+                    })
+
 
             # Prepare values to set or update
             vals = {}
