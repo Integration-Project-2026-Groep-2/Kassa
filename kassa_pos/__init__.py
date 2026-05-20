@@ -241,7 +241,53 @@ def post_init(env):
             ('payment_method_invoice', 'Invoice', 'account_journal_bancontact_kassa'),
             ('pos_payment_method_topup', 'Saldo', 'account_journal_saldo_kassa'),
         ]
-        
+
+        # ── Pre-pass: deduplicate cash PMs sharing the same journal ──────────
+        # Previous failed runs may have left multiple pos.payment.method records
+        # all pointing at the same cash journal (KCASH). Odoo forbids this with
+        # the constraint "cannot use same journal on multiple cash PMs".
+        # We keep the record registered in our ir.model.data if possible,
+        # otherwise keep the one with the lowest ID, and hard-delete the rest.
+        for _xml_name, _display_name, _journal_xmlid in payment_methods:
+            try:
+                _journal = env.ref('kassa_pos.' + _journal_xmlid, raise_if_not_found=False)
+                if not _journal or _journal.type != 'cash':
+                    continue
+                pms_on_journal = PaymentMethod.search([('journal_id', '=', _journal.id)])
+                if len(pms_on_journal) <= 1:
+                    continue
+                # Prefer the one already in our ir.model.data
+                our_xml = IrModelData.search([
+                    ('module', '=', 'kassa_pos'),
+                    ('name', '=', _xml_name),
+                    ('model', '=', 'pos.payment.method'),
+                ], limit=1)
+                keep_id = our_xml.res_id if (our_xml and our_xml.res_id in pms_on_journal.ids) else pms_on_journal[0].id
+                for _pm in pms_on_journal:
+                    if _pm.id == keep_id:
+                        continue
+                    import logging as _l
+                    _l.getLogger('kassa_pos').warning(
+                        'post_init: dedup — deleting duplicate cash PM id=%s (journal=%s), keeping id=%s',
+                        _pm.id, _journal.name, keep_id,
+                    )
+                    cr.execute(
+                        'DELETE FROM pos_config_pos_payment_method_rel WHERE pos_payment_method_id = %s',
+                        (_pm.id,),
+                    )
+                    cr.execute(
+                        "DELETE FROM ir_model_data WHERE model='pos.payment.method' AND res_id = %s",
+                        (_pm.id,),
+                    )
+                    _pm.unlink()
+            except Exception:
+                try:
+                    import logging
+                    logging.getLogger('kassa_pos').exception('post_init: cash PM dedup failed for %s', _xml_name)
+                except Exception:
+                    pass
+
+
         for xml_name, display_name, journal_xmlid in payment_methods:
             # ── Resolve the journal we intend to use ────────────────────────
             journal = None
