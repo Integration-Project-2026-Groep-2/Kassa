@@ -115,3 +115,100 @@ def reload_core_modules():
     except Exception:
         pass
     yield
+
+
+# Lightweight `odoo` stub so unit tests can import kassa_pos modules without full Odoo
+if 'odoo' not in sys.modules:
+    odoo = types.ModuleType('odoo')
+    class Model:
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+        def ensure_one(self):
+            return None
+        def write(self, vals):
+            for k, v in vals.items():
+                setattr(self, k, v)
+            return True
+    odoo.models = types.SimpleNamespace(Model=Model)
+
+    class Fields:
+        @staticmethod
+        def Char(**kwargs):
+            return None
+        @staticmethod
+        def Selection(*args, **kwargs):
+            return None
+        @staticmethod
+        def Float(**kwargs):
+            return None
+        def __getattr__(self, name):
+            def _factory(*args, **kwargs):
+                return None
+            return _factory
+        class Datetime:
+            def __init__(self, *args, **kwargs):
+                pass
+            @staticmethod
+            def now():
+                import datetime as _dt
+                return _dt.datetime.utcnow()
+        class Date:
+            @staticmethod
+            def today():
+                import datetime as _dt
+                return _dt.date.today()
+    odoo.fields = Fields()
+
+    class api:
+        @staticmethod
+        def model_create_multi(func):
+            return func
+        @staticmethod
+        def depends(*args, **kwargs):
+            def _decor(fn):
+                return fn
+            return _decor
+        @staticmethod
+        def model(func=None):
+            if func is None:
+                def _decor(fn):
+                    return fn
+                return _decor
+            return func
+    odoo.api = api
+    odoo.SUPERUSER_ID = 1
+
+    exc_mod = types.ModuleType('odoo.exceptions')
+    class UserError(Exception):
+        pass
+    exc_mod.UserError = UserError
+    class ValidationError(Exception):
+        pass
+    exc_mod.ValidationError = ValidationError
+    sys.modules['odoo.exceptions'] = exc_mod
+    odoo.exceptions = exc_mod
+
+    # minimal http helpers
+    http_mod = types.ModuleType('odoo.http')
+    class Response:
+        def __init__(self, body='', status=200, content_type='text/plain'):
+            self.body = body
+            self.status = status
+            self.content_type = content_type
+        def __str__(self):
+            return str(self.body)
+    http_mod.Response = Response
+    http_mod.request = types.SimpleNamespace(env={})
+    class Controller:
+        pass
+    http_mod.Controller = Controller
+    def route(*args, **kwargs):
+        def _decor(fn):
+            return fn
+        return _decor
+    http_mod.route = route
+    sys.modules['odoo.http'] = http_mod
+    odoo.http = http_mod
+
+    sys.modules['odoo'] = odoo
