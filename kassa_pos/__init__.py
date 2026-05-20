@@ -161,6 +161,51 @@ def post_init(env):
             logging.getLogger('kassa_pos').exception('post_init: failed to create pos.config')
         except Exception:
             pass
+    # ── 3b. Cleanup: remove any foreign/generic 'Cash' PM from Kassa Main ────
+    # On the first run the code may have linked Odoo's default 'Cash' payment
+    # method (owned by the built-in 'Shop' POS) to Kassa Main. Odoo's own
+    # constraint then blocks re-opening Kassa Main with that shared cash PM.
+    # We remove that stale link here so Step 4 can replace it with our own
+    # dedicated 'Kassa Cash' payment method.
+    try:
+        cr.execute("""
+            SELECT res_id FROM ir_model_data
+            WHERE module='kassa_pos' AND name='pos_config_kassa_main'
+        """)
+        row = cr.fetchone()
+        if row:
+            pos_config_id = row[0]
+            # Find payment methods linked to Kassa Main whose xml_name is NOT
+            # in our expected set (i.e. they are foreign/default records).
+            our_pm_xml_names = (
+                'payment_method_cash', 'payment_method_card',
+                'payment_method_invoice', 'pos_payment_method_topup',
+            )
+            cr.execute("""
+                SELECT res_id FROM ir_model_data
+                WHERE module='kassa_pos' AND name = ANY(%s)
+            """, (list(our_pm_xml_names),))
+            our_pm_ids = [r[0] for r in cr.fetchall()]
+
+            # Remove any linked PM that is NOT in our managed set
+            if our_pm_ids:
+                cr.execute("""
+                    DELETE FROM pos_config_pos_payment_method_rel
+                    WHERE pos_config_id = %s
+                      AND pos_payment_method_id NOT IN %s
+                """, (pos_config_id, tuple(our_pm_ids)))
+            else:
+                cr.execute("""
+                    DELETE FROM pos_config_pos_payment_method_rel
+                    WHERE pos_config_id = %s
+                """, (pos_config_id,))
+    except Exception:
+        try:
+            import logging
+            logging.getLogger('kassa_pos').exception('post_init: cleanup of foreign cash PM failed')
+        except Exception:
+            pass
+
     # ── 4. Create POS payment methods safely ─────────────────────────────────
     try:
         PaymentMethod = env['pos.payment.method'].sudo()
@@ -168,8 +213,11 @@ def post_init(env):
         Company = env.ref('base.main_company')
         
         # Define payment methods
+        # NOTE: Use distinct names (e.g. 'Kassa Cash') so we never accidentally
+        # match Odoo's built-in 'Cash' payment method, which is already
+        # exclusively owned by the default 'Shop' POS configuration.
         payment_methods = [
-            ('payment_method_cash', 'Cash', 'account_journal_cash_kassa'),
+            ('payment_method_cash', 'Kassa Cash', 'account_journal_cash_kassa'),
             ('payment_method_card', 'Bancontact', 'account_journal_bancontact_kassa'),
             ('payment_method_invoice', 'Invoice', 'account_journal_bancontact_kassa'),
             ('pos_payment_method_topup', 'Saldo', 'account_journal_saldo_kassa'),
@@ -188,15 +236,29 @@ def post_init(env):
             if not pm_id:
                 existing = PaymentMethod.search([('name', '=', display_name)], limit=1)
                 if existing:
-                    pm_id = existing.id
-                    # Register in ir.model.data
-                    IrModelData.create({
-                        'module': 'kassa_pos',
-                        'name': xml_name,
-                        'model': 'pos.payment.method',
-                        'res_id': pm_id,
-                        'noupdate': True,
-                    })
+                    # Guard: a cash-type payment method may only belong to one POS.
+                    # If this record is already linked exclusively to a different POS
+                    # config (not Kassa Main), don't reuse it — let the else-branch
+                    # create a fresh dedicated one.
+                    kassa_main = env['pos.config'].sudo().search([('name', '=', 'Kassa Main')], limit=1)
+                    is_cash_type = existing.journal_id and existing.journal_id.type == 'cash'
+                    already_owned_by_other = False
+                    if is_cash_type and 'pos_config_ids' in existing._fields:
+                        other_pos = existing.pos_config_ids.filtered(
+                            lambda c: not kassa_main or c.id != kassa_main.id
+                        )
+                        already_owned_by_other = bool(other_pos)
+
+                    if not already_owned_by_other:
+                        pm_id = existing.id
+                        # Register in ir.model.data
+                        IrModelData.create({
+                            'module': 'kassa_pos',
+                            'name': xml_name,
+                            'model': 'pos.payment.method',
+                            'res_id': pm_id,
+                            'noupdate': True,
+                        })
 
             # Resolve journal ref
             journal = None
