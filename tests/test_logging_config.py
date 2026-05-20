@@ -8,7 +8,7 @@ import logging
 import sys
 import types
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 # src/config.py uses sibling-imports that only resolve when /app/src is on sys.path.
 # Stub it before importing logging_config so the lazy import inside _ensure_connected
@@ -29,6 +29,18 @@ _fake_settings.RABBIT_USER = "guest"
 _fake_settings.RABBIT_PASSWORD = "guest"
 _fake_settings.RABBIT_VHOST = "/"
 sys.modules.setdefault("settings", _fake_settings)
+
+# Stub aio_pika if not present locally (e.g. on development environment) so tests can run
+try:
+    import aio_pika
+except ImportError:
+    _fake_aiopika = types.ModuleType("aio_pika")
+    _fake_aiopika.connect_robust = AsyncMock()
+    class FakeMessage:
+        def __init__(self, body, *args, **kwargs):
+            self.body = body
+    _fake_aiopika.Message = FakeMessage
+    sys.modules["aio_pika"] = _fake_aiopika
 
 import os
 os.environ['ENABLE_RABBITMQ_LOGS'] = 'false'

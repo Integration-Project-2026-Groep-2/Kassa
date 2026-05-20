@@ -163,6 +163,27 @@ END $$;
 EOF
   fi
 
+  # Align existing programmatic ir.model.data records to noupdate=true to prevent Odoo's orphan cleanup
+  # from deleting them during upgrade, which would fail due to active POS sessions and payment methods constraints.
+  if [ -n "$ODOO_DB_NAME" ]; then
+    echo "[entrypoint] Aligning existing ir.model.data records to noupdate=true..."
+    psql "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" << 'EOF' 2>/dev/null || true
+UPDATE ir_model_data 
+SET noupdate = true 
+WHERE module = 'kassa_pos' 
+  AND name IN (
+    'pos_config_kassa_main', 
+    'account_journal_cash_kassa', 
+    'account_journal_bancontact_kassa', 
+    'account_journal_saldo_kassa', 
+    'payment_method_cash', 
+    'payment_method_card', 
+    'payment_method_invoice', 
+    'pos_payment_method_topup'
+  );
+EOF
+  fi
+
 if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
 
   # Check if kassa_pos is already installed in the database.

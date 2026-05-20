@@ -64,6 +64,7 @@ def post_init(env):
                         'name': xml_name,
                         'model': 'account.journal',
                         'res_id': existing.id,
+                        'noupdate': True,
                     })
                 except Exception:
                     pass
@@ -80,6 +81,7 @@ def post_init(env):
                 'name': xml_name,
                 'model': 'account.journal',
                 'res_id': journal.id,
+                'noupdate': True,
             })
     except Exception:
         try:
@@ -120,6 +122,7 @@ def post_init(env):
                 'name': 'pos_config_kassa_main',
                 'model': 'pos.config',
                 'res_id': pos_config.id,
+                'noupdate': True,
             })
         else:
             # Register existing in ir.model.data if missing
@@ -131,6 +134,7 @@ def post_init(env):
                     'name': 'pos_config_kassa_main',
                     'model': 'pos.config',
                     'res_id': existing.id,
+                    'noupdate': True,
                 })
     except Exception:
         try:
@@ -169,6 +173,7 @@ def post_init(env):
                     'name': xml_name,
                     'model': 'pos.payment.method',
                     'res_id': existing.id,
+                    'noupdate': True,
                 })
                 continue
             
@@ -197,6 +202,7 @@ def post_init(env):
                 'name': xml_name,
                 'model': 'pos.payment.method',
                 'res_id': pm.id,
+                'noupdate': True,
             })
     except Exception:
         try:
