@@ -171,6 +171,14 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
   fi
 fi
 
+# Clear broken cached asset attachments to force Odoo to regenerate all JS/CSS files.
+# This resolves the common Odoo "AssetsLoadingError: The loading of /web/assets/... failed".
+echo "[entrypoint] Clearing cached Odoo assets from database to force regeneration..."
+psql \
+  "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" \
+  -c "DELETE FROM ir_attachment WHERE url LIKE '/web/assets/%';" 2>/dev/null || true
+
+
 # Ensure Kassa payment methods are linked to Kassa Main pos_config
 echo "[entrypoint] Linking Kassa payment methods to Kassa Main pos_config"
 psql \
