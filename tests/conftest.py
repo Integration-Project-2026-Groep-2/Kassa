@@ -4,6 +4,13 @@ import importlib
 from pathlib import Path
 import pytest
 
+# Ensure the repository root is on sys.path so imports like `src.xml_validator`
+# work both locally and in CI runners where the working directory may differ.
+repo_root = Path(__file__).resolve().parents[1]
+repo_root_str = str(repo_root)
+if repo_root_str not in sys.path:
+    sys.path.insert(0, repo_root_str)
+
 # Shared test setup: provide lightweight stubs and import aliases so tests
 # can import top-level modules (`messaging`, `odoo_integration`, `connection`, etc.)
 
