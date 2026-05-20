@@ -116,6 +116,34 @@ class TestUserConsumer(unittest.TestCase):
         self.assertFalse(success)
         self.mock_odoo_repo.create_user.assert_not_called()
 
+    def test_process_user_message_missing_critical_tags(self):
+        """Test that missing required CRM fields fails cleanly and triggers on_error."""
+        error_callback = Mock()
+        repo = Mock(spec=OdooUserRepository)
+        repo.create_user = Mock(side_effect=ValueError("Invalid user data: email must be valid: "))
+        repo.update_user = Mock(return_value=True)
+        repo.deactivate_user = Mock(return_value=True)
+        consumer = UserConsumer(repo, on_error=error_callback)
+
+        missing_tags_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<UserConfirmed>
+    <id>8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11</id>
+    <firstName>Emma</firstName>
+    <lastName>Janssens</lastName>
+    <badgeCode>BADGE-00123</badgeCode>
+    <isActive>true</isActive>
+    <gdprConsent>true</gdprConsent>
+    <confirmedAt>2026-03-28T10:15:30+00:00</confirmedAt>
+</UserConfirmed>"""
+
+        success = consumer.process_user_message(missing_tags_xml)
+
+        self.assertFalse(success)
+        repo.create_user.assert_not_called()
+        error_callback.assert_called_once()
+        self.assertEqual(error_callback.call_args[0][0], 'User')
+        self.assertIn('Element', error_callback.call_args[0][1])
+
     def test_process_user_deactivated_message_calls_deactivate_user(self):
         """Test that UserDeactivated message calls deactivate_user on OdooUserRepository."""
         success = self.consumer.process_user_message(USER_DEACTIVATED_XML)
