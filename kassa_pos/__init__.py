@@ -161,13 +161,17 @@ def post_init(env):
             logging.getLogger('kassa_pos').exception('post_init: failed to create pos.config')
         except Exception:
             pass
-    # ── 3b. Cleanup: remove any foreign/generic 'Cash' PM from Kassa Main ────
-    # On the first run the code may have linked Odoo's default 'Cash' payment
-    # method (owned by the built-in 'Shop' POS) to Kassa Main. Odoo's own
-    # constraint then blocks re-opening Kassa Main with that shared cash PM.
-    # We remove that stale link here so Step 4 can replace it with our own
-    # dedicated 'Kassa Cash' payment method.
+    # ── 3b. Cleanup: remove any PM that is shared with another POS ────────────
+    # Odoo enforces that a cash-type payment method may only belong to ONE POS.
+    # If a PM is linked to both Kassa Main AND another POS config, Odoo's
+    # constraint blocks opening Kassa Main. We fix this by:
+    #   1. Removing the shared PM from Kassa Main's relation table.
+    #   2. Deleting the ir.model.data entry for that PM so Step 4 will create
+    #      a fresh dedicated PM (e.g. 'Kassa Cash') in its place.
     try:
+        import logging as _logging
+        _log_cleanup = _logging.getLogger('kassa_pos')
+
         cr.execute("""
             SELECT res_id FROM ir_model_data
             WHERE module='kassa_pos' AND name='pos_config_kassa_main'
@@ -175,36 +179,51 @@ def post_init(env):
         row = cr.fetchone()
         if row:
             pos_config_id = row[0]
-            # Find payment methods linked to Kassa Main whose xml_name is NOT
-            # in our expected set (i.e. they are foreign/default records).
-            our_pm_xml_names = (
-                'payment_method_cash', 'payment_method_card',
-                'payment_method_invoice', 'pos_payment_method_topup',
-            )
-            cr.execute("""
-                SELECT res_id FROM ir_model_data
-                WHERE module='kassa_pos' AND name = ANY(%s)
-            """, (list(our_pm_xml_names),))
-            our_pm_ids = [r[0] for r in cr.fetchall()]
 
-            # Remove any linked PM that is NOT in our managed set
-            if our_pm_ids:
+            # Fetch every PM currently linked to Kassa Main
+            cr.execute("""
+                SELECT pos_payment_method_id
+                FROM pos_config_pos_payment_method_rel
+                WHERE pos_config_id = %s
+            """, (pos_config_id,))
+            linked_pm_ids = [r[0] for r in cr.fetchall()]
+
+            for pm_id in linked_pm_ids:
+                # Check if this PM is ALSO linked to a different POS config
                 cr.execute("""
-                    DELETE FROM pos_config_pos_payment_method_rel
-                    WHERE pos_config_id = %s
-                      AND pos_payment_method_id NOT IN %s
-                """, (pos_config_id, tuple(our_pm_ids)))
-            else:
-                cr.execute("""
-                    DELETE FROM pos_config_pos_payment_method_rel
-                    WHERE pos_config_id = %s
-                """, (pos_config_id,))
+                    SELECT pos_config_id
+                    FROM pos_config_pos_payment_method_rel
+                    WHERE pos_payment_method_id = %s
+                      AND pos_config_id != %s
+                    LIMIT 1
+                """, (pm_id, pos_config_id))
+                other_pos = cr.fetchone()
+                if other_pos:
+                    _log_cleanup.warning(
+                        'post_init: PM id=%s is shared with POS id=%s — '
+                        'removing from Kassa Main and resetting ir.model.data '
+                        'so a dedicated copy is created.',
+                        pm_id, other_pos[0],
+                    )
+                    # Remove from Kassa Main relation
+                    cr.execute("""
+                        DELETE FROM pos_config_pos_payment_method_rel
+                        WHERE pos_config_id = %s AND pos_payment_method_id = %s
+                    """, (pos_config_id, pm_id))
+                    # Remove the ir.model.data entry so Step 4 recreates it fresh
+                    cr.execute("""
+                        DELETE FROM ir_model_data
+                        WHERE module = 'kassa_pos'
+                          AND model  = 'pos.payment.method'
+                          AND res_id = %s
+                    """, (pm_id,))
     except Exception:
         try:
             import logging
-            logging.getLogger('kassa_pos').exception('post_init: cleanup of foreign cash PM failed')
+            logging.getLogger('kassa_pos').exception('post_init: cleanup of shared cash PM failed')
         except Exception:
             pass
+
 
     # ── 4. Create POS payment methods safely ─────────────────────────────────
     try:
