@@ -29,13 +29,12 @@ class PosConfig(models.Model):
         except Exception as e:
             _logger.exception("Failed to load chart of accounts defensively in _register_hook: %s", e)
 
-        # Check if the 'Kassa Main' shop config already exists. If not, trigger post_init setup.
+        # Run the post_init setup hook defensively on startup to ensure all
+        # POS configs, journals, payment methods, and relations are correct and linked.
         try:
-            existing = self.env['pos.config'].sudo().search([('name', '=', 'Kassa Main')], limit=1)
-            if not existing:
-                _logger.info("Kassa Main pos.config not found. Running post_init setup hook defensively...")
-                from odoo.addons.kassa_pos import post_init
-                post_init(self.env)
-                _logger.info("Defensive post_init setup hook completed successfully.")
+            _logger.info("Running defensive post_init setup hook...")
+            from odoo.addons.kassa_pos import post_init
+            post_init(self.env)
+            _logger.info("Defensive post_init setup hook completed successfully.")
         except Exception as e:
             _logger.exception("Failed to run post_init hook defensively in pos.config _register_hook: %s", e)

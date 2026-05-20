@@ -173,53 +173,67 @@ def post_init(env):
         ]
         
         for xml_name, display_name, journal_xmlid in payment_methods:
-            # Check if already exists by xmlid mapping
+            # Try to resolve the existing record ID
+            pm_id = None
             try:
-                IrModelData.get_object('kassa_pos', xml_name)
-                continue
+                pm_id = IrModelData.get_object('kassa_pos', xml_name).id
             except Exception:
-                pass
-            
-            # Try to find by name
-            existing = PaymentMethod.search([('name', '=', display_name)], limit=1)
-            if existing:
-                # Register in ir.model.data
-                IrModelData.create({
-                    'module': 'kassa_pos',
-                    'name': xml_name,
-                    'model': 'pos.payment.method',
-                    'res_id': existing.id,
-                    'noupdate': True,
-                })
-                continue
-            
+                existing = PaymentMethod.search([('name', '=', display_name)], limit=1)
+                if existing:
+                    pm_id = existing.id
+                    # Register in ir.model.data
+                    try:
+                        IrModelData.create({
+                            'module': 'kassa_pos',
+                            'name': xml_name,
+                            'model': 'pos.payment.method',
+                            'res_id': pm_id,
+                            'noupdate': True,
+                        })
+                    except Exception:
+                        pass
+
             # Resolve journal ref
             journal = None
             try:
                 journal = env.ref('kassa_pos.' + journal_xmlid, raise_if_not_found=False)
             except Exception:
                 journal = None
-            
-            # Create payment method
-            vals = {
-                'name': display_name,
-                'company_id': Company.id,
-            }
+
+            # Prepare values to set or update
+            vals = {}
             if journal:
                 vals['journal_id'] = journal.id
-            
-            # Special handling for Invoice
-            if xml_name == 'payment_method_invoice' and 'split_transactions' in PaymentMethod._fields:
-                vals['split_transactions'] = True
-            
-            pm = PaymentMethod.create(vals)
-            IrModelData.create({
-                'module': 'kassa_pos',
-                'name': xml_name,
-                'model': 'pos.payment.method',
-                'res_id': pm.id,
-                'noupdate': True,
-            })
+            if xml_name == 'payment_method_invoice':
+                if 'split_transactions' in PaymentMethod._fields:
+                    vals['split_transactions'] = True
+                if 'identify_customer' in PaymentMethod._fields:
+                    vals['identify_customer'] = True
+            elif xml_name == 'pos_payment_method_topup':
+                if 'identify_customer' in PaymentMethod._fields:
+                    vals['identify_customer'] = True
+
+            if pm_id:
+                # Update existing record if any values differ
+                pm = PaymentMethod.browse(pm_id)
+                update_vals = {k: v for k, v in vals.items() if getattr(pm, k) != v}
+                if update_vals:
+                    pm.write(update_vals)
+            else:
+                # Create a new payment method
+                create_vals = {
+                    'name': display_name,
+                    'company_id': Company.id,
+                }
+                create_vals.update(vals)
+                pm = PaymentMethod.create(create_vals)
+                IrModelData.create({
+                    'module': 'kassa_pos',
+                    'name': xml_name,
+                    'model': 'pos.payment.method',
+                    'res_id': pm.id,
+                    'noupdate': True,
+                })
     except Exception:
         try:
             import logging
