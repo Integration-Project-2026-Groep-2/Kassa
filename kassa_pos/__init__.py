@@ -26,6 +26,22 @@ def post_init(env):
     """
     cr = env.cr
 
+    # ── 0. Ensure Chart of Accounts is configured ────────────────────────────
+    try:
+        Company = env.ref('base.main_company')
+        has_coa = env['account.account'].sudo().search([('company_id', '=', Company.id)], limit=1)
+        if not has_coa:
+            import logging
+            logging.getLogger('kassa_pos').info("post_init: No chart of accounts found. Loading generic_coa...")
+            env['account.chart.template'].sudo().try_loading('generic_coa', company=Company)
+            logging.getLogger('kassa_pos').info("post_init: generic_coa loaded successfully.")
+    except Exception:
+        try:
+            import logging
+            logging.getLogger('kassa_pos').exception('post_init: failed to load chart of accounts')
+        except Exception:
+            pass
+
     # ── 1. Schema migration ──────────────────────────────────────────────────
     cr.execute("""
         SELECT 1 FROM information_schema.columns

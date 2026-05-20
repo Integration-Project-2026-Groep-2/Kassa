@@ -18,6 +18,17 @@ class PosConfig(models.Model):
         """
         super()._register_hook()
         
+        # Check and ensure chart of accounts is configured first so journals/configs can be created properly.
+        try:
+            Company = self.env.ref('base.main_company')
+            has_coa = self.env['account.account'].sudo().search([('company_id', '=', Company.id)], limit=1)
+            if not has_coa:
+                _logger.info("No chart of accounts found for Main Company. Loading generic_coa defensively...")
+                self.env['account.chart.template'].sudo().try_loading('generic_coa', company=Company)
+                _logger.info("Generic chart of accounts loaded successfully.")
+        except Exception as e:
+            _logger.exception("Failed to load chart of accounts defensively in _register_hook: %s", e)
+
         # Check if the 'Kassa Main' shop config already exists. If not, trigger post_init setup.
         try:
             existing = self.env['pos.config'].sudo().search([('name', '=', 'Kassa Main')], limit=1)

@@ -17,6 +17,7 @@
         'point_of_sale',
         'account',
         'sales_team',
+        'l10n_generic_coa',
     ],
     'data': [
         'security/ir.model.access.csv',
