@@ -335,6 +335,23 @@ class PosOrder(models.Model):
         # Now create orders
         order_ids = super().create_from_ui(orders, draft=draft)
 
+        # Build a set of order references that were submitted with an Invoice
+        # payment method.  We detect this from the raw input (before super()) so
+        # we don't depend on the `payment_type` computed field being flushed yet.
+        invoice_refs = set()
+        for order_data in orders:
+            od = order_data.get('data', {})
+            for pl in od.get('statement_ids', []):
+                if isinstance(pl, (list, tuple)) and len(pl) >= 3:
+                    pm_id = pl[2].get('payment_method_id')
+                    if pm_id:
+                        try:
+                            pm = self.env['pos.payment.method'].browse(pm_id)
+                            if pm and 'invoice' in (pm.name or '').lower():
+                                invoice_refs.add(od.get('pos_reference') or od.get('name'))
+                        except Exception:
+                            pass
+
         for order_info in order_ids:
             order = self.browse(order_info['id'])
 
@@ -346,35 +363,48 @@ class PosOrder(models.Model):
             try:
                 exported = order.export_for_printing() or {}
                 _logger.info("🟦 create_from_ui: export_for_printing returned %d keys: %s", len(exported.keys()), list(exported.keys()))
-                
+
                 order_info['data'] = exported
                 _logger.info("🟪 create_from_ui: order_info['data'] now contains %d keys: %s", len(order_info.get('data', {}).keys()), list(order_info.get('data', {}).keys()))
-                
+
                 # Also expose the VSC directly at the top level for clients
                 # that don't inspect `data`.
                 if 'vsc_code' in exported:
                     order_info['vsc_code'] = exported.get('vsc_code')
                     _logger.info("🔷 create_from_ui: SET order_info['vsc_code']=%s and order_info['data']['vsc_code']=%s", order_info.get('vsc_code'), order_info.get('data', {}).get('vsc_code'))
-                # Log what we're returning so we can debug RPC responses
                 try:
                     _logger.info("✅ create_from_ui COMPLETE: order_id=%s vsc=%s exported_keys=%s", order.id, order_info.get('vsc_code'), list(exported.keys()))
                 except Exception:
-                    # never fail the flow because of logging
                     pass
             except Exception as e:
-                # Defensive: don't fail the whole create_from_ui when export_for_printing
-                # has issues; leave order_info unchanged in that case.
                 _logger.error("❌ create_from_ui: export_for_printing FAILED for order_id=%s error=%s", order.id, str(e))
-                pass
 
-            # Invoice-payment orders leave create_from_ui in state 'draft' because
-            # Odoo creates the actual account.move record asynchronously (hence
-            # account_move=False in the sync result).  We must therefore also fire
-            # RabbitMQ messages for orders whose payment_type is 'Invoice',
-            # regardless of the order state at this point in time.
-            if order.state in ('paid', 'done', 'invoiced') or order.payment_type == 'Invoice':
-                self._trigger_rabbitmq_messages(order)
+            # Determine whether this order used an Invoice payment method.
+            # We check both the pre-detected set (reliable) and the stored
+            # computed field (may already be flushed by now) as a fallback.
+            is_invoice_order = (
+                order.pos_reference in invoice_refs
+                or order.payment_type == 'Invoice'
+            )
+            _logger.info(
+                "🐇 create_from_ui: order_id=%s state=%s payment_type=%s pos_ref=%s is_invoice_order=%s",
+                order.id, order.state, order.payment_type,
+                order.pos_reference, is_invoice_order,
+            )
+
+            # Invoice-payment orders are in state 'draft' at this point because
+            # Odoo generates the account.move asynchronously (account_move=False
+            # in the sync result).  Always trigger for invoice orders; for direct
+            # payments use the state guard as before.
+            if order.state in ('paid', 'done', 'invoiced') or is_invoice_order:
+                _logger.info("🐇 create_from_ui: calling _trigger_rabbitmq_messages for order_id=%s", order.id)
+                self._trigger_rabbitmq_messages(order, is_invoice=is_invoice_order)
                 self._process_balance_payment(order)
+            else:
+                _logger.info(
+                    "🐇 create_from_ui: SKIPPING rabbitmq for order_id=%s (state=%s, not invoice)",
+                    order.id, order.state,
+                )
 
         return order_ids
 
@@ -463,24 +493,56 @@ class PosOrder(models.Model):
                     except Exception:
                         _logger.exception('Failed to create fallback payment for order %s', order.name)
 
-    def _trigger_rabbitmq_messages(self, order):
+    def _trigger_rabbitmq_messages(self, order, is_invoice=False):
         """
         Stuur de correcte berichten naar RabbitMQ op basis van paymentType:
 
         - PaymentConfirmed → kassa.payment.confirmed (Contract 16, naar CRM)
           ALTIJD voor bezoekers, BEHALVE bij 'Invoice' (dat gaat via K-01).
         - InvoiceRequested → kassa.invoice.requested (Contract K-01, naar Facturatie)
-          Alleen bij 'Invoice' voor bezoekers (US-11).
+          Voor ALLE invoice-betalingen, zowel particulieren (US-11) als
+          bedrijfscontacten.  De `company_id_custom` guard is verwijderd omdat
+          die berichten voor B2B-klanten stilzwijgend blokkeerde.
         """
-        # Contract 16 — alleen voor bezoekers en NIET bij Invoice
-        payment_data = order._build_payment_confirmed_data()
-        if payment_data.get('email') and not order.partner_id.company_id_custom and order.payment_type != 'Invoice':
-            rabbitmq_sender.send_payment_confirmed(payment_data)
+        _logger.info(
+            "🐇 _trigger_rabbitmq_messages: order_id=%s state=%s payment_type=%s is_invoice=%s partner=%s company_id_custom=%s",
+            order.id, order.state, order.payment_type, is_invoice,
+            order.partner_id.id if order.partner_id else None,
+            order.partner_id.company_id_custom if order.partner_id else None,
+        )
 
-        # Contract K-01 — US-11: factuurverzoek voor privépersonen (geen bedrijfskoppeling)
-        if order.payment_type == 'Invoice' and order.partner_id and not order.partner_id.company_id_custom:
-            invoice_data = order._build_invoice_requested_data()
-            rabbitmq_sender.send_invoice_requested(invoice_data)
+        # Determine invoice flag from argument or computed field
+        invoice_payment = is_invoice or order.payment_type == 'Invoice'
+
+        # Contract 16 — PaymentConfirmed: only for direct payments with a known email
+        if not invoice_payment:
+            payment_data = order._build_payment_confirmed_data()
+            _logger.info("🐇 _trigger_rabbitmq_messages: PaymentConfirmed data=%s", payment_data)
+            if payment_data.get('email'):
+                ok = rabbitmq_sender.send_payment_confirmed(payment_data)
+                _logger.info("🐇 _trigger_rabbitmq_messages: send_payment_confirmed result=%s", ok)
+            else:
+                _logger.warning(
+                    "🐇 _trigger_rabbitmq_messages: skipping PaymentConfirmed — no email for order_id=%s",
+                    order.id,
+                )
+        else:
+            _logger.info("🐇 _trigger_rabbitmq_messages: skipping PaymentConfirmed (invoice payment)")        
+
+        # Contract K-01 — InvoiceRequested: for ALL invoice-payment orders
+        if invoice_payment:
+            if not order.partner_id:
+                _logger.warning(
+                    "🐇 _trigger_rabbitmq_messages: skipping InvoiceRequested — no partner for order_id=%s",
+                    order.id,
+                )
+            else:
+                invoice_data = order._build_invoice_requested_data()
+                _logger.info("🐇 _trigger_rabbitmq_messages: InvoiceRequested data=%s", invoice_data)
+                ok = rabbitmq_sender.send_invoice_requested(invoice_data)
+                _logger.info("🐇 _trigger_rabbitmq_messages: send_invoice_requested result=%s", ok)
+        else:
+            _logger.info("🐇 _trigger_rabbitmq_messages: skipping InvoiceRequested (direct payment)")
 
     @api.model
     def close_daily_batch(self, session=None, session_id=None) -> dict:
