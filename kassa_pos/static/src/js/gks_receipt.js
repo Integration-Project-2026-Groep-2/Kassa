@@ -37,6 +37,64 @@ function parseCurrency(value) {
     return toNumber(value);
 }
 
+function formatUtcTimestamp(value) {
+    if (!value) {
+        return '';
+    }
+
+    if (typeof value === 'string') {
+        const parsed = new Date(value);
+        if (!Number.isNaN(parsed.getTime())) {
+            return parsed.toISOString().replace(/\.\d{3}Z$/, 'Z');
+        }
+        return value;
+    }
+
+    if (typeof value?.toUTC === 'function' && typeof value?.toFormat === 'function') {
+        return value.toUTC().toFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    }
+
+    if (value instanceof Date) {
+        return value.toISOString().replace(/\.\d{3}Z$/, 'Z');
+    }
+
+    return '';
+}
+
+async function buildLocalVscCode(orderLike, printedData) {
+    const orderId = orderLike?.server_id || orderLike?.backendId || printedData?.server_id || printedData?.backendId || printedData?.id;
+    const orderRef = orderLike?.name || printedData?.name || orderLike?.uid || printedData?.uid || orderLike?.pos_reference || printedData?.pos_reference || '';
+    const dateOrder = formatUtcTimestamp(orderLike?.date_order || printedData?.date_order || printedData?.date);
+    const amountTotal = toNumber(
+        orderLike?.amount_total ??
+        orderLike?.get_total_with_tax?.() ??
+        printedData?.amount_total
+    );
+
+    const sourceId = orderId || orderRef;
+
+    if (!sourceId || !dateOrder || !Number.isFinite(amountTotal)) {
+        console.warn('[kassa_pos] VSC inputs missing', {
+            hasOrderId: Boolean(orderId),
+            hasOrderRef: Boolean(orderRef),
+            hasDateOrder: Boolean(dateOrder),
+            amountTotal,
+        });
+        return '';
+    }
+
+    if (!globalThis.crypto?.subtle) {
+        return '';
+    }
+
+    const source = `${sourceId}:${dateOrder}:${amountTotal}`;
+    const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(source));
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0'))
+        .join('')
+        .toUpperCase()
+        .slice(0, 20);
+}
+
 function getLineRate(line) {
     // 1) Try tax_ids if available
     const directRate = toNumber(line?.tax_ids?.[0]?.amount ?? line?.taxes?.[0]?.amount);
@@ -134,29 +192,16 @@ patch(OrderReceipt.prototype, {
                 return;
             }
 
-            let orderId = this.props?.order?.server_id || this.props?.data?.id || this.props?.data?.server_id || this.props?.data?.gks_order_id;
-            if (!orderId && this.props?.data?.name) {
-                const nameMatch = this.props.data.name.match(/(\d+)/);
-                if (nameMatch) {
-                    orderId = parseInt(nameMatch[0]);
+            const localVscCode = await buildLocalVscCode(this.props?.order, this.props?.data);
+            if (localVscCode) {
+                this._cachedVscCode = localVscCode;
+                this.gksReceiptState.vscCode = localVscCode;
+                if (this.props?.data) {
+                    this.props.data.vsc_code = localVscCode;
                 }
-            }
-
-            if (!orderId) {
-                return;
-            }
-
-            try {
-                const result = await this.env.services.rpc('/kassa_pos/get_vsc_code', { order_id: orderId });
-                if (result && result.vsc_code) {
-                    this._cachedVscCode = result.vsc_code;
-                    this.gksReceiptState.vscCode = result.vsc_code;
-                    if (this.props?.data) {
-                        this.props.data.vsc_code = result.vsc_code;
-                    }
-                }
-            } catch (error) {
-                console.error('[kassa_pos] ❌ RPC fetch failed:', error);
+                console.info('[kassa_pos] local VSC generated', localVscCode);
+            } else {
+                console.warn('[kassa_pos] local VSC could not be generated from receipt data');
             }
         });
     },
