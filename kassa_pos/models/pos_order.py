@@ -235,12 +235,23 @@ class PosOrder(models.Model):
         return digest[:20]
 
     def export_for_printing(self):
-        """Inject GKS receipt payload into the POS print data."""
+        """Build a GKS receipt payload dict for this order.
+
+        NOTE: In Odoo 17 the ``export_for_printing`` method no longer exists on
+        the Python ``pos.order`` model — it was moved entirely to the JavaScript
+        frontend.  Calling ``super().export_for_printing()`` therefore raises
+        ``AttributeError: 'super' object has no attribute 'export_for_printing'``.
+
+        We build the GKS-specific payload here from scratch and return it.
+        The frontend receipt component fetches the VSC code independently via the
+        ``/kassa_pos/get_vsc_code`` RPC endpoint, so nothing is lost.
+        """
         _logger.info("🔵 export_for_printing CALLED for order_id=%s", self.id)
-        
-        data = super().export_for_printing()
-        _logger.info("🟡 export_for_printing: superclass returned %d keys: %s", len(data.keys()), list(data.keys()))
-        
+
+        # Build a standalone GKS data dict — no super() call because Odoo 17
+        # does not expose export_for_printing on the Python model.
+        data = {}
+
         if self:
             breakdown = self._build_gks_vat_breakdown()
             data['gks_vat_breakdown'] = breakdown
@@ -250,9 +261,9 @@ class PosOrder(models.Model):
             # Add id and server_id for frontend RPC lookups
             data['id'] = self.id
             data['server_id'] = self.id
-            
+
             _logger.info("🟢 export_for_printing: ADDED id=%s server_id=%s vsc_code=%s", self.id, self.id, data['vsc_code'])
-            _logger.info("🟣 export_for_printing: Final data dict has %d keys: %s", len(data.keys()), list(data.keys()))
+            _logger.info("🟣 export_for_printing: data dict has %d keys: %s", len(data.keys()), list(data.keys()))
 
             # Also expose per-group gross totals so the template can render totals
             # directly from the backend-calculated groups if needed.
@@ -262,24 +273,6 @@ class PosOrder(models.Model):
             data['gks_vat_breakdown']['rates'][21]['gross'] = round(
                 data['gks_vat_breakdown']['rates'][21]['net'] + data['gks_vat_breakdown']['rates'][21]['vat'], 2
             )
-
-            # Ensure paymentline names include chosen Top Up amounts so receipts
-            # and exports show e.g. "Top Up (gebruik €5.00)" instead of generic name.
-            try:
-                paymentlines = data.get('paymentlines') or []
-                for pl in paymentlines:
-                    try:
-                        name = pl.get('name') or ''
-                        amount = float(pl.get('amount') or 0.0)
-                        if isinstance(name, str) and ('top up' in name.lower() or 'saldo' in name.lower()):
-                            pl['name'] = f"{name} (gebruik €{amount:.2f})"
-                    except Exception:
-                        # non-fatal: leave paymentline as-is
-                        pass
-                if paymentlines:
-                    data['paymentlines'] = paymentlines
-            except Exception:
-                pass
 
         return data
 
