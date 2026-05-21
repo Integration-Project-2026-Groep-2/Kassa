@@ -357,6 +357,30 @@ class TestOdooUserRepository(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             repo.create_user(self.user)
 
+    def test_create_user_partial_failure_rolls_back(self):
+        """Simulate create succeeds but readback verification fails; ensure exception and no write."""
+        bad_read = {
+            'id': 100,
+            'name': 'Partial Fail',
+            'email': 'partial@example.com',
+            'active': True,
+            'customer_rank': 0,  # will trigger visibility failure
+            'is_company': False,
+            'company_id': None,
+            'user_id_custom': self.user.userId,
+            'badge_code': self.user.badgeCode,
+        }
+
+        conn = DummyOdooConnection(read_response=bad_read)
+        repo = OdooUserRepository(conn)
+
+        with self.assertRaises(RuntimeError):
+            repo.create_user(self.user)
+
+        # create was attempted (created_values set) but no write should have occurred
+        self.assertIsNotNone(conn.created_values)
+        self.assertIsNone(conn.written_values)
+
     def test_create_user_reactivates_inactive_partner(self):
         """If a partner exists but is inactive, create_user should update (reactivate) it."""
         # Simulate existing partner id and an initial read showing active=False

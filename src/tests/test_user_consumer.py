@@ -291,6 +291,46 @@ class TestUserConsumer(unittest.TestCase):
         self.assertFalse(success)
         error_callback.assert_called_once()
 
+    def test_transient_odoo_error_triggers_on_error(self):
+        """Simulate a transient Odoo error during create_user and ensure on_error is called."""
+        error_callback = Mock()
+        repo = Mock(spec=OdooUserRepository)
+        # Simulate transient runtime error from Odoo
+        repo.create_user = Mock(side_effect=RuntimeError("Temporary Odoo error"))
+        repo.update_user = Mock(return_value=True)
+        repo.deactivate_user = Mock(return_value=True)
+
+        consumer = UserConsumer(repo, on_error=error_callback)
+
+        success = consumer.process_user_message(USER_CONFIRMED_XML)
+
+        self.assertFalse(success)
+        error_callback.assert_called_once()
+        # For CRM messages the consumer calls on_error with the CRM message type
+        self.assertEqual(error_callback.call_args[0][0], 'UserConfirmed')
+        self.assertIn('Temporary Odoo error', error_callback.call_args[0][1])
+
+    def test_consumer_handles_xml_with_cdata_and_special_chars(self):
+        """Ensure consumer accepts CDATA and special characters and forwards them to repo."""
+        special_xml = USER_CONFIRMED_XML.replace(
+            '<firstName>Emma</firstName>',
+            '<firstName><![CDATA[Emma <script>alert(1)</script> & co]]></firstName>'
+        )
+
+        repo = Mock(spec=OdooUserRepository)
+        repo.create_user = Mock(return_value=1)
+        repo.update_user = Mock(return_value=True)
+        repo.deactivate_user = Mock(return_value=True)
+
+        consumer = UserConsumer(repo)
+        success = consumer.process_user_message(special_xml)
+
+        self.assertTrue(success)
+        repo.create_user.assert_called_once()
+        called_user = repo.create_user.call_args[0][0]
+        # CDATA should be preserved as literal text in the parsed firstName
+        self.assertIn('<script>alert(1)</script>', called_user.firstName)
+
 
 if __name__ == "__main__":
     unittest.main()
