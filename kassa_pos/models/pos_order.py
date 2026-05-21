@@ -367,7 +367,12 @@ class PosOrder(models.Model):
                 _logger.error("❌ create_from_ui: export_for_printing FAILED for order_id=%s error=%s", order.id, str(e))
                 pass
 
-            if order.state in ('paid', 'done', 'invoiced'):
+            # Invoice-payment orders leave create_from_ui in state 'draft' because
+            # Odoo creates the actual account.move record asynchronously (hence
+            # account_move=False in the sync result).  We must therefore also fire
+            # RabbitMQ messages for orders whose payment_type is 'Invoice',
+            # regardless of the order state at this point in time.
+            if order.state in ('paid', 'done', 'invoiced') or order.payment_type == 'Invoice':
                 self._trigger_rabbitmq_messages(order)
                 self._process_balance_payment(order)
 
