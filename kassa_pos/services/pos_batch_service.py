@@ -96,7 +96,10 @@ class PosOrderBatchService:
         
         domain = [
             ('session_id', '=', session.id),
-            ('state', 'in', ['paid', 'invoiced']),
+            # Company invoice orders land in 'draft' because Odoo creates the
+            # account.move asynchronously (account_move=False in the sync result).
+            # Include 'draft' so those orders are picked up by the batch.
+            ('state', 'in', ['draft', 'paid', 'invoiced']),
             ('id', 'not in', batched_order_ids)
         ]
         

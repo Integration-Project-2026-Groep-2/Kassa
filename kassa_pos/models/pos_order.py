@@ -495,54 +495,60 @@ class PosOrder(models.Model):
 
     def _trigger_rabbitmq_messages(self, order, is_invoice=False):
         """
-        Stuur de correcte berichten naar RabbitMQ op basis van paymentType:
+        Routing rules for RabbitMQ messages per order:
 
-        - PaymentConfirmed → kassa.payment.confirmed (Contract 16, naar CRM)
-          ALTIJD voor bezoekers, BEHALVE bij 'Invoice' (dat gaat via K-01).
-        - InvoiceRequested → kassa.invoice.requested (Contract K-01, naar Facturatie)
-          Voor ALLE invoice-betalingen, zowel particulieren (US-11) als
-          bedrijfscontacten.  De `company_id_custom` guard is verwijderd omdat
-          die berichten voor B2B-klanten stilzwijgend blokkeerde.
+        ┌─────────────────────────┬────────────────────┬─────────────────────────────────┐
+        │ Partner                 │ Payment method     │ Action                          │
+        ├─────────────────────────┼────────────────────┼─────────────────────────────────┤
+        │ has company_id_custom   │ Invoice            │ NOTHING — deferred to BatchClosed│
+        │ no company_id_custom    │ Invoice            │ InvoiceRequested (K-01)         │
+        │ any                     │ Direct (cash/…)    │ PaymentConfirmed (Contract 16)  │
+        └─────────────────────────┴────────────────────┴─────────────────────────────────┘
         """
-        _logger.info(
-            "🐇 _trigger_rabbitmq_messages: order_id=%s state=%s payment_type=%s is_invoice=%s partner=%s company_id_custom=%s",
-            order.id, order.state, order.payment_type, is_invoice,
-            order.partner_id.id if order.partner_id else None,
-            order.partner_id.company_id_custom if order.partner_id else None,
-        )
-
-        # Determine invoice flag from argument or computed field
+        partner = order.partner_id
+        has_company = bool(partner.company_id_custom) if partner else False
         invoice_payment = is_invoice or order.payment_type == 'Invoice'
 
-        # Contract 16 — PaymentConfirmed: only for direct payments with a known email
-        if not invoice_payment:
-            payment_data = order._build_payment_confirmed_data()
-            _logger.info("🐇 _trigger_rabbitmq_messages: PaymentConfirmed data=%s", payment_data)
-            if payment_data.get('email'):
-                ok = rabbitmq_sender.send_payment_confirmed(payment_data)
-                _logger.info("🐇 _trigger_rabbitmq_messages: send_payment_confirmed result=%s", ok)
-            else:
-                _logger.warning(
-                    "🐇 _trigger_rabbitmq_messages: skipping PaymentConfirmed — no email for order_id=%s",
-                    order.id,
-                )
-        else:
-            _logger.info("🐇 _trigger_rabbitmq_messages: skipping PaymentConfirmed (invoice payment)")        
+        _logger.info(
+            "🐇 _trigger_rabbitmq_messages: order_id=%s state=%s invoice_payment=%s has_company=%s partner=%s",
+            order.id, order.state, invoice_payment, has_company,
+            partner.id if partner else None,
+        )
 
-        # Contract K-01 — InvoiceRequested: for ALL invoice-payment orders
-        if invoice_payment:
-            if not order.partner_id:
+        if invoice_payment and has_company:
+            # B2B invoice: deferred to BatchClosed (Afsluitknop / K-02).
+            # Do NOT send any per-order message to kassa.topic.
+            _logger.info(
+                "🐇 _trigger_rabbitmq_messages: DEFERRED (company invoice) order_id=%s — will appear in BatchClosed",
+                order.id,
+            )
+            return
+
+        if invoice_payment and not has_company:
+            # Visitor/individual invoice (US-11): send InvoiceRequested immediately.
+            if not partner:
                 _logger.warning(
                     "🐇 _trigger_rabbitmq_messages: skipping InvoiceRequested — no partner for order_id=%s",
                     order.id,
                 )
-            else:
-                invoice_data = order._build_invoice_requested_data()
-                _logger.info("🐇 _trigger_rabbitmq_messages: InvoiceRequested data=%s", invoice_data)
-                ok = rabbitmq_sender.send_invoice_requested(invoice_data)
-                _logger.info("🐇 _trigger_rabbitmq_messages: send_invoice_requested result=%s", ok)
+                return
+            invoice_data = order._build_invoice_requested_data()
+            _logger.info("🐇 _trigger_rabbitmq_messages: sending InvoiceRequested for order_id=%s", order.id)
+            ok = rabbitmq_sender.send_invoice_requested(invoice_data)
+            _logger.info("🐇 _trigger_rabbitmq_messages: send_invoice_requested result=%s", ok)
+            return
+
+        # Direct payment (cash / bancontact / saldo / …): send PaymentConfirmed.
+        payment_data = order._build_payment_confirmed_data()
+        if payment_data.get('email'):
+            _logger.info("🐇 _trigger_rabbitmq_messages: sending PaymentConfirmed for order_id=%s", order.id)
+            ok = rabbitmq_sender.send_payment_confirmed(payment_data)
+            _logger.info("🐇 _trigger_rabbitmq_messages: send_payment_confirmed result=%s", ok)
         else:
-            _logger.info("🐇 _trigger_rabbitmq_messages: skipping InvoiceRequested (direct payment)")
+            _logger.warning(
+                "🐇 _trigger_rabbitmq_messages: skipping PaymentConfirmed — no email for order_id=%s",
+                order.id,
+            )
 
     @api.model
     def close_daily_batch(self, session=None, session_id=None) -> dict:
