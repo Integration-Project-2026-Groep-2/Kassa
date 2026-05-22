@@ -51,6 +51,9 @@ Welcome! This is your guide to all documentation for the **POS User Registration
    - Integration points
 
 4. **[DEPLOYMENT_TESTING_GUIDE.md](DEPLOYMENT_TESTING_GUIDE.md)** (20 min read)
+
+4. **[KASSA_POS_TOPUP_AND_VSC_CHANGES.md](KASSA_POS_TOPUP_AND_VSC_CHANGES.md)** (5 min read)
+   - Notes about Top Up payment label change and `/kassa_pos/get_vsc_code` JSON response format
    - Pre-deployment checks
    - Step-by-step deployment
    - Unit testing
@@ -299,8 +302,8 @@ The **fallback queue** in Odoo that stores pending user messages when RabbitMQ i
 
 ## Document Maintenance
 
-**Last Updated:** March 29, 2026  
-**Documentation Version:** 1.0  
+**Last Updated:** May 11, 2026  
+**Documentation Version:** 1.1  
 **Status:** Complete
 
 ### How to Keep Docs Updated

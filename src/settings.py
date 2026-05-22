@@ -82,7 +82,7 @@ COMPANY_DEACTIVATED_QUEUE = 'kassa.company.deactivated'
 
 # Odoo connection settings (for Odoo persistence of CRM users)
 # We use None as a fallback so the app can handle missing config explicitly
-ODOO_URL = os.getenv('ODOO_URL', 'http://odoo:8069')
+ODOO_URL = os.getenv('ODOO_URL', 'http://localhost:8069')
 ODOO_DB = os.getenv('ODOO_DB', 'kassa_db')
 ODOO_USER = os.getenv('ODOO_USER')
 ODOO_PASSWORD = os.getenv('ODOO_PASSWORD')

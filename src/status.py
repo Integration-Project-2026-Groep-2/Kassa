@@ -86,7 +86,7 @@ async def run_status(connection: AbstractRobustConnection) -> None:
                 logger.info("Status kanaal openen...")
                 channel = await connection.channel()
 
-            queue = await channel.declare_queue("kassa.status.checked", durable=False)
+            queue = await channel.declare_queue("kassa.status.checked", durable=False, exclusive=False)
 
             xml_bytes = _build_status_xml()
             validate(xml_bytes)

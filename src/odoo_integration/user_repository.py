@@ -9,7 +9,7 @@ high-level CRUD operations for user management from the Integration Service.
 import logging
 from typing import Optional, Dict, Any
 from models.user import User, UserRole
-from odoo.odoo_connection import OdooConnection
+from odoo_integration.odoo_connection import OdooConnection
 
 logger = logging.getLogger(__name__)
 

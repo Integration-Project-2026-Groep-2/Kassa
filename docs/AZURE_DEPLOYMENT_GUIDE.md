@@ -46,11 +46,12 @@ ODOO_DOMAIN=kassa.integration-project-2026-groep-2.my.be
 ### Step 2: Start Docker Compose
 
 ```bash
-# Pull the custom Odoo image from GHCR
-export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:latest
+# Use one prebuilt image that already contains Odoo + kassa_pos + embedded receivers
+export ODOO_IMAGE=ghcr.io/integration-project-2026-groep-2/kassa:latest-dev
 
-# Build and start all services
-docker compose -f docker-compose.production.yml up -d --build
+# Pull and start all services (no local image build on VM)
+docker compose -f docker-compose.production.yml pull odoo
+docker compose -f docker-compose.production.yml up -d
 
 # If you already have an older database, run a one-time schema upgrade before serving traffic
 docker compose -f docker-compose.production.yml run --rm --no-deps --entrypoint bash odoo -lc 'odoo --config=/etc/odoo/odoo.conf --db_host="$DB_HOST" --db_port="$DB_PORT" --db_user="$USER" --db_password="$PASSWORD" -d "$POSTGRES_DB" -u all --stop-after-init'
@@ -207,6 +208,11 @@ docker compose -f docker-compose.production.yml restart odoo
 # View startup logs
 docker compose -f docker-compose.production.yml logs odoo
 ```
+
+Deployment note:
+- The `odoo` service runs from one image (`ODOO_IMAGE`).
+- There is no separate POS image/service in production deployment.
+- POS UI is part of Odoo (`point_of_sale`) and `kassa_pos` is installed inside the same image/container.
 
 ### Step 5: Install Custom Module
 
@@ -468,7 +474,7 @@ Solution:
 - [ ] Copy `.env.example` to `.env`
 - [ ] Fill in Azure infrastructure details
 - [ ] Set strong passwords (min 20 chars)
-- [ ] Run `docker compose -f docker-compose.production.yml up -d --build`
+- [ ] Run `docker compose -f docker-compose.production.yml pull odoo && docker compose -f docker-compose.production.yml up -d`
 - [ ] Verify all services healthy: `docker compose -f docker-compose.production.yml ps`
 - [ ] Initialize Odoo database
 - [ ] Install Kassa module via Odoo UI

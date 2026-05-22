@@ -1,6 +1,6 @@
 import logging
 from connection import RabbitManager
-from config import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
+from settings import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
 
 """Producer helper to publish XML messages to RabbitMQ.
 

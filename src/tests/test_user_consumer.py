@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import Mock
 
 from messaging.user_consumer import UserConsumer
-from odoo.user_repository import OdooUserRepository
+from odoo_integration.user_repository import OdooUserRepository
 from models.user import User
 
 
@@ -68,6 +68,44 @@ USER_DEACTIVATED_XML = """<?xml version="1.0" encoding="UTF-8"?>
 </UserDeactivated>"""
 
 
+class DummyOdooConnection:
+    def __init__(self, existing_ids=None):
+        self.existing_ids = existing_ids or []
+        self.created_values = None
+        self.written_values = None
+
+    def is_connected(self):
+        return True
+
+    def search(self, model, domain, **kwargs):
+        return list(self.existing_ids)
+
+    def create(self, model, values):
+        self.created_values = values
+        return 42
+
+    def read(self, model, ids, fields=None):
+        source_values = self.written_values or self.created_values
+        if source_values is None:
+            return []
+
+        return [{
+            'id': 42,
+            'name': source_values.get('name'),
+            'email': source_values.get('email'),
+            'active': source_values.get('active', True),
+            'customer_rank': source_values.get('customer_rank', 1),
+            'is_company': source_values.get('is_company', False),
+            'company_id': source_values.get('company_id', False),
+            'user_id_custom': source_values.get('user_id_custom'),
+            'badge_code': source_values.get('badge_code'),
+        }]
+
+    def write(self, model, ids, values, **kwargs):
+        self.written_values = values
+        return True
+
+
 class TestUserConsumer(unittest.TestCase):
     def setUp(self):
         # Mock OdooUserRepository
@@ -116,6 +154,102 @@ class TestUserConsumer(unittest.TestCase):
         self.assertFalse(success)
         self.mock_odoo_repo.create_user.assert_not_called()
 
+    def test_process_user_message_missing_critical_tags(self):
+        """Test that missing required CRM fields fails cleanly and triggers on_error."""
+        error_callback = Mock()
+        repo = Mock(spec=OdooUserRepository)
+        repo.create_user = Mock(side_effect=ValueError("Invalid user data: email must be valid: "))
+        repo.update_user = Mock(return_value=True)
+        repo.deactivate_user = Mock(return_value=True)
+        consumer = UserConsumer(repo, on_error=error_callback)
+
+        missing_tags_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<UserConfirmed>
+    <id>8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11</id>
+    <firstName>Emma</firstName>
+    <lastName>Janssens</lastName>
+    <badgeCode>BADGE-00123</badgeCode>
+    <isActive>true</isActive>
+    <gdprConsent>true</gdprConsent>
+    <confirmedAt>2026-03-28T10:15:30+00:00</confirmedAt>
+</UserConfirmed>"""
+
+        success = consumer.process_user_message(missing_tags_xml)
+
+        self.assertFalse(success)
+        repo.create_user.assert_not_called()
+        error_callback.assert_called_once()
+        self.assertEqual(error_callback.call_args[0][0], 'User')
+        self.assertIn('Element', error_callback.call_args[0][1])
+
+    def test_idempotent_processing_of_duplicate_messages(self):
+        """Test that duplicate CRM messages resolve to create once, then update once."""
+        connection = DummyOdooConnection(existing_ids=[])
+        repository = OdooUserRepository(connection)
+        consumer = UserConsumer(repository)
+
+        first = consumer.process_user_message(USER_CONFIRMED_XML)
+        connection.existing_ids = [42]
+        second = consumer.process_user_message(USER_CONFIRMED_XML)
+
+        self.assertTrue(first)
+        self.assertTrue(second)
+        self.assertIsNotNone(connection.created_values)
+        self.assertIsNotNone(connection.written_values)
+        self.assertEqual(connection.created_values['user_id_custom'], "8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11")
+        self.assertEqual(connection.written_values['user_id_custom'], "8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11")
+
+    def test_idempotent_processing_of_duplicate_user_updated(self):
+        """Test that duplicate UserUpdated messages perform update without duplication."""
+        connection = DummyOdooConnection(existing_ids=[])
+        repository = OdooUserRepository(connection)
+        consumer = UserConsumer(repository)
+
+        first = consumer.process_user_message(USER_UPDATED_XML)
+        connection.existing_ids = [42]
+        second = consumer.process_user_message(USER_UPDATED_XML)
+
+        self.assertTrue(first)
+        self.assertTrue(second)
+        self.assertIsNotNone(connection.created_values)
+        self.assertIsNotNone(connection.written_values)
+        self.assertEqual(connection.written_values.get('user_id_custom'), "8a9b2a3e-6d1f-4b58-8c20-2f5f3f5c4d11")
+
+    def test_idempotent_processing_of_duplicate_user_deactivated(self):
+        """Test that duplicate UserDeactivated messages don't cause errors and set active=False."""
+        connection = DummyOdooConnection(existing_ids=[42])
+        repository = OdooUserRepository(connection)
+        consumer = UserConsumer(repository)
+
+        first = consumer.process_user_message(USER_DEACTIVATED_XML)
+        second = consumer.process_user_message(USER_DEACTIVATED_XML)
+
+        self.assertTrue(first)
+        self.assertTrue(second)
+        self.assertIsNotNone(connection.written_values)
+        self.assertEqual(connection.written_values.get('active'), False)
+
+    def test_out_of_order_user_updated_then_confirmed(self):
+        """If UserUpdated arrives before UserConfirmed, ensure no duplicate partner is created."""
+        connection = DummyOdooConnection(existing_ids=[])
+        repository = OdooUserRepository(connection)
+        consumer = UserConsumer(repository)
+
+        # Process update first (will create)
+        first = consumer.process_user_message(USER_UPDATED_XML)
+        # Simulate Odoo now has the partner
+        connection.existing_ids = [42]
+
+        # Process confirm later (should update existing, not create new)
+        second = consumer.process_user_message(USER_CONFIRMED_XML)
+
+        self.assertTrue(first)
+        self.assertTrue(second)
+        # created_values should be set by the first call
+        self.assertIsNotNone(connection.created_values)
+        # written_values should be set by the second call (update path)
+        self.assertIsNotNone(connection.written_values)
+
     def test_process_user_deactivated_message_calls_deactivate_user(self):
         """Test that UserDeactivated message calls deactivate_user on OdooUserRepository."""
         success = self.consumer.process_user_message(USER_DEACTIVATED_XML)
@@ -156,6 +290,46 @@ class TestUserConsumer(unittest.TestCase):
         
         self.assertFalse(success)
         error_callback.assert_called_once()
+
+    def test_transient_odoo_error_triggers_on_error(self):
+        """Simulate a transient Odoo error during create_user and ensure on_error is called."""
+        error_callback = Mock()
+        repo = Mock(spec=OdooUserRepository)
+        # Simulate transient runtime error from Odoo
+        repo.create_user = Mock(side_effect=RuntimeError("Temporary Odoo error"))
+        repo.update_user = Mock(return_value=True)
+        repo.deactivate_user = Mock(return_value=True)
+
+        consumer = UserConsumer(repo, on_error=error_callback)
+
+        success = consumer.process_user_message(USER_CONFIRMED_XML)
+
+        self.assertFalse(success)
+        error_callback.assert_called_once()
+        # For CRM messages the consumer calls on_error with the CRM message type
+        self.assertEqual(error_callback.call_args[0][0], 'UserConfirmed')
+        self.assertIn('Temporary Odoo error', error_callback.call_args[0][1])
+
+    def test_consumer_handles_xml_with_cdata_and_special_chars(self):
+        """Ensure consumer accepts CDATA and special characters and forwards them to repo."""
+        special_xml = USER_CONFIRMED_XML.replace(
+            '<firstName>Emma</firstName>',
+            '<firstName><![CDATA[Emma <script>alert(1)</script> & co]]></firstName>'
+        )
+
+        repo = Mock(spec=OdooUserRepository)
+        repo.create_user = Mock(return_value=1)
+        repo.update_user = Mock(return_value=True)
+        repo.deactivate_user = Mock(return_value=True)
+
+        consumer = UserConsumer(repo)
+        success = consumer.process_user_message(special_xml)
+
+        self.assertTrue(success)
+        repo.create_user.assert_called_once()
+        called_user = repo.create_user.call_args[0][0]
+        # CDATA should be preserved as literal text in the parsed firstName
+        self.assertIn('<script>alert(1)</script>', called_user.firstName)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- pos.config record is created safely in post_init hook to avoid ORM write restrictions -->
+    </data>
+</odoo>

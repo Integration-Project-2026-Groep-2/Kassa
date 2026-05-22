@@ -380,8 +380,15 @@ def test_company_deactivated_valid():
 def test_invoice_requested_valid():
     valid("""<InvoiceRequested>
         <orderId>order-001</orderId>
-        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
-        <companyId>550e8400-e29b-4ed4-a716-446655440001</companyId>
+        <User>
+            <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+            <firstName>Jan</firstName>
+            <lastName>Peeters</lastName>
+            <email>jan@example.com</email>
+            <companyId>550e8400-e29b-4ed4-a716-446655440001</companyId>
+            <badgeCode>BADGE123</badgeCode>
+            <role>VISITOR</role>
+        </User>
         <amount>49.99</amount>
         <currency>EUR</currency>
         <orderedAt>2026-04-18T10:00:00Z</orderedAt>
@@ -398,8 +405,15 @@ def test_invoice_requested_valid():
 def test_invoice_requested_no_items():
     invalid("""<InvoiceRequested>
         <orderId>order-001</orderId>
-        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
-        <companyId>550e8400-e29b-4ed4-a716-446655440001</companyId>
+        <User>
+            <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+            <firstName>Jan</firstName>
+            <lastName>Peeters</lastName>
+            <email>jan@example.com</email>
+            <companyId>550e8400-e29b-4ed4-a716-446655440001</companyId>
+            <badgeCode>BADGE123</badgeCode>
+            <role>VISITOR</role>
+        </User>
         <amount>49.99</amount>
         <currency>EUR</currency>
         <orderedAt>2026-04-18T10:00:00Z</orderedAt>
@@ -407,10 +421,17 @@ def test_invoice_requested_no_items():
     </InvoiceRequested>""")
 
 
-def test_invoice_requested_missing_company_id():
-    invalid("""<InvoiceRequested>
+def test_invoice_requested_visitor_valid():
+    valid("""<InvoiceRequested>
         <orderId>order-001</orderId>
-        <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+        <User>
+            <userId>550e8400-e29b-4ed4-a716-446655440000</userId>
+            <firstName>Jan</firstName>
+            <lastName>Peeters</lastName>
+            <email>jan@example.com</email>
+            <badgeCode>BADGE123</badgeCode>
+            <role>VISITOR</role>
+        </User>
         <amount>49.99</amount>
         <currency>EUR</currency>
         <orderedAt>2026-04-18T10:00:00Z</orderedAt>

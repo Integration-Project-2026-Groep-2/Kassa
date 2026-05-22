@@ -14,7 +14,7 @@ import uuid
 import xml.etree.ElementTree as ET
 from models.user import User, UserRole
 from messaging.message_builders import build_user_xml, parse_user_xml
-from odoo.user_repository import OdooUserRepository
+from odoo_integration.user_repository import OdooUserRepository
 
 
 class DummyOdooConnection:
@@ -36,12 +36,16 @@ class DummyOdooConnection:
         return 42
 
     def read(self, model, ids, fields=None):
-        # If an explicit read_response is provided, return it (wrapped in a list)
-        if self.read_response is not None:
+        # If a write has occurred, prefer the written values for readback
+        if self.written_values is not None:
+            source_values = self.written_values
+        elif self.read_response is not None:
+            # Initially, simulate Odoo returning a pre-existing record
             return [self.read_response]
+        else:
+            # Use created_values if available
+            source_values = self.created_values
 
-        # Use written_values if available (from update), otherwise use created_values
-        source_values = self.written_values or self.created_values
         if source_values is None:
             return []
 
@@ -61,7 +65,7 @@ class DummyOdooConnection:
     def get_default_company_id(self):
         return 1  # Simulate default company
 
-    def write(self, model, ids, values):
+    def write(self, model, ids, values, **kwargs):
         self.written_values = values
         return True
 
@@ -301,6 +305,27 @@ class TestOdooUserRepository(unittest.TestCase):
         self.assertFalse(repo.odoo.written_values['is_company'])
         self.assertEqual(repo.odoo.written_values['company_type'], 'person')
 
+    def test_update_user_updates_existing_record(self):
+        repo = OdooUserRepository(DummyOdooConnection(existing_ids=[99]))
+
+        result = repo.update_user(self.user)
+
+        self.assertTrue(result)
+        self.assertIsNotNone(repo.odoo.written_values)
+        self.assertEqual(repo.odoo.written_values['user_id_custom'], self.user.userId)
+        self.assertEqual(repo.odoo.written_values['company_id_custom'], self.user.companyId)
+        self.assertEqual(repo.odoo.written_values['customer_rank'], 1)
+        self.assertFalse(repo.odoo.written_values['is_company'])
+
+    def test_update_user_raises_when_user_missing(self):
+        repo = OdooUserRepository(DummyOdooConnection(existing_ids=[]))
+
+        with self.assertRaises(ValueError) as context:
+            repo.update_user(self.user)
+
+        self.assertIn('User not found in Odoo', str(context.exception))
+        self.assertIsNone(repo.odoo.written_values)
+
     def test_create_user_sets_company_id(self):
         """Test that create_user sets the standard Odoo company_id field."""
         repo = OdooUserRepository(DummyOdooConnection())
@@ -308,8 +333,8 @@ class TestOdooUserRepository(unittest.TestCase):
         repo.create_user(self.user)
 
         self.assertIsNotNone(repo.odoo.created_values)
-        # Verify company_id is set to the default (1)
-        self.assertEqual(repo.odoo.created_values.get('company_id'), 1)
+        # Verify company_id is set to False (visible across all Odoo companies)
+        self.assertEqual(repo.odoo.created_values.get('company_id'), False)
         self.assertEqual(repo.odoo.created_values['customer_rank'], 1)
         self.assertFalse(repo.odoo.created_values['is_company'])
 
@@ -331,6 +356,56 @@ class TestOdooUserRepository(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             repo.create_user(self.user)
+
+    def test_create_user_partial_failure_rolls_back(self):
+        """Simulate create succeeds but readback verification fails; ensure exception and no write."""
+        bad_read = {
+            'id': 100,
+            'name': 'Partial Fail',
+            'email': 'partial@example.com',
+            'active': True,
+            'customer_rank': 0,  # will trigger visibility failure
+            'is_company': False,
+            'company_id': None,
+            'user_id_custom': self.user.userId,
+            'badge_code': self.user.badgeCode,
+        }
+
+        conn = DummyOdooConnection(read_response=bad_read)
+        repo = OdooUserRepository(conn)
+
+        with self.assertRaises(RuntimeError):
+            repo.create_user(self.user)
+
+        # create was attempted (created_values set) but no write should have occurred
+        self.assertIsNotNone(conn.created_values)
+        self.assertIsNone(conn.written_values)
+
+    def test_create_user_reactivates_inactive_partner(self):
+        """If a partner exists but is inactive, create_user should update (reactivate) it."""
+        # Simulate existing partner id and an initial read showing active=False
+        inactive_read = {
+            'id': 99,
+            'name': 'Inactive User',
+            'email': 'inactive@example.com',
+            'active': False,
+            'customer_rank': 0,
+            'is_company': False,
+            'company_id': None,
+            'user_id_custom': self.user.userId,
+            'badge_code': self.user.badgeCode,
+        }
+
+        conn = DummyOdooConnection(existing_ids=[99], read_response=inactive_read)
+        repo = OdooUserRepository(conn)
+
+        # Calling create_user should detect existing and call update_user which writes active=True
+        partner_id = repo.create_user(self.user)
+
+        self.assertEqual(partner_id, 99)
+        # After update, the connection.written_values should include active True
+        self.assertIsNotNone(conn.written_values)
+        self.assertTrue(conn.written_values.get('active'))
 
 
 if __name__ == '__main__':

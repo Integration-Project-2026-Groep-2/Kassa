@@ -9,19 +9,19 @@ _logger = logging.getLogger(__name__)
 class PosSession(models.Model):
     _inherit = 'pos.session'
 
-    def action_pos_session_closing_control(self, bank_payment_method_diffs=None):
+    def action_pos_session_closing_control(self, balancing_account=False, amount_to_balance=False, bank_payment_method_diffs=None):
         """
         Override session closing control to trigger the daily batch close (Afsluitknop)
         This is called before the final session close
         """
         _logger.info('[Afsluitknop] Session %s closing control initiated', self.name)
-        
+
         # Trigger the daily batch close
         try:
             # Get all orders for this session to close batch
             pos_order_model = self.env['pos.order']
             result = pos_order_model.close_daily_batch(session=self)
-            
+
             if result.get('success'):
                 _logger.info(
                     '[Afsluitknop] Batch closed successfully: batchId=%s, orders=%d, total=%.2f',
@@ -37,9 +37,13 @@ class PosSession(models.Model):
         except Exception as e:
             _logger.exception('[Afsluitknop] Error during batch close: %s', str(e))
             # Don't prevent session close on error
-        
-        # Continue with normal session closing control, passing the parameter
-        return super().action_pos_session_closing_control(bank_payment_method_diffs=bank_payment_method_diffs)
+
+        # Continue with normal session closing control, passing all parameters
+        return super().action_pos_session_closing_control(
+            balancing_account=balancing_account,
+            amount_to_balance=amount_to_balance,
+            bank_payment_method_diffs=bank_payment_method_diffs,
+        )
 
     def action_pos_session_close(self, balancing_account=None, amount_to_balance=None, bank_payment_method_diffs=None):
         """

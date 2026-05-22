@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+
+import logging
+from odoo import models, api
+
+_logger = logging.getLogger(__name__)
+
+class PosConfig(models.Model):
+    _inherit = 'pos.config'
+
+    @api.model
+    def _register_hook(self):
+        """
+        Runs after the Odoo registry has loaded.
+        Ensures the 'Kassa Main' POS configuration, journals, and payment methods exist.
+        This provides a highly reliable fallback for when Odoo's initial post_init_hook is bypassed
+        on subsequent startup cycles or when upgrading existing databases.
+        """
+        super()._register_hook()
+        
+        # Check and ensure chart of accounts is configured first so journals/configs can be created properly.
+        try:
+            Company = self.env.ref('base.main_company')
+            has_coa = self.env['account.account'].sudo().search([('company_id', '=', Company.id)], limit=1)
+            if not has_coa:
+                _logger.info("No chart of accounts found for Main Company. Loading generic_coa defensively...")
+                self.env['account.chart.template'].sudo().try_loading('generic_coa', company=Company)
+                _logger.info("Generic chart of accounts loaded successfully.")
+        except Exception as e:
+            _logger.exception("Failed to load chart of accounts defensively in _register_hook: %s", e)
+
+        # Run the post_init setup hook defensively on startup to ensure all
+        # POS configs, journals, payment methods, and relations are correct and linked.
+        try:
+            _logger.info("Running defensive post_init setup hook...")
+            from odoo.addons.kassa_pos import post_init
+            post_init(self.env)
+            _logger.info("Defensive post_init setup hook completed successfully.")
+        except Exception as e:
+            _logger.exception("Failed to run post_init hook defensively in pos.config _register_hook: %s", e)

@@ -10,6 +10,8 @@ Reads environment variables:
 """
 import logging
 import os
+import re
+import sys
 import threading
 import queue
 from datetime import datetime, timezone
@@ -24,14 +26,22 @@ except ImportError:
     HAS_AIOPIKA = False
 
 
-# Mapping from Python logging levels to XML LogEvent severity types
+# Spec splits FATAL and PANIC; Python's logging.FATAL aliases CRITICAL, so we register
+# a distinct level between ERROR and CRITICAL to keep both reachable.
+FATAL = 45
+logging.addLevelName(FATAL, "FATAL")
+
 SEVERITY_MAP = {
     logging.DEBUG: "DEBUG",
     logging.INFO: "INFO",
     logging.WARNING: "WARN",
     logging.ERROR: "ERROR",
+    FATAL: "FATAL",
     logging.CRITICAL: "PANIC",
 }
+
+# XML 1.0 disallows these; one dirty log line would otherwise loop-fail the publisher.
+_XML_CTRL_CHARS = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F]")
 
 
 class RabbitMQLogHandler(logging.Handler):
@@ -43,10 +53,12 @@ class RabbitMQLogHandler(logging.Handler):
     def __init__(self, service_name: str = "KASSA"):
         super().__init__()
         self.service_name = service_name
-        self.log_queue = queue.Queue()
+        self.log_queue = queue.Queue(maxsize=10_000)
         self.stop_event = threading.Event()
-        
-        # Start background thread for async publishing
+        self._connection = None
+        self._channel = None
+        self._exchange = None
+
         self.thread = threading.Thread(target=self._worker_thread, daemon=True)
         self.thread.start()
 
@@ -64,66 +76,81 @@ class RabbitMQLogHandler(logging.Handler):
             return
 
         loop = None
-        connection = None
-
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             while not self.stop_event.is_set():
                 try:
-                    # Get record with timeout
                     record = self.log_queue.get(timeout=1.0)
-                    
-                    # Publish asynchronously
-                    loop.run_until_complete(
-                        self._publish_to_rabbitmq(record)
-                    )
+                    loop.run_until_complete(self._publish_to_rabbitmq(record))
                 except queue.Empty:
                     continue
                 except Exception as e:
-                    # Log to stderr but don't crash
-                    import sys
                     print(f"RabbitMQLogHandler error: {e}", file=sys.stderr)
 
         finally:
             if loop:
+                if self._connection is not None:
+                    try:
+                        loop.run_until_complete(self._connection.close())
+                    except Exception:
+                        pass
                 loop.close()
 
-    async def _publish_to_rabbitmq(self, record: logging.LogRecord) -> None:
-        """Publish a log record as XML to RabbitMQ."""
+    async def _ensure_connected(self) -> None:
+        if self._channel is not None and not self._channel.is_closed:
+            return
+
+        # Dual-context import: setup_rabbitmq.py runs from /app (package), sidecars and
+        # the Odoo addon hook run with /app/src on sys.path (sibling import).
         try:
-            from config import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
-
-            connection = await aio_pika.connect_robust(
-                f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}:{RABBIT_PORT}/{RABBIT_VHOST}"
+            from settings import (
+                RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST,
             )
-            channel = await connection.channel()
+        except ImportError:
+            from settings import (
+                RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST,
+            )
 
-            # Build XML LogEvent
+        self._connection = await aio_pika.connect_robust(
+            f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}:{RABBIT_PORT}/{RABBIT_VHOST}"
+        )
+        self._channel = await self._connection.channel()
+        self._exchange = await self._channel.declare_exchange(
+            "logs.direct", "direct", durable=True,
+        )
+
+    async def _publish_to_rabbitmq(self, record: logging.LogRecord) -> None:
+        """Publish a log record as XML LogEvent to the logs.direct exchange."""
+        try:
+            await self._ensure_connected()
+
             root = etree.Element("LogEvent")
-            etree.SubElement(root, "level").text = SEVERITY_MAP.get(
-                record.levelno, "INFO"
-            )
+            etree.SubElement(root, "level").text = SEVERITY_MAP.get(record.levelno, "INFO")
             etree.SubElement(root, "timestamp").text = datetime.fromtimestamp(
                 record.created, tz=timezone.utc
             ).isoformat()
             etree.SubElement(root, "service").text = self.service_name
-            etree.SubElement(root, "data").text = record.getMessage()
+            etree.SubElement(root, "data").text = _XML_CTRL_CHARS.sub("?", record.getMessage())
 
             xml_bytes = etree.tostring(root, xml_declaration=True, encoding="UTF-8")
 
-            # Publish to logs.direct exchange
-            await channel.default_exchange.publish(
+            await self._exchange.publish(
                 aio_pika.Message(body=xml_bytes),
                 routing_key="routing.log",
             )
-
-            await connection.close()
-
-        except Exception:
-            # Silently fail to avoid disrupting the logging system
-            pass
+        except Exception as e:
+            print(f"RabbitMQLogHandler publish failed: {e}", file=sys.stderr)
+            if self._connection is not None:
+                # Release TCP socket + heartbeat task before the next reconnect attempt.
+                try:
+                    await self._connection.close()
+                except Exception:
+                    pass
+            self._connection = None
+            self._channel = None
+            self._exchange = None
 
     def close(self) -> None:
         """Stop the worker thread and clean up."""
@@ -139,37 +166,39 @@ def configure_logging() -> None:
     level = getattr(logging, level_name, logging.INFO)
 
     root = logging.getLogger()
-    if root.handlers:
-        # Already configured
+    if any(isinstance(h, RabbitMQLogHandler) for h in root.handlers):
         return
 
-    root.setLevel(level)
+    # Odoo installs its own root handler before kassa_pos is imported. Skip the
+    # console/file setup in that case so we don't trample Odoo's formatter, but
+    # still attach our RabbitMQ handler below.
+    if not root.handlers:
+        root.setLevel(level)
 
-    fmt = os.environ.get(
-        'LOG_FORMAT', '%(asctime)s %(levelname)s %(name)s: %(message)s'
-    )
-    datefmt = os.environ.get('LOG_DATEFMT', '%Y-%m-%d %H:%M:%S')
+        fmt = os.environ.get(
+            'LOG_FORMAT', '%(asctime)s %(levelname)s %(name)s: %(message)s'
+        )
+        datefmt = os.environ.get('LOG_DATEFMT', '%Y-%m-%d %H:%M:%S')
 
-    console = logging.StreamHandler()
-    console.setLevel(level)
-    console.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
-    root.addHandler(console)
+        console = logging.StreamHandler()
+        console.setLevel(level)
+        console.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
+        root.addHandler(console)
 
-    log_file = os.environ.get('LOG_FILE')
-    if log_file:
-        try:
-            max_bytes = int(os.environ.get('LOG_FILE_MAX_BYTES', 5242880))
-            backup_count = int(os.environ.get('LOG_FILE_BACKUP_COUNT', 5))
-        except ValueError:
-            max_bytes = 5242880
-            backup_count = 5
+        log_file = os.environ.get('LOG_FILE')
+        if log_file:
+            try:
+                max_bytes = int(os.environ.get('LOG_FILE_MAX_BYTES', 5242880))
+                backup_count = int(os.environ.get('LOG_FILE_BACKUP_COUNT', 5))
+            except ValueError:
+                max_bytes = 5242880
+                backup_count = 5
 
-        fh = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count)
-        fh.setLevel(level)
-        fh.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
-        root.addHandler(fh)
+            fh = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count)
+            fh.setLevel(level)
+            fh.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
+            root.addHandler(fh)
 
-    # Add RabbitMQ handler to send logs to Controlroom
     enable_rabbitmq = os.environ.get('ENABLE_RABBITMQ_LOGS', 'true').lower() in ('true', '1', 'yes')
     if enable_rabbitmq and HAS_AIOPIKA:
         try:
@@ -177,11 +206,8 @@ def configure_logging() -> None:
             rabbitmq_handler.setLevel(level)
             root.addHandler(rabbitmq_handler)
         except Exception as e:
-            # If RabbitMQ handler fails to initialize, continue without it
-            import sys
             print(f"Warning: RabbitMQ logging handler failed to initialize: {e}", file=sys.stderr)
 
 
 
-# Configure on import so modules don't have to call this explicitly.
 configure_logging()

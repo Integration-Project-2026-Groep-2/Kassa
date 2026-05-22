@@ -1,8 +1,9 @@
 import logging
 import threading
 
+from logging_config import configure_logging
 from messaging.consumer import KassaConsumer
-from config import (
+from settings import (
     RABBIT_HOST,
     WARNING_QUEUE,
     PERSON_LOOKUP_RESPONSE_QUEUE,
@@ -27,7 +28,7 @@ Queues (conform Docker-docs):
   R3: crm.user.deactivated, kassa.company.deactivated
 """
 
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+configure_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -134,12 +135,12 @@ def listen_queue(queue_name: str, callback, durable: bool = True, exchange: str 
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 QUEUE_HANDLERS = [
-    # (queue_name, callback, durable)
-    (WARNING_QUEUE,                False, on_warning),
-    (PERSON_LOOKUP_RESPONSE_QUEUE, False, on_person_lookup_response),
-    (USER_CONFIRMED_QUEUE,         True,  on_user_confirmed),
-    (COMPANY_CONFIRMED_QUEUE,      True,  on_company_confirmed),
-    (UNPAID_RESPONSE_QUEUE,        False, on_unpaid_response),
+    # (queue_name, durable, exclusive, callback)
+    (WARNING_QUEUE,                False, True, on_warning),
+    (PERSON_LOOKUP_RESPONSE_QUEUE, False, True, on_person_lookup_response),
+    (USER_CONFIRMED_QUEUE,         True,  False, on_user_confirmed),
+    (COMPANY_CONFIRMED_QUEUE,      True,  False, on_company_confirmed),
+    (UNPAID_RESPONSE_QUEUE,        False, True, on_unpaid_response),
     (USER_UPDATED_QUEUE,           True,  on_user_updated),
     (COMPANY_UPDATED_QUEUE,        True,  on_company_updated),
     (USER_DEACTIVATED_QUEUE,       True,  on_user_deactivated),
@@ -148,7 +149,7 @@ QUEUE_HANDLERS = [
 
 if __name__ == "__main__":
     threads = []
-    for queue_name, durable, callback in QUEUE_HANDLERS:
+    for queue_name, durable, exclusive, callback in QUEUE_HANDLERS:
         exchange = None
         routing_key = None
         if queue_name == USER_CONFIRMED_QUEUE:
@@ -163,7 +164,7 @@ if __name__ == "__main__":
         logger.info("Start listener op queue '%s'", queue_name)
         t = threading.Thread(
             target=listen_queue,
-            args=(queue_name, callback, durable, exchange, routing_key),
+            args=(queue_name, callback, durable, exclusive, exchange, routing_key),
             daemon=True,
         )
         t.start()

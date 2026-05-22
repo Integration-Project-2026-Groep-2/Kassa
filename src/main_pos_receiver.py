@@ -1,8 +1,9 @@
 import logging
 import threading
 
+from logging_config import configure_logging
 from messaging.consumer import KassaConsumer
-from config import RABBIT_HOST, PAYMENT_CONFIRMED_QUEUE, INVOICE_REQUESTED_QUEUE
+from settings import RABBIT_HOST, PAYMENT_CONFIRMED_QUEUE, INVOICE_REQUESTED_QUEUE
 
 """
 Test-receiver die berichten logt van de queues die Kassa publiceert.
@@ -10,7 +11,7 @@ Start RabbitMQ via Docker, start daarna dit script.
 Doe een verkoop in Odoo POS → je ziet de XML-berichten verschijnen.
 """
 
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+configure_logging()
 logger = logging.getLogger(__name__)
 
 

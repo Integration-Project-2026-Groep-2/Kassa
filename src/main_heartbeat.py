@@ -1,9 +1,10 @@
 import logging
 import time
 
+from logging_config import configure_logging
 from messaging.producer import KassaProducer
 from messaging.message_builders import build_heartbeat_xml
-from config import (
+from settings import (
     RABBIT_HOST,
     HEARTBEAT_INTERVAL_SECONDS,
     HEARTBEAT_EXCHANGE,
@@ -21,7 +22,7 @@ Start dit bestand direct om een eenvoudige heartbeat-publisher te draaien.
 """
 
 
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+configure_logging()
 logger = logging.getLogger(__name__)
 
 RECONNECT_DELAY_SECONDS = 2

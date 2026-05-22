@@ -96,7 +96,7 @@ class User:
         if not self.email or not self._is_valid_email(self.email):
             return False, f"email must be valid: {self.email}"
         
-        if not self.badgeCode:
+        if not self.badgeCode or not self.badgeCode.strip():
             return False, "badgeCode is required"
         
         if not self.role:

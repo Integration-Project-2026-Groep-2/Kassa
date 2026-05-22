@@ -22,14 +22,16 @@ from lxml import etree
 
 from xml_validator import validate_xml
 from messaging.user_consumer import UserConsumer
-from odoo.odoo_connection import OdooConnection
-from odoo.user_repository import OdooUserRepository
+from messaging.check_in_consumer import CheckInConsumer
+from odoo_integration.odoo_connection import OdooConnection
+from odoo_integration.user_repository import OdooUserRepository
 
 logger = logging.getLogger(__name__)
 
-# Global user consumer and odoo connection (initialized in run_receiver)
+# Global consumers en Odoo-verbinding (geïnitialiseerd in run_receiver)
 _odoo_connection: OdooConnection | None = None
 _user_consumer: UserConsumer | None = None
+_check_in_consumer: CheckInConsumer | None = None
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -247,16 +249,38 @@ async def on_user_message(message: aio_pika.IncomingMessage) -> None:
             return
         
     # (end dev variant)
+
+
+# ── CheckIn handler (IoT QR-scanner → Kassa) ───────────────────────────────
+
+async def on_check_in(message: aio_pika.IncomingMessage) -> None:
+    """CheckIn — IoT QR-scanner stuurt het CRM UUID van de gescande gebruiker."""
+    async with message.process():
+        try:
+            xml_string = message.body.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.error("CheckIn: kon bericht niet decoderen als UTF-8")
+            return
+
+        if _check_in_consumer is None:
+            logger.error("CheckInConsumer not initialized")
+            return
+
+        _check_in_consumer.process(xml_string)
+
+
 # ── Queue configuratie ─────────────────────────────────────────────────────────
 
-# (queue_name, durable, handler, routing_key)
+# (queue_name, durable, exclusive, handler, routing_key)
 CONTACT_TOPIC_EXCHANGE = "contact.topic"
+CHECK_IN_ROUTING_KEY = os.environ.get("CHECK_IN_ROUTING_KEY", "iot.check_in")
 QUEUE_HANDLERS = [
-    ("kassa.person.lookup.responded",   False, on_person_lookup_response, "crm.person.lookup.responded"),
-    ("kassa.user.confirmed",            True,  on_user_confirmed,         "crm.user.confirmed"),
-    ("kassa.unpaid.responded",          False, on_unpaid_response,        "crm.unpaid.responded"),
-    ("kassa.user.updated",              True,  on_user_updated,           "crm.user.updated"),
-    ("kassa.user.deactivated",          True,  on_user_deactivated,       "crm.user.deactivated"),
+    ("kassa.person.lookup.responded",   True,  False, on_person_lookup_response, "crm.person.lookup.responded"),
+    ("kassa.user.confirmed",            True,  False, on_user_confirmed,         "crm.user.confirmed"),
+    ("kassa.unpaid.responded",          True,  False, on_unpaid_response,        "crm.unpaid.responded"),
+    ("kassa.user.updated",              True,  False, on_user_updated,           "crm.user.updated"),
+    ("kassa.user.deactivated",          True,  False, on_user_deactivated,       "crm.user.deactivated"),
+    ("kassa.check_in",                  True,  False, on_check_in,               CHECK_IN_ROUTING_KEY),
 ]
 
 
@@ -271,8 +295,13 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
     """
     global _odoo_connection, _user_consumer
     
-    # Initialize Odoo connection
-    odoo_url = os.getenv('ODOO_URL', 'http://odoo:8069')
+    # Give Odoo time to start (especially on first boot in Docker)
+    logger.info("Waiting 10 seconds for Odoo to be ready...")
+    await asyncio.sleep(10)
+    
+    # Initialize Odoo connection.
+    # The receiver runs inside the same container as Odoo, so it must always use localhost.
+    odoo_url = 'http://localhost:8069'
     odoo_db = os.getenv('ODOO_DB', 'odoo')
     odoo_user = os.getenv('ODOO_USER')
     odoo_password = os.getenv('ODOO_PASSWORD')
@@ -297,7 +326,8 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
         odoo_user_repo,
         on_error=lambda msg_type, error: logger.error(f"User {msg_type} error: {error}")
     )
-    logger.info("OdooUserRepository and UserConsumer initialized")
+    _check_in_consumer = CheckInConsumer(odoo_user_repo)
+    logger.info("OdooUserRepository, UserConsumer en CheckInConsumer geïnitialiseerd")
     logger.info("Receiver task gestart — luistert op %d queues", len(QUEUE_HANDLERS))
 
     channel = await connection.channel()
@@ -308,8 +338,8 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
         durable=True,
     )
 
-    for queue_name, durable, handler, routing_key in QUEUE_HANDLERS:
-        queue = await channel.declare_queue(queue_name, durable=durable)
+    for queue_name, durable, exclusive, handler, routing_key in QUEUE_HANDLERS:
+        queue = await channel.declare_queue(queue_name, durable=durable, exclusive=exclusive)
         if routing_key:
             await queue.bind(contact_exchange, routing_key=routing_key)
         else:

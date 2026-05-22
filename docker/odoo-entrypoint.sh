@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Preserve the original PYTHONPATH (e.g. /app/src) for receiver scripts
+# and unset it for Odoo server processes to prevent the `/app/src/odoo` namespace
+# directory from shadowing the core Odoo system package.
+ORIGINAL_PYTHONPATH="${PYTHONPATH:-}"
+export PYTHONPATH=""
+
 ODOO_DB_HOST="${DB_HOST:-${HOST:-db}}"
 ODOO_DB_PORT="${DB_PORT:-5432}"
 ODOO_DB_USER="${POSTGRES_USER:-${USER:-odoo}}"
@@ -101,6 +107,83 @@ if [ -n "${ODOO_EXTRA_ARGS:-}" ]; then
   set -- "$@" ${ODOO_EXTRA_ARGS}
 fi
 
+# ── Wait for PostgreSQL to be ready ──────────────────────────────────────────
+# On VM restarts the DB container may take longer to accept connections.
+# We wait up to 60 s before giving up.
+echo "[entrypoint] Waiting for PostgreSQL at ${ODOO_DB_HOST}:${ODOO_DB_PORT}..."
+for i in $(seq 1 30); do
+  if pg_isready -h "${ODOO_DB_HOST}" -p "${ODOO_DB_PORT}" -U "${ODOO_DB_USER}" -q; then
+    echo "[entrypoint] PostgreSQL is ready."
+    break
+  fi
+  echo "[entrypoint] PostgreSQL not ready yet (attempt ${i}/30), retrying in 2s..."
+  sleep 2
+done
+
+  # Reset all database sequences to prevent unique constraint violations (e.g., mail_followers_pkey, mail_message_pkey)
+  # that can happen when the database is restored/cloned/imported and sequence ownership is not preserved.
+  if [ -n "$ODOO_DB_NAME" ]; then
+    echo "[entrypoint] Resetting all database sequences to prevent unique constraint violations..."
+    psql "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" << 'EOF' 2>/dev/null || true
+DO $$
+DECLARE
+    r RECORD;
+    t_name TEXT;
+    c_name TEXT;
+    s_name TEXT;
+    max_id BIGINT;
+BEGIN
+    FOR r IN
+        SELECT c.relname AS seq_name
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relkind = 'S' AND n.nspname = 'public'
+    LOOP
+        s_name := r.seq_name;
+        t_name := NULL;
+        c_name := 'id'; -- Default Odoo primary key column
+        
+        -- Try to deduce table name by stripping '_id_seq'
+        IF s_name LIKE '%_id_seq' THEN
+            t_name := substring(s_name from 1 for length(s_name) - 7);
+        END IF;
+
+        -- If table exists, fetch its max ID and align the sequence
+        IF t_name IS NOT NULL THEN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = t_name
+            ) THEN
+                EXECUTE format('SELECT COALESCE(MAX(%I), 0) FROM %I', c_name, t_name) INTO max_id;
+                EXECUTE format('SELECT setval(%L, %s, false)', 'public.' || s_name, max_id + 1);
+            END IF;
+        END IF;
+    END LOOP;
+END $$;
+EOF
+  fi
+
+  # Align existing programmatic ir.model.data records to noupdate=true to prevent Odoo's orphan cleanup
+  # from deleting them during upgrade, which would fail due to active POS sessions and payment methods constraints.
+  if [ -n "$ODOO_DB_NAME" ]; then
+    echo "[entrypoint] Aligning existing ir.model.data records to noupdate=true..."
+    psql "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" << 'EOF' 2>/dev/null || true
+UPDATE ir_model_data 
+SET noupdate = true 
+WHERE module = 'kassa_pos' 
+  AND name IN (
+    'pos_config_kassa_main', 
+    'account_journal_cash_kassa', 
+    'account_journal_bancontact_kassa', 
+    'account_journal_saldo_kassa', 
+    'payment_method_cash', 
+    'payment_method_card', 
+    'payment_method_invoice', 
+    'pos_payment_method_topup'
+  );
+EOF
+  fi
+
 if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
 
   # Check if kassa_pos is already installed in the database.
@@ -135,27 +218,53 @@ if [ "$ODOO_SKIP_MODULE_SYNC" != "true" ] && [ -n "$ODOO_DB_NAME" ]; then
     else
       "${SYNC_CMD[@]}"
     fi
-  elif [ -n "$ODOO_SYNC_MODULES" ]; then
-    echo "[entrypoint] kassa_pos already installed, upgrading explicitly listed modules: ${ODOO_SYNC_MODULES}"
-    SYNC_CMD=("${BASE_SYNC_ARGS[@]}" -u "${ODOO_SYNC_MODULES}")
+  else
+    # Always upgrade kassa_pos to ensure data files are loaded (pos_config_data.xml, etc.)
+    # Also upgrade any modules explicitly listed in ODOO_SYNC_MODULES
+    MODULES_TO_UPGRADE="kassa_pos"
+    if [ -n "$ODOO_SYNC_MODULES" ]; then
+      MODULES_TO_UPGRADE="${MODULES_TO_UPGRADE},${ODOO_SYNC_MODULES}"
+    fi
+    echo "[entrypoint] kassa_pos already installed, upgrading for data sync: ${MODULES_TO_UPGRADE}"
+    SYNC_CMD=("${BASE_SYNC_ARGS[@]}" -u "${MODULES_TO_UPGRADE}")
     if [ "$(id -u)" = "0" ]; then
       runuser -u odoo -- "${SYNC_CMD[@]}"
     else
       "${SYNC_CMD[@]}"
     fi
-  else
-    echo "[entrypoint] kassa_pos already installed, no explicit upgrade requested — skipping module sync"
   fi
 fi
+
+# Clear broken cached asset attachments to force Odoo to regenerate all JS/CSS files.
+# This resolves the common Odoo "AssetsLoadingError: The loading of /web/assets/... failed".
+echo "[entrypoint] Clearing cached Odoo assets from database to force regeneration..."
+psql \
+  "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" \
+  -c "DELETE FROM ir_attachment WHERE url LIKE '/web/assets/%';" 2>/dev/null || true
+
+
+# Ensure Kassa payment methods are linked to Kassa Main pos_config
+echo "[entrypoint] Linking Kassa payment methods to Kassa Main pos_config"
+psql \
+  "postgresql://${ODOO_DB_USER}:${ODOO_DB_PASSWORD}@${ODOO_DB_HOST}:${ODOO_DB_PORT}/${ODOO_DB_NAME}" \
+  -c "INSERT INTO pos_config_pos_payment_method_rel (pos_config_id, pos_payment_method_id)
+      SELECT pc.id, ppm.id
+      FROM pos_config pc, pos_payment_method ppm, account_journal aj
+      WHERE pc.name = 'Kassa Main'
+        AND ppm.journal_id = aj.id
+        AND aj.code IN ('KCASH', 'KBANC', 'KSAL')
+        AND ppm.company_id = pc.company_id
+      ON CONFLICT DO NOTHING;" 2>/dev/null || true
+
 
 # Initialize RabbitMQ topology (exchanges, queues, bindings)
 echo "[entrypoint] Initializing RabbitMQ topology via setup_rabbitmq.py"
 if [ "$(id -u)" = "0" ]; then
-  runuser -u odoo -- python3 /app/setup_rabbitmq.py || {
+  runuser -u odoo -- env PYTHONPATH="$ORIGINAL_PYTHONPATH" python3 /app/setup_rabbitmq.py || {
     echo "[entrypoint] WARNING: RabbitMQ setup failed, but continuing with Odoo startup"
   }
 else
-  python3 /app/setup_rabbitmq.py || {
+  PYTHONPATH="$ORIGINAL_PYTHONPATH" python3 /app/setup_rabbitmq.py || {
     echo "[entrypoint] WARNING: RabbitMQ setup failed, but continuing with Odoo startup"
   }
 fi
@@ -163,6 +272,7 @@ fi
 if [ "$HEARTBEAT_ENABLED" = "true" ]; then
   (
     cd /app/src
+    export PYTHONPATH="$ORIGINAL_PYTHONPATH"
     python3 main_heartbeat.py
   ) &
   HB_PID="$!"
@@ -172,6 +282,7 @@ fi
 if [ "$RECEIVER_ENABLED" = "true" ]; then
   (
     cd /app/src
+    export PYTHONPATH="$ORIGINAL_PYTHONPATH"
     python3 main.py
   ) &
   REC_PID="$!"

@@ -1,6 +1,6 @@
 import logging
 from connection import RabbitManager
-from config import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
+from settings import RABBIT_HOST, RABBIT_PORT, RABBIT_USER, RABBIT_PASSWORD, RABBIT_VHOST
 
 """Consumer helper die berichten van een queue leest en een callback aanroept.
 
