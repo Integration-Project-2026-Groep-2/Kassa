@@ -68,3 +68,30 @@ class PosSession(models.Model):
         
         # Continue with normal session close, passing all parameters
         return super().action_pos_session_close(balancing_account, amount_to_balance, bank_payment_method_diffs)
+
+    def _get_pos_ui_res_currency(self, params):
+        """
+        Override to prevent IndexError: list index out of range if the currency is not active
+        in the database or not found.
+        """
+        res = self.env['res.currency'].with_context(active_test=False).search_read(**params['search_params'])
+        if not res:
+            _logger.warning("No currency found with search_params %s. Attempting fallback.", params.get('search_params'))
+            # Fallback 1: try to find base.EUR specifically with active_test=False
+            eur = self.env.ref('base.EUR', raise_if_not_found=False)
+            if eur:
+                res = self.env['res.currency'].with_context(active_test=False).search_read(
+                    [('id', '=', eur.id)],
+                    fields=params['search_params'].get('fields')
+                )
+            # Fallback 2: search for any active currency
+            if not res:
+                res = self.env['res.currency'].search_read([], fields=params['search_params'].get('fields'), limit=1)
+            # Fallback 3: search for any currency including inactive ones
+            if not res:
+                res = self.env['res.currency'].with_context(active_test=False).search_read([], fields=params['search_params'].get('fields'), limit=1)
+        
+        if res:
+            return res[0]
+            
+        return super()._get_pos_ui_res_currency(params)

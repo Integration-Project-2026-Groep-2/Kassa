@@ -26,6 +26,20 @@ def post_init(env):
     """
     cr = env.cr
 
+    # ── 00. Ensure EUR currency is active ────────────────────────────────────
+    try:
+        eur = env.ref('base.EUR', raise_if_not_found=False)
+        if eur and not eur.active:
+            import logging
+            logging.getLogger('kassa_pos').info("post_init: Activating EUR currency defensively...")
+            eur.sudo().write({'active': True})
+    except Exception:
+        try:
+            import logging
+            logging.getLogger('kassa_pos').exception('post_init: failed to activate EUR currency')
+        except Exception:
+            pass
+
     # ── 0. Ensure Chart of Accounts is configured ────────────────────────────
     try:
         Company = env.ref('base.main_company')
