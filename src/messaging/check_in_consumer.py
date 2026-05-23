@@ -110,6 +110,7 @@ class CheckInConsumer:
                 "CheckIn verwerkt — partner gevonden [id=%s name=%s badge=%s timestamp=%s]",
                 user_id, name, badge, timestamp,
             )
+            self.odoo_user_repo.notify_check_in_to_pos(partner["id"])
         else:
             logger.warning(
                 "CheckIn: geen partner gevonden voor CRM-id=%s (timestamp=%s) "

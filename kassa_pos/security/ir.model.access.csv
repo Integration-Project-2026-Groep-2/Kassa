@@ -13,3 +13,5 @@ access_pos_order_batch_user,pos.order.batch pos user,kassa_pos.model_pos_order_b
 access_pos_order_batch_manager,pos.order.batch pos manager,kassa_pos.model_pos_order_batch,point_of_sale.group_pos_manager,1,1,1,1
 access_balance_transaction_user,balance.transaction pos user,kassa_pos.model_balance_transaction,point_of_sale.group_pos_user,1,1,1,0
 access_balance_transaction_manager,balance.transaction pos manager,kassa_pos.model_balance_transaction,point_of_sale.group_pos_manager,1,1,1,1
+access_kassa_check_in_user,kassa.check.in pos user,kassa_pos.model_kassa_check_in,point_of_sale.group_pos_user,1,0,1,0
+access_kassa_check_in_manager,kassa.check.in pos manager,kassa_pos.model_kassa_check_in,point_of_sale.group_pos_manager,1,1,1,1

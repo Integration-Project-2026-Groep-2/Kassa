@@ -61,6 +61,7 @@ def create_exchanges():
         ("user.topic",         "topic",  True),   # C36/C37/C38 Kassa → CRM user sync
         ("heartbeat.direct",   "direct", True),   # heartbeat (Contract 7)
         ("logs.direct",        "direct", True),   # Controlroom centralized logs (ClickUp 2kyr1d3m-7235)
+        ("user.checkin.topic", "topic",  True),   # IoT QR-scanner check-in berichten
     ]
 
     for name, kind, durable in exchanges:
