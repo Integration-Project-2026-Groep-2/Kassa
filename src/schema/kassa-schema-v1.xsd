@@ -168,7 +168,7 @@
 
   <!-- ============================================================
        CONTRACT 8 — Kassa → Controlroom: statuscheck
-       Queue: kassa.status.checked | durable: false
+       Exchange: statuscheck.direct | Queue: controlroom.statuscheck.queue | durable: true
   ============================================================ -->
   <xs:element name="StatusCheck">
     <xs:complexType>

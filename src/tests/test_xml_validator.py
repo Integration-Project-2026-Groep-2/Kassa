@@ -62,55 +62,38 @@ def test_statuscheck_valid():
     valid("""<StatusCheck>
         <serviceId>KASSA</serviceId>
         <timestamp>2026-04-18T10:00:00Z</timestamp>
-        <status>healthy</status>
         <uptime>3600</uptime>
-        <systemLoad>
-            <cpu>0.10</cpu>
-            <memory>0.40</memory>
-            <disk>0.20</disk>
-        </systemLoad>
+        <memory>0.40</memory>
+        <disk>0.20</disk>
     </StatusCheck>""")
 
 
-def test_statuscheck_degraded_valid():
+def test_statuscheck_zero_uptime_valid():
     valid("""<StatusCheck>
         <serviceId>KASSA</serviceId>
         <timestamp>2026-04-18T10:00:00Z</timestamp>
-        <status>degraded</status>
         <uptime>0</uptime>
-        <systemLoad>
-            <cpu>0.95</cpu>
-            <memory>0.95</memory>
-            <disk>0.50</disk>
-        </systemLoad>
+        <memory>0.95</memory>
+        <disk>0.50</disk>
     </StatusCheck>""")
 
 
-def test_statuscheck_invalid_status():
+def test_statuscheck_missing_memory():
     invalid("""<StatusCheck>
         <serviceId>KASSA</serviceId>
         <timestamp>2026-04-18T10:00:00Z</timestamp>
-        <status>ok</status>
         <uptime>0</uptime>
-        <systemLoad>
-            <cpu>0.10</cpu>
-            <memory>0.10</memory>
-            <disk>0.10</disk>
-        </systemLoad>
+        <disk>0.10</disk>
     </StatusCheck>""")
 
 
-def test_statuscheck_cpu_out_of_range():
+def test_statuscheck_invalid_service_id():
     invalid("""<StatusCheck>
-        <serviceId>KASSA</serviceId>
+        <serviceId>UNKNOWN</serviceId>
         <timestamp>2026-04-18T10:00:00Z</timestamp>
-        <status>healthy</status>
         <uptime>0</uptime>
-        <systemLoad>
-            <cpu>1.50</cpu>
-            <memory>0.10</memory>
-            <disk>0.10</disk>
-        </systemLoad>
+        <memory>0.10</memory>
+        <disk>0.10</disk>
     </StatusCheck>""")
 
 

@@ -16,26 +16,30 @@ logger = logging.getLogger(__name__)
 
 STATUS_INTERVAL_SECONDS = int(os.environ.get('STATUS_INTERVAL_SECONDS', 120))
 
+_EXCHANGE_NAME  = "statuscheck.direct"
+_ROUTING_KEY    = "routing.statuscheck"
+_QUEUE_NAME     = "controlroom.statuscheck.queue"
+_DLQ_NAME       = "controlroom.statuscheck.queue.dlq"
+
 # Tijdstip waarop de service gestart is, voor uptime berekening
 _START_TIME = time.monotonic()
 
 
-def _get_system_load() -> tuple[float, float, float]:
-    """Geeft cpu, memory en disk terug als float tussen 0.0 en 1.0."""
+def _get_system_load() -> tuple[float, float]:
+    """Geeft memory en disk terug als float tussen 0.0 en 1.0."""
     try:
         import psutil
-        cpu = psutil.cpu_percent(interval=None) / 100.0
         memory = psutil.virtual_memory().percent / 100.0
         disk = psutil.disk_usage('/').percent / 100.0
-        return cpu, memory, disk
+        return memory, disk
     except ImportError:
         logger.warning("psutil niet beschikbaar — geheugen/schijf worden als 0.0 gerapporteerd")
-        return 0.0, 0.0, 0.0
+        return 0.0, 0.0
 
 
 def _build_status_xml() -> bytes:
     """Bouw een StatusCheck XML-bericht conform Contract 8."""
-    _, memory, disk = _get_system_load()
+    memory, disk = _get_system_load()
     uptime = int(time.monotonic() - _START_TIME)
 
     root = etree.Element("StatusCheck")
@@ -52,8 +56,8 @@ def _build_status_xml() -> bytes:
 
 async def run_status(connection: AbstractRobustConnection) -> None:
     """
-    Publiceer een StatusCheck XML-bericht elke 2 minuten naar kassa.status.checked.
-    Queue: kassa.status.checked | durable: false
+    Publiceer een StatusCheck XML-bericht elke 2 minuten.
+    Exchange: statuscheck.direct | Queue: controlroom.statuscheck.queue | durable: true
     """
     logger.info("Status task gestart (interval=%ds)", STATUS_INTERVAL_SECONDS)
 
@@ -65,14 +69,23 @@ async def run_status(connection: AbstractRobustConnection) -> None:
                 logger.info("Status kanaal openen...")
                 channel = await connection.channel()
 
-            queue = await channel.declare_queue("kassa.status.checked", durable=False, exclusive=False)
+                dlq = await channel.declare_queue(_DLQ_NAME, durable=True)
+
+                exchange = await channel.declare_exchange(
+                    _EXCHANGE_NAME,
+                    aio_pika.ExchangeType.DIRECT,
+                    durable=True,
+                )
+
+                queue = await channel.declare_queue(_QUEUE_NAME, durable=True)
+                await queue.bind(exchange, routing_key=_ROUTING_KEY)
 
             xml_bytes = _build_status_xml()
             validate(xml_bytes)
 
-            await channel.default_exchange.publish(
+            await exchange.publish(
                 aio_pika.Message(body=xml_bytes),
-                routing_key="kassa.status.checked",
+                routing_key=_ROUTING_KEY,
             )
             logger.debug("StatusCheck gepubliceerd")
         except (ValueError, etree.XMLSyntaxError):
