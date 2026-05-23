@@ -334,6 +334,16 @@ class OdooUserRepository:
             )
             return None
 
+    def notify_check_in_to_pos(self, partner_id: int) -> bool:
+        """Stuur een bus-notificatie naar alle POS-clients via kassa.check.in.notify_pos()."""
+        try:
+            return bool(self.odoo.execute("kassa.check.in", "notify_pos", partner_id))
+        except Exception as exc:
+            logger.error(
+                "notify_check_in_to_pos mislukt [partner_id=%d]: %s", partner_id, exc
+            )
+            return False
+
     def _verify_partner_visibility(self, partner_record: Dict[str, Any]) -> bool:
         """
         Check whether the created/updated partner record will be visible in the

@@ -62,6 +62,7 @@ def create_exchanges():
         ("heartbeat.direct",   "direct", True),   # heartbeat (Contract 7)
         ("statuscheck.direct", "direct", True),   # statuscheck (Contract 8)
         ("logs.direct",        "direct", True),   # Controlroom centralized logs (ClickUp 2kyr1d3m-7235)
+        ("user.checkin.topic", "topic",  True),   # IoT QR-scanner check-in berichten
     ]
 
     for name, kind, durable in exchanges:

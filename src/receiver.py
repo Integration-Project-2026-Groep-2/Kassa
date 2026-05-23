@@ -273,14 +273,14 @@ async def on_check_in(message: aio_pika.IncomingMessage) -> None:
 
 # (queue_name, durable, exclusive, handler, routing_key)
 CONTACT_TOPIC_EXCHANGE = "contact.topic"
-CHECK_IN_ROUTING_KEY = os.environ.get("CHECK_IN_ROUTING_KEY", "iot.check_in")
+CHECK_IN_EXCHANGE = "user.checkin.topic"
+CHECK_IN_ROUTING_KEY = "routing.user.checkin"
 QUEUE_HANDLERS = [
     ("kassa.person.lookup.responded",   True,  False, on_person_lookup_response, "crm.person.lookup.responded"),
     ("kassa.user.confirmed",            True,  False, on_user_confirmed,         "crm.user.confirmed"),
     ("kassa.unpaid.responded",          True,  False, on_unpaid_response,        "crm.unpaid.responded"),
     ("kassa.user.updated",              True,  False, on_user_updated,           "crm.user.updated"),
     ("kassa.user.deactivated",          True,  False, on_user_deactivated,       "crm.user.deactivated"),
-    ("kassa.check_in",                  True,  False, on_check_in,               CHECK_IN_ROUTING_KEY),
 ]
 
 
@@ -293,7 +293,7 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
     
     Initialiseert ook de OdooConnection en UserConsumer voor CRUD operations.
     """
-    global _odoo_connection, _user_consumer
+    global _odoo_connection, _user_consumer, _check_in_consumer
     
     # Give Odoo time to start (especially on first boot in Docker)
     logger.info("Waiting 10 seconds for Odoo to be ready...")
@@ -332,20 +332,28 @@ async def run_receiver(connection: AbstractRobustConnection) -> None:
 
     channel = await connection.channel()
     await channel.set_qos(prefetch_count=10)
+
     contact_exchange = await channel.declare_exchange(
         CONTACT_TOPIC_EXCHANGE,
         aio_pika.ExchangeType.TOPIC,
         durable=True,
     )
-
     for queue_name, durable, exclusive, handler, routing_key in QUEUE_HANDLERS:
         queue = await channel.declare_queue(queue_name, durable=durable, exclusive=exclusive)
-        if routing_key:
-            await queue.bind(contact_exchange, routing_key=routing_key)
-        else:
-            await queue.bind(contact_exchange, routing_key=queue_name)
+        await queue.bind(contact_exchange, routing_key=routing_key or queue_name)
         await queue.consume(handler)
         logger.info("Luisteren op queue '%s'", queue_name)
+
+    # kassa.check_in zit op een aparte exchange (user.checkin.topic)
+    check_in_exchange = await channel.declare_exchange(
+        CHECK_IN_EXCHANGE,
+        aio_pika.ExchangeType.TOPIC,
+        durable=True,
+    )
+    check_in_queue = await channel.declare_queue("kassa.check_in", durable=True)
+    await check_in_queue.bind(check_in_exchange, routing_key=CHECK_IN_ROUTING_KEY)
+    await check_in_queue.consume(on_check_in)
+    logger.info("Luisteren op queue 'kassa.check_in' (exchange=%s key=%s)", CHECK_IN_EXCHANGE, CHECK_IN_ROUTING_KEY)
 
     # Blijf draaien tot de verbinding wordt gesloten
     await asyncio.Future()
