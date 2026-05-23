@@ -6,6 +6,7 @@ import { Dialog } from "@web/core/dialog/dialog";
 import { ProductScreen } from "@point_of_sale/app/screens/product_screen/product_screen";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
 import { _t } from "@web/core/l10n/translation";
+import { logger } from "./logger";
 
 /**
  * Laad jsQR éénmalig als gewone <script> tag — werkt op alle browsers
@@ -170,11 +171,8 @@ class QrScannerDialog extends Component {
         // Dan via RPC
         try {
             const result = await this.orm.searchRead(
-                // note(nasr): the badge id thing is an internal id that doesnt map to the crm id so this should fix it
-                // so copilot says
                 "res.partner",
-                [["user_id_custom", "=", badgeCode]],
-                [["badge_code", "=", badgeCode]],
+                ["|", ["badge_code", "=", badgeCode], ["user_id_custom", "=", badgeCode]],
                 ["id", "name", "email", "phone", "badge_code", "role", "company_id_custom", "user_id_custom"],
                 { limit: 1 }
             );
@@ -183,7 +181,7 @@ class QrScannerDialog extends Component {
                 return result[0];
             }
         } catch (e) {
-            console.error("Fout bij badge-opzoeking:", e);
+            logger.error("Fout bij badge-opzoeking:", e);
         }
 
         return null;
