@@ -170,7 +170,10 @@ class QrScannerDialog extends Component {
         // Dan via RPC
         try {
             const result = await this.orm.searchRead(
+                // note(nasr): the badge id thing is an internal id that doesnt map to the crm id so this should fix it
+                // so copilot says
                 "res.partner",
+                [["user_id_custom", "=", badgeCode]],
                 [["badge_code", "=", badgeCode]],
                 ["id", "name", "email", "phone", "badge_code", "role", "company_id_custom", "user_id_custom"],
                 { limit: 1 }
