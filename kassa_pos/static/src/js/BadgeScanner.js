@@ -3,6 +3,7 @@
 import { ProductScreen } from "@point_of_sale/app/screens/product_screen/product_screen";
 import { patch } from "@web/core/utils/patch";
 import { _t } from "@web/core/l10n/translation";
+import { logger } from "./logger";
 
 /**
  * Badge Scanner Extension
@@ -91,7 +92,7 @@ patch(ProductScreen.prototype, {
                 return result[0];
             }
         } catch (error) {
-            console.error("Error searching for badge:", error);
+            logger.error("Error searching for badge:", error);
         }
 
         return null;

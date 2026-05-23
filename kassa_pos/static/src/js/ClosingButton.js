@@ -4,6 +4,7 @@ import { Component, xml } from '@odoo/owl';
 import { useService } from '@web/core/utils/hooks';
 import { sprintf } from '@web/core/utils/strings';
 import { ProductScreen } from '@point_of_sale/app/screens/product_screen/product_screen';
+import { logger } from './logger';
 
 class ClosingButton extends Component {
     static template = xml`
@@ -34,7 +35,7 @@ class ClosingButton extends Component {
                 });
 
                 if (result.batch_id) {
-                    console.log('Batch gesloten:', sprintf(
+                    logger.log('Batch gesloten:', sprintf(
                         'Batch %s — %d orders — €%.2f',
                         result.batch_id,
                         result.orders_count,
@@ -48,7 +49,7 @@ class ClosingButton extends Component {
                 });
             }
         } catch (error) {
-            console.error('Fout bij dagafsluiting:', error);
+            logger.error('Fout bij dagafsluiting:', error);
             this.notification.add(`Fout: ${error.message}`, {
                 title: 'Systeemfout',
                 type: 'danger',

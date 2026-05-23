@@ -3,6 +3,7 @@
 import { Component, useState, xml } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { Dialog } from "@web/core/dialog/dialog";
+import { logger } from "./logger";
 
 
 class UserRegistrationModal extends Component {
@@ -81,7 +82,7 @@ class UserRegistrationModal extends Component {
         this.rpc = useService('rpc');
         this.dialog = useService('dialog');
         
-        console.log('UserRegistrationModal setup - dialog service:', this.dialog);
+        logger.log('UserRegistrationModal setup - dialog service:', this.dialog);
         
         // Form state
         this.formData = useState({
@@ -229,7 +230,7 @@ class UserRegistrationModal extends Component {
                 company_id_custom: userData.companyId,
             }]);
 
-            console.log('User created successfully with contact ID:', contactId);
+            logger.log('User created successfully with contact ID:', contactId);
 
             // Success notification
             this.notification.add(`User ${userData.firstName} ${userData.lastName} created successfully!`, {
@@ -242,7 +243,7 @@ class UserRegistrationModal extends Component {
         } catch (error) {
             this.uiState.errorMessage = `Error creating user: ${error.message}`;
             this.uiState.hasError = true;
-            console.error('Error creating user:', error);
+            logger.error('Error creating user:', error);
         } finally {
             this.uiState.isLoading = false;
         }
@@ -252,7 +253,7 @@ class UserRegistrationModal extends Component {
      * Close the modal dialog
      */
     closeModal() {
-        console.log('Closing modal');
+        logger.log('Closing modal');
         if (this.props && this.props.close) {
             this.props.close();
         }

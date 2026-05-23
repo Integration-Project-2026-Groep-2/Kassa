@@ -3,9 +3,10 @@
 import { onWillStart, useState } from "@odoo/owl";
 import { patch } from "@web/core/utils/patch";
 import { OrderReceipt } from "@point_of_sale/app/screens/receipt_screen/receipt/order_receipt";
+import { logger } from "./logger";
 
 // Runtime load marker
-console.info('[kassa_pos] gks_receipt.js loaded');
+logger.info('[kassa_pos] gks_receipt.js loaded');
 window.__kassa_pos_gks_loaded = true;
 
 // Product category mapping: product name → tax rate (%)
@@ -74,7 +75,7 @@ async function buildLocalVscCode(orderLike, printedData) {
     const sourceId = orderId || orderRef;
 
     if (!sourceId || !dateOrder || !Number.isFinite(amountTotal)) {
-        console.warn('[kassa_pos] VSC inputs missing', {
+        logger.warn('[kassa_pos] VSC inputs missing', {
             hasOrderId: Boolean(orderId),
             hasOrderRef: Boolean(orderRef),
             hasDateOrder: Boolean(dateOrder),
@@ -199,9 +200,9 @@ patch(OrderReceipt.prototype, {
                 if (this.props?.data) {
                     this.props.data.vsc_code = localVscCode;
                 }
-                console.info('[kassa_pos] local VSC generated', localVscCode);
+                logger.info('[kassa_pos] local VSC generated', localVscCode);
             } else {
-                console.warn('[kassa_pos] local VSC could not be generated from receipt data');
+                logger.warn('[kassa_pos] local VSC could not be generated from receipt data');
             }
         });
     },
@@ -210,7 +211,7 @@ patch(OrderReceipt.prototype, {
         const data = this.props?.data || {};
         // Use cached VSC if available (from RPC fetch), otherwise from data, otherwise empty
         const vscCode = this.gksReceiptState?.vscCode || this._cachedVscCode || data.vsc_code || data.gks_vsc || "";
-        console.log('[kassa_pos] receipt getter called - vscCode:', vscCode, 'cached:', this._cachedVscCode, 'data.vsc_code:', data.vsc_code);
+        logger.log('[kassa_pos] receipt getter called - vscCode:', vscCode, 'cached:', this._cachedVscCode, 'data.vsc_code:', data.vsc_code);
         return {
             ...data,
             vsc_code: vscCode,
@@ -240,7 +241,7 @@ patch(OrderReceipt.prototype, {
         // If order not available on the component, try the `data` prop (export_for_printing())
         const printedData = this.props?.data;
         if (!order && printedData) {
-            console.debug('[kassa_pos] gksReceiptLines - using props.data');
+            logger.debug('[kassa_pos] gksReceiptLines - using props.data');
         }
 
         // Attempt to fetch server-side VAT breakdown for synced orders.
@@ -255,12 +256,12 @@ patch(OrderReceipt.prototype, {
                     const resp = await this.env.services.rpc('/kassa_pos/get_gks_vat_breakdown', { order_id: serverId });
                     if (resp && resp.ok && resp.breakdown) {
                         this._gksServerBreakdown = resp.breakdown;
-                        console.debug('[kassa_pos] fetched server gks_vat_breakdown', resp.breakdown);
+                        logger.debug('[kassa_pos] fetched server gks_vat_breakdown', resp.breakdown);
                     } else {
-                        console.debug('[kassa_pos] server breakdown not available', resp && resp.error);
+                        logger.debug('[kassa_pos] server breakdown not available', resp && resp.error);
                     }
                 } catch (err) {
-                    console.warn('[kassa_pos] failed to fetch server gks_vat_breakdown', err);
+                    logger.warn('[kassa_pos] failed to fetch server gks_vat_breakdown', err);
                 }
             })();
         }
@@ -287,12 +288,12 @@ patch(OrderReceipt.prototype, {
         // Log raw exported shape for easier debugging in DevTools
         try {
             if (Array.isArray(raw)) {
-                console.debug('[kassa_pos] raw orderlines length', raw.length, 'first:', raw[0]);
+                logger.debug('[kassa_pos] raw orderlines length', raw.length, 'first:', raw[0]);
             } else {
-                console.debug('[kassa_pos] raw orderlines (non-array)', raw);
+                logger.debug('[kassa_pos] raw orderlines (non-array)', raw);
             }
         } catch (e) {
-            console.warn('[kassa_pos] failed to log raw orderlines', e);
+            logger.warn('[kassa_pos] failed to log raw orderlines', e);
         }
 
         const normalized = (raw || []).map((l, idx) => {
@@ -342,9 +343,9 @@ patch(OrderReceipt.prototype, {
 
         // Log normalized shape for debugging
         try {
-            console.debug('[kassa_pos] normalized orderlines length', normalized.length, 'first:', normalized[0]);
+            logger.debug('[kassa_pos] normalized orderlines length', normalized.length, 'first:', normalized[0]);
         } catch (e) {
-            console.warn('[kassa_pos] failed to log normalized orderlines', e);
+            logger.warn('[kassa_pos] failed to log normalized orderlines', e);
         }
 
         return normalized;
