@@ -18,3 +18,13 @@ class KassaCheckIn(models.Model):
             {"partner_id": partner.id, "partner_name": partner.name},
         )
         return True
+
+
+class BusBus(models.Model):
+    _inherit = "bus.bus"
+
+    def _build_bus_channel_list(self):
+        """Voeg het kassa_check_in kanaal toe zodat POS-clients het mogen subscriben."""
+        channels = super()._build_bus_channel_list()
+        channels.append("kassa_check_in")
+        return channels
