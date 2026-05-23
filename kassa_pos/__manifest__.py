@@ -33,6 +33,7 @@
             'kassa_pos/static/src/css/user_registration.css',
             'kassa_pos/static/src/css/gks_receipt.css',
             'kassa_pos/static/src/css/qr_scanner.css',
+            'kassa_pos/static/src/js/logger.js',
             'kassa_pos/static/src/js/UserRegistration.js',
             'kassa_pos/static/src/js/gks_receipt.js',
             'kassa_pos/static/src/js/ProductScreenUserButton.js',

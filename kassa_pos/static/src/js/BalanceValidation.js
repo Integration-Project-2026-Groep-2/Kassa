@@ -4,6 +4,7 @@ import { patch } from "@web/core/utils/patch";
 import { PaymentScreen } from "@point_of_sale/app/screens/payment_screen/payment_screen";
 import { useService } from "@web/core/utils/hooks";
 import { NumberPopup } from "@point_of_sale/app/utils/input_popups/number_popup";
+import { logger } from "./logger";
 
 patch(PaymentScreen.prototype, {
     setup() {
@@ -59,10 +60,10 @@ patch(PaymentScreen.prototype, {
                 partner_id: partner.id,
             });
 
-            console.log('Top Up: balance check result =', result);
+            logger.log('Top Up: balance check result =', result);
 
             if (!result.success || result.balance <= 0) {
-                console.warn('Top Up blocked: balance is', result.balance);
+                logger.warn('Top Up blocked: balance is', result.balance);
                 this.notification.add(
                     `${partner.name} heeft geen saldo beschikbaar.`,
                     { type: 'warning', title: 'Onvoldoende saldo' }
@@ -70,7 +71,7 @@ patch(PaymentScreen.prototype, {
                 return;
             }
 
-            console.log('Top Up: balance OK, creating payment line');
+            logger.log('Top Up: balance OK, creating payment line');
             // Balance is OK, now create the payment line
             await super.selectPaymentMethod(paymentMethod);
 
@@ -199,7 +200,7 @@ patch(PaymentScreen.prototype, {
         try {
             return await super.validateOrder(isForceValidate);
         } catch (e) {
-            console.error('validateOrder error:', e);
+            logger.error('validateOrder error:', e);
             
             // Catch server UserError and show as red notification
             const serverMsg = (e && (e.message || (e.data && e.data.message))) || '';

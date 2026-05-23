@@ -2,6 +2,7 @@
 
 import { useService } from '@web/core/utils/hooks';
 import { patch } from '@web/core/utils/patch';
+import { logger } from './logger';
 
 /**
  * SessionCloseHandler
@@ -9,11 +10,11 @@ import { patch } from '@web/core/utils/patch';
  * when a session is being closed
  */
 export function initSessionCloseHandler() {
-    console.log('[Afsluitknop] SessionCloseHandler initialized');
+    logger.log('[Afsluitknop] SessionCloseHandler initialized');
 }
 
 // Patch the action that closes the session
 export function patchSessionCloseAction() {
     // This function is called to patch any session close actions if needed
-    console.log('[Afsluitknop] Session close action patched');
+    logger.log('[Afsluitknop] Session close action patched');
 }
