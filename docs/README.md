@@ -15,7 +15,7 @@ Dit project levert een custom Odoo image (gebaseerd op de officiele `odoo:latest
 - DB image: `postgres:15`
 - RabbitMQ image: `rabbitmq:3-management`
 
-## 2) Vereiste environment variables
+## 2) Required environment variables
 
 Gebruik `.env.example` als basis.
 

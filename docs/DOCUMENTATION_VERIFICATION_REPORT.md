@@ -71,7 +71,7 @@ All three schema files exist and match documentation:
   - Durable: true
   - Trigger: POS session closure / daily batch closing
   
-- **Action Required**: Add K-02 contract specification to KASSA_CONTRACTS_SPECIFICATION.md
+**Action:** K-02 contract specification has been added to `docs/KASSA_CONTRACTS_SPECIFICATION.md`.
 
 ---
 
@@ -113,7 +113,7 @@ All three schema files exist and match documentation:
   - Queue: `crm.kassa.user.deactivated`
   - Note: Kassa receives this from CRM, does not publish it
 
-- **Action Required**: Add C36, C37, C38 contract specifications to KASSA_CONTRACTS_SPECIFICATION.md
+**Action:** C36, C37, C38 contract specifications have been added to `docs/KASSA_CONTRACTS_SPECIFICATION.md`.
 
 ---
 

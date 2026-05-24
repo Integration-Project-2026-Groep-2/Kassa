@@ -6,7 +6,7 @@
 
 ---
 
-## Vereisten
+## Requirements
 
 - Docker Desktop geïnstalleerd en draaiend
 - Git geïnstalleerd
