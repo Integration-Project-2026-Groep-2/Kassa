@@ -229,6 +229,27 @@ USER root
 - Impact: Docker cannot detect container failure independently
 - Recommendation: Add HEALTHCHECK to Dockerfile
 
+**Suggested HEALTHCHECK snippet**
+
+To allow Docker to detect an unhealthy Odoo process, add a HEALTHCHECK that queries the local health endpoint. Example (place in the Dockerfile):
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+   CMD python -c "import urllib.request,sys
+try:
+      r=urllib.request.urlopen('http://127.0.0.1:8069/health')
+      sys.exit(0 if r.getcode()==200 else 1)
+except Exception:
+      sys.exit(1)"
+```
+
+If `python` is not available in the image at runtime, use `curl` instead:
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+   CMD curl -f http://127.0.0.1:8069/health || exit 1
+```
+
 **Schema Files Not Mentioned in Dockerfile:**
 - Documentation states (line 98): "Vereist bestand: src/schema/kassa-schema-v1.xsd moet aanwezig zijn"
 - Actual: Schema files are copied but not explicitly mentioned

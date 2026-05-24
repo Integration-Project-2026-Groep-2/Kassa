@@ -425,13 +425,34 @@ def callback(ch, method, properties, body):
 def process_user_registration(message):
     """Handle user registration event."""
     logger.info(f"Processing user registration: {message}")
-    # TODO: Connect to Odoo API, create user
+    # Example: create or update a user in Odoo using the Odoo JSON-RPC
+    try:
+        user_payload = message.get('user') or {}
+        # This is illustrative; use the project's Odoo client helper
+        connection = OdooConnection(url=Config.ODOO_URL, db=Config.POSTGRES_DB, user=Config.ODOO_USER, password=Config.ODOO_PASSWORD)
+        connection.connect()
+        repo = OdooUserRepository(connection)
+        success, err, created = repo.create_or_update_user(user_payload)
+        if not success:
+            logger.error(f"Failed to create user in Odoo: {err}")
+    except Exception as e:
+        logger.exception("Error creating user in Odoo: %s", e)
 
 
 def process_user_login(message):
     """Handle user login event."""
     logger.info(f"Processing user login: {message}")
-    # TODO: Log user activity
+    # Example: append a simple login event to a lightweight activity log table
+    try:
+        user_id = message.get('user', {}).get('userId')
+        timestamp = message.get('timestamp') or datetime.datetime.utcnow().isoformat()
+        # Use the repository or a direct DB helper to store the event
+        connection = OdooConnection(url=Config.ODOO_URL, db=Config.POSTGRES_DB, user=Config.ODOO_USER, password=Config.ODOO_PASSWORD)
+        connection.connect()
+        repo = OdooUserRepository(connection)
+        repo.log_user_activity(user_id=user_id, activity_type='login', timestamp=timestamp)
+    except Exception as e:
+        logger.exception("Error logging user activity: %s", e)
 
 
 if __name__ == '__main__':
