@@ -2,78 +2,17 @@
 
 [![tests](https://github.com/Integration-Project-2026-Groep-2/Kassa/actions/workflows/tests.yml/badge.svg)](https://github.com/Integration-Project-2026-Groep-2/Kassa/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/gh/Integration-Project-2026-Groep-2/Kassa/branch/main/graph/badge.svg)](https://codecov.io/gh/Integration-Project-2026-Groep-2/Kassa)
-Kassa is de integratie-service en POS-extensie die Point-of-Sale (POS) clients verbindt met back-end systemen (Odoo, RabbitMQ) voor transacties, berichtenverwerking en kassalogica. De repository bevat zowel de Python service (`src/`) als de Odoo module (`kassa_pos/`) en ondersteunende devops-scripts en documentatie.
 
-**Talen & tools**: Python, Odoo module (XML/JS), Docker, RabbitMQ, pytest, testcontainers
-
-**Status**: actief ontwikkelproject — zie de `docs/` map voor uitgebreide handleidingen en deployment-richtlijnen.
-
-## Inhoud van deze README
-
-- Projectoverzicht
-- Snelstart (development met Docker)
-- Lokaal ontwikkelen en testen
-- Integratietests en CI
-- Projectstructuur en belangrijke bestanden
-- Veelvoorkomende taken & troubleshooting
-- Bijdragen
-
-## Projectoverzicht
-
-De repository bestaat uit twee belangrijkste onderdelen:
-
-- `src/`: de Python service en messaging code (producer, consumer, validator, integraties met Odoo)
-- `kassa_pos/`: Odoo-add-on met POS uitbreidingen, controllers, views en data-bestanden
-
-Naast deze hoofdmappen vind je configuratie en deployment-bestanden (`docker-compose.yml`, `Dockerfile`, `odoo.conf.example`) en uitgebreide documentatie in `docs/`.
-
-Belangrijke features
-- POS Top Up betaalmethode en bijbehorende bon-labels
-- Gestandaardiseerd VSC-endpoint (`/kassa_pos/get_vsc_code`) met `ok`/`error` JSON-responses
-- Messaging via RabbitMQ, met helper classes in `src/messaging`
-
-Zie voor functionele en technische details: [docs/README.md](docs/README.md) en [docs/KASSA_POS_TOPUP_AND_VSC_CHANGES.md](docs/KASSA_POS_TOPUP_AND_VSC_CHANGES.md).
-
-## Snelstart (lokaal met Docker)
-
-1. Vereisten
-	 - Docker Desktop (of Docker Engine)
-	 - Python 3.11/3.12 + virtualenv (voor lokale tests)
-	 - Git
-
-2. Kopieer voorbeeldconfiguratie en environment variabelen indien nodig
-
-```powershell
-cp odoo.conf.example odoo.conf
-# Pas variabelen aan in .env of gebruik environment overrides
-```
-
-3. Start de services (build & up)
-
-```powershell
-docker compose up -d --build
-```
-
-4. Wacht tot Odoo bereikbaar is (`http://127.0.0.1:8069/health`) en open de POS-client.
-
-Opmerkingen: als je lokale Odoo-instantie een module-upgrade nodig heeft (bijv. na een version bump in `kassa_pos`), stop de containers, pas `kassa_pos` versie aan en herstart met `docker compose up -d --build` of voer de upgrade in Odoo uit.
-
-## Lokaal ontwikkelen
-# Kassa
-
-[![tests](https://github.com/Integration-Project-2026-Groep-2/Kassa/actions/workflows/tests.yml/badge.svg)](https://github.com/Integration-Project-2026-Groep-2/Kassa/actions/workflows/tests.yml)
-[![codecov](https://codecov.io/gh/Integration-Project-2026-Groep-2/Kassa/branch/main/graph/badge.svg)](https://codecov.io/gh/Integration-Project-2026-Groep-2/Kassa)
-
-Kassa is the integration service and POS extension that connects Point-of-Sale (POS) clients with back-end systems (Odoo, RabbitMQ) for transactions, message processing and cashier logic. This repository contains both the Python service (`src/`) and the Odoo module (`kassa_pos/`), plus supporting DevOps scripts and documentation.
+Kassa is the integration service and POS extension that connects Point-of-Sale (POS) clients with back-end systems (Odoo, RabbitMQ) for transactions, message processing, and cashier logic. This repository contains the Python service (`src/`) and the Odoo add-on (`kassa_pos/`), alongside DevOps scripts and documentation.
 
 Languages & tools: Python, Odoo (XML/JS), Docker, RabbitMQ, pytest, testcontainers
 
 Status: active development — see the `docs/` folder for detailed guides and deployment instructions.
 
-## What this README contains
+## Contents
 
 - Project overview
-- Quickstart (development with Docker)
+- Quickstart (local development with Docker)
 - Local development and testing
 - Integration tests and CI
 - Project structure and important files
@@ -99,9 +38,9 @@ See functional and technical details in `docs/README.md` and `docs/KASSA_POS_TOP
 ## Quickstart (local with Docker)
 
 1. Requirements
-	 - Docker Desktop (or Docker Engine)
-	 - Python 3.11/3.12 + virtualenv (for local tests)
-	 - Git
+   - Docker Desktop (or Docker Engine)
+   - Python 3.11/3.12 + virtualenv (for local tests)
+   - Git
 
 2. Copy example config and adjust environment variables if needed
 
@@ -141,11 +80,11 @@ pip install -r requirements.txt
 Set the environment variable and run all tests (including integration):
 
 ```powershell
-#$env:RUN_INTEGRATION=1
+## $env:RUN_INTEGRATION=1
 .venv\Scripts\python -m pytest --maxfail=1 -q --cov=src --cov-report=xml
 ```
 
-Note: integration tests use `testcontainers` and will start a RabbitMQ container among others; make sure Docker is running.
+Note: integration tests use `testcontainers` and will start containers such as RabbitMQ; make sure Docker is running.
 
 ## CI and coverage
 
@@ -157,9 +96,9 @@ Current local coverage (for reference): see the `coverage.xml` file in the repos
 ## Project structure (short)
 
 - `src/` — Python services
-	- `connection.py` — Rabbit/Odoo connection helpers
-	- `messaging/` — producer/consumer and message builders
-	- `settings.py`, `main.py`, `receiver.py` — service entrypoints
+  - `connection.py` — Rabbit/Odoo connection helpers
+  - `messaging/` — producer/consumer and message builders
+  - `settings.py`, `main.py`, `receiver.py` — service entrypoints
 - `kassa_pos/` — Odoo module (controllers, models, views, data)
 - `docs/` — extensive project documentation (deployment, guides, specs)
 - `docker-compose.yml`, `Dockerfile` — development and deployment
