@@ -16,11 +16,11 @@ Four comprehensive reference documents + enhanced configuration files:
 
 | Document | Purpose | Audience |
 |----------|---------|----------|
-| **[ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)** | Complete reference table of env variables + usage guidelines | Dev/DevOps |
-| **[docker-compose.production.yml](./docker-compose.production.yml)** | Production-ready compose file with detailed comments | DevOps/Infra |
-| **[.env.example](./.env.example)** | Template for .env file with Azure infrastructure defaults | DevOps |
-| **[AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md)** | Step-by-step deployment guide for Azure VM | DevOps |
-| **[CODE_EXAMPLES_ENV_VARIABLES.md](./CODE_EXAMPLES_ENV_VARIABLES.md)** | Python code examples for reading env variables | Developers |
+| **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)** | Complete reference table of env variables + usage guidelines | Dev/DevOps |
+| **[docker-compose.production.yml](../docker-compose.production.yml)** | Production-ready compose file with detailed comments | DevOps/Infra |
+| **[.env.example](../.env.example)** | Template for .env file with Azure infrastructure defaults | DevOps |
+| **[AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md)** | Step-by-step deployment guide for Azure VM | DevOps |
+| **[CODE_EXAMPLES_ENV_VARIABLES.md](CODE_EXAMPLES_ENV_VARIABLES.md)** | Python code examples for reading env variables | Developers |
 
 ---
 
@@ -49,7 +49,7 @@ docker compose -f docker-compose.production.yml logs -f odoo
 ```
 
 ### Step 4: Configure Nginx
-See [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md#step-3-configure-nginx-reverse-proxy)
+See [AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md#step-3-configure-nginx-reverse-proxy)
 
 ---
 
@@ -104,35 +104,35 @@ Your Setup:
 ## 📖 Documentation Map
 
 ### For Configuration/Deployment
-Start here → **[AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md)**
+Start here → **[AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md)**
 - Complete deployment walkthrough
 - Nginx configuration for your domain
 - Troubleshooting guide
 - Backup and recovery procedures
 
 ### For Reference
-Use → **[ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)**
+Use → **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)**
 - Full variable descriptions
 - Service dependency mapping
 - Production guidelines
 - Validation examples
 
 ### For Implementation
-Reference → **[CODE_EXAMPLES_ENV_VARIABLES.md](./CODE_EXAMPLES_ENV_VARIABLES.md)**
+Reference → **[CODE_EXAMPLES_ENV_VARIABLES.md](CODE_EXAMPLES_ENV_VARIABLES.md)**
 - How to read env vars in Python
 - RabbitMQ connection patterns
 - Odoo module integration
 - Validation and testing code
 
 ### For Docker Setup
-Use → **[docker-compose.production.yml](./docker-compose.production.yml)**
+Use → **[docker-compose.production.yml](../docker-compose.production.yml)**
 - Enhanced version of existing docker-compose.yml
 - Production-ready configuration
 - Comments explaining every variable
 - Nginx reverse proxy reference
 
 ### For .env File
-Reference → **[.env.example](./.env.example)**
+Reference → **[.env.example](../.env.example)**
 - Complete template with explanations
 - Azure-specific examples
 - Security checklist
@@ -275,27 +275,27 @@ docker compose -f docker-compose.production.yml logs -f odoo
 
 These documents work together:
 
-1. **[ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)**
+1. **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)**
    - Read first to understand all available variables
    - Reference when adding new environment-specific configuration
    - Check "Troubleshooting" section for common issues
 
-2. **[docker-compose.production.yml](./docker-compose.production.yml)**
+2. **[docker-compose.production.yml](../docker-compose.production.yml)**
    - Use as basis for production deployment
    - Read comments to understand each service's configuration
    - Compare with existing `docker-compose.yml` for differences
 
-3. **[.env.example](./.env.example)**
+3. **[.env.example](../.env.example)**
    - Copy to `.env` to start configuration
    - Follow checklist for production deployment
    - Use different `.env` files for different environments
 
-4. **[AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md)**
+4. **[AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md)**
    - Follow step-by-step for initial deployment
    - Reference nginx configuration section
    - Use troubleshooting guide when issues occur
 
-5. **[CODE_EXAMPLES_ENV_VARIABLES.md](./CODE_EXAMPLES_ENV_VARIABLES.md)**
+5. **[CODE_EXAMPLES_ENV_VARIABLES.md](CODE_EXAMPLES_ENV_VARIABLES.md)**
    - Use configuration module pattern in Python code
    - Copy RabbitMQ utilities for your services
    - Reference when implementing new integrations
@@ -369,17 +369,17 @@ HEARTBEAT_INTERVAL_SECONDS, HEARTBEAT_EXCHANGE, HEARTBEAT_ROUTING_KEY, HEARTBEAT
 POS_EXCHANGE, POS_ROUTING_KEY, POS_QUEUE
 ```
 
-See **[ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md#environment-variables-table)** for complete table.
+See **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md#environment-variables-table)** for complete table.
 
 ---
 
 ## 🎓 Learning Path
 
 1. **Start**: Read this file (overview & context)
-2. **Understand**: Review [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) (reference)
-3. **Deploy**: Follow [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md) (step-by-step)
-4. **Configure**: Use [docker-compose.production.yml](./docker-compose.production.yml) (implementation)
-5. **Implement**: Reference [CODE_EXAMPLES_ENV_VARIABLES.md](./CODE_EXAMPLES_ENV_VARIABLES.md) (code patterns)
+2. **Understand**: Review [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) (reference)
+3. **Deploy**: Follow [AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md) (step-by-step)
+4. **Configure**: Use [docker-compose.production.yml](../docker-compose.production.yml) (implementation)
+5. **Implement**: Reference [CODE_EXAMPLES_ENV_VARIABLES.md](CODE_EXAMPLES_ENV_VARIABLES.md) (code patterns)
 
 ---
 

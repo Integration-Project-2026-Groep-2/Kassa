@@ -109,7 +109,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/kassa.integration-project-2026-groep-2.my.be/privkey.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_ciphers HIGH:!annul:!MD5;
     ssl_prefer_server_ciphers on;
 
     client_max_body_size 50M;
@@ -159,7 +159,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/kassa.integration-project-2026-groep-2.my.be/privkey.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_ciphers HIGH:!annul:!MD5;
 
     auth_basic "RabbitMQ Admin";
     auth_basic_user_file /etc/nginx/.htpasswd_rabbitmq;
@@ -509,7 +509,7 @@ Solution:
 For issues or questions:
 
 1. Check logs: `docker compose -f docker-compose.production.yml logs -f <service>`
-2. Review [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)
+2. Review [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)
 3. Consult Azure infrastructure documentation
 4. Contact DevOps team for Azure/infrastructure issues
 5. Contact development team for Odoo/module issues

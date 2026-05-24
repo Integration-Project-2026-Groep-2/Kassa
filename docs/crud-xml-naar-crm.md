@@ -1,17 +1,17 @@
-# CRUD XML Doorsturen naar CRM — Technische Documentatie
+# Forward CRUD XML to CRM — Technical Documentation
 
-**Project:** Integration Project 2025/2026 — Groep 2  
+**Project:** Integration Project 2025/2026 — Group 2  
 **Team:** Team Kassa  
-**Taak:** Contracts C36, C37, C38 — Kassa → CRM user lifecycle  
-**Datum:** April 2026
+**Purpose:** Contracts C36, C37, C38 — Kassa → CRM user lifecycle  
+**Date:** April 2026
 
 ---
 
-## Inhoudsopgave
+## Contents
 
 1. [Overzicht](#1-overzicht)
 2. [Contracts](#2-contracts)
-3. [Architectuur](#3-architectuur)
+3. [Architecture](#3-architectuur)
 4. [Gewijzigde en nieuwe bestanden](#4-gewijzigde-en-nieuwe-bestanden)
 5. [XML Berichten](#5-xml-berichten)
 6. [RabbitMQ configuratie](#6-rabbitmq-configuratie)
@@ -21,11 +21,11 @@
 
 ---
 
-## 1. Overzicht
+## 1. Overview
 
-Wanneer een gebruiker aangemaakt, bijgewerkt of verwijderd wordt in Odoo (Kassa), stuurt het systeem automatisch een XML-bericht naar CRM via RabbitMQ. CRM gebruikt deze berichten om hun eigen gebruikersbestand synchroon te houden met Kassa.
+When a user is created, updated or deleted in Odoo (Kassa), the system automatically sends an XML message to CRM via RabbitMQ. CRM uses these messages to keep its user store synchronized with Kassa.
 
-**Stroom:**
+**Flow:**
 ```
 Odoo (res.partner) → rabbitmq_sender.py → RabbitMQ user.topic exchange → CRM
 ```
@@ -36,60 +36,60 @@ Odoo (res.partner) → rabbitmq_sender.py → RabbitMQ user.topic exchange → C
 
 | Contract | Actie        | Routing Key            | XML Element         | CRM Queue                   |
 |----------|--------------|------------------------|---------------------|-----------------------------|
-| C36      | Aanmaken     | `kassa.user.created`   | `<KassaUserCreated>` | `crm.kassa.user.created`   |
-| C37      | Bijwerken    | `kassa.user.updated`   | `<KassaUserUpdated>` | `crm.kassa.user.updated`   |
-| C38      | Deactiveren  | `kassa.user.deactivated` | `<UserDeactivated>` | `crm.kassa.user.deactivated` |
+| C36      | Create       | `kassa.user.created`   | `<KassaUserCreated>` | `crm.kassa.user.created`   |
+| C37      | Update       | `kassa.user.updated`   | `<KassaUserUpdated>` | `crm.kassa.user.updated`   |
+| C38      | Deactivate   | `kassa.user.deactivated` | `<UserDeactivated>` | `crm.kassa.user.deactivated` |
 
-**Belangrijk voor C38:** het sleutelveld is `<id>` (niet `<userId>`), conform de CRM XSD spec.
+**Important for C38:** the key field is `<id>` (not `<userId>`), per the CRM XSD spec.
 
 ---
 
-## 3. Architectuur
+## 3. Architecture
 
 ### RabbitMQ Exchange
 
-| Exchange    | Type  | Durable | Doel                              |
+| Exchange    | Type  | Durable | Purpose                            |
 |-------------|-------|---------|-----------------------------------|
-| `user.topic` | topic | ja      | Gedeeld met CRM, Facturatie, Mailing, Planning |
+| `user.topic` | topic | yes     | Shared with CRM, Invoicing, Mailing, Scheduling |
 
 Kassa **publiceert alleen** naar de exchange met een routing key.  
 CRM **declareert zelf** hun consumer-queues en bindt die aan de exchange.
 
-### Waarom topic exchange?
+### Why topic exchange?
 
-Een `topic` exchange laat meerdere teams tegelijk naar dezelfde berichten luisteren via wildcards. CRM bindt hun queue met `kassa.user.*` zodat ze alle drie de routing keys ontvangen.
+A `topic` exchange allows multiple teams to listen to the same messages using wildcards. CRM binds their queue with `kassa.user.*` so they receive all three routing keys.
 
-### Automatische trigger
+### Automatic trigger
 
-De berichten worden verstuurd via Odoo ORM hooks in [kassa_pos/models/res_partner.py](../kassa_pos/models/res_partner.py):
+Messages are sent via Odoo ORM hooks in [kassa_pos/models/res_partner.py](../kassa_pos/models/res_partner.py):
 
 - `create()` → roept `_publish_user_change('created')` aan → C36
-- `write()` → roept `_publish_user_change('updated')` aan → C37 (alleen als relevante velden gewijzigd zijn)
+- `write()` → roept `_publish_user_change('updated')` aan → C37 (alleen also relevant velden gewijzigd zijn)
 - `unlink()` → roept `_publish_user_deleted()` aan → C38
 
-**Voorwaarde:** het contact moet een `user_id_custom` (User ID) hebben ingevuld. Contacten zonder User ID worden niet doorgestuurd.
+**Prerequisite:** the contact must have a `user_id_custom` (User ID) set. Contacts without a User ID are not forwarded.
 
-### Watched fields voor C37
+### Watched fields for C37
 
-Een update-bericht wordt alleen verstuurd als één van deze velden gewijzigd wordt:
+Een update-bericht wordt alleen verstuurd also één van deze velden gewijzigd wordt:
 - `name`, `email`, `phone`, `badge_code`, `role`, `company_id_custom`, `user_id_custom`
 
 ---
 
-## 4. Gewijzigde en nieuwe bestanden
+## 4. Changed and new files
 
 ### Nieuw bestand
 
 #### `src/schema/contracts/kassa-user.xsd`
-Standalone XSD schema versie 1.10.1 voor C36/C37/C38.
+Standalone XSD schema version 1.10.1 for C36/C37/C38.
 
-Staat apart van het master schema (`kassa-schema-v1.xsd`) omdat `<UserDeactivated>` botst met Contract 22 in het master schema.
+This schema is separate from the master schema (`kassa-schema-v1.xsd`) because `<UserDeactivated>` conflicts with Contract 22 in the master schema.
 
-Definieert:
+Defines:
 - `KassaUserCreated` (C36)
 - `KassaUserUpdated` (C37)
 - `UserDeactivated` (C38)
-- `NonEmptyStringType` — voorkomt lege `<badgeCode>` (minLength=1)
+- `NonEmptyStringType` — prevents empty `<badgeCode>` (minLength=1)
 
 ### Gewijzigde bestanden
 
@@ -206,7 +206,7 @@ Of voeg hem manueel toe via de RabbitMQ Management UI:
 
 ### Verbindingsinstellingen (uit .env)
 
-| Variabele         | Waarde       |
+| Variable         | Waarde       |
 |-------------------|--------------|
 | `RABBIT_HOST`     | `rabbitmq`   |
 | `RABBIT_PORT`     | `5672`       |
@@ -278,7 +278,7 @@ print('C38 resultaat:', result)
 
 ### Berichten controleren in RabbitMQ
 
-1. Ga naar [http://localhost:15672](http://localhost:15672) → login als `team_kassa`
+1. Ga naar [http://localhost:15672](http://localhost:15672) → login also `team_kassa`
 2. Maak een testqueue aan: **Queues → Add a new queue** → naam `test.crm.kassa`
 3. Bind de queue: klik op de queue → **Bindings → Add binding from exchange**
    - From exchange: `user.topic`
@@ -332,9 +332,9 @@ Alle 48 tests moeten slagen, inclusief 12 nieuwe tests voor C36/C37/C38.
 
 Tijdens de implementatie werden ook de volgende bestaande bugs opgelost:
 
-| Bug | Probleem | Oplossing |
+| Bug | Problem | Oplossing |
 |-----|----------|-----------|
-| Verkeerde XML elementen | `<User>` werd gebruikt voor zowel create als update | Gesplitst in `<UserCreated>` en `<UserUpdatedIntegration>` |
+| Verkeerde XML elementen | `<User>` werd gebruikt voor zowel create also update | Gesplitst in `<UserCreated>` en `<UserUpdatedIntegration>` |
 | Dubbele queue handler | `crm.user.confirmed` stond twee keer in `QUEUE_HANDLERS` waardoor ~50% van de berichten verloren ging | Duplicate verwijderd en handlers samengevoegd |
 | Update/delete events niet verwerkt | `on_user_updated` en `on_user_deactivated` logden alleen, maar updaten UserStore niet | `_user_consumer.process_user_message()` toegevoegd |
 | `setup_rabbitmq.py` hardcoded credentials | Verbindingsinstellingen stonden hardcoded in het script | Omgevingsvariabelen gebruikt |

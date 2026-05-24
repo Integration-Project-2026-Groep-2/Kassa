@@ -424,8 +424,8 @@ The feature integrates seamlessly with the User CRUD system:
 
 ## Documentation
 
-- Main: [README.md](../README.md)
-- CRUD API: [USER_CRUD_API.md](../USER_CRUD_API.md)
+- Main: [README.md](README.md)
+- CRUD API: [USER_CRUD_API.md](USER_CRUD_API.md)
 - POS Feature: [This file]
 
 ## Support

@@ -162,7 +162,7 @@ rabbit_host = os.environ['RABBIT_HOST']  # KeyError if not set
 
 #### 2. Creating a Configuration Module
 
-Create [src/config.py](src/config.py):
+Create [src/config.py](../src/settings.py):
 
 ```python
 import os
@@ -228,7 +228,7 @@ db_host = os.environ.get('DB_HOST')
 
 #### Reading Environment Variables in Python Files
 
-[kassa_pos/models/user_registration.py](kassa_pos/models/user_registration.py):
+[kassa_pos/models/user_registration.py](../kassa_pos/models/user_registration.py):
 
 ```python
 import os
@@ -250,7 +250,7 @@ class UserRegistration(models.Model):
 
 #### Using Environment Variables in RabbitMQ Sender
 
-[kassa_pos/utils/rabbitmq_sender.py](kassa_pos/utils/rabbitmq_sender.py):
+[kassa_pos/utils/rabbitmq_sender.py](../kassa_pos/utils/rabbitmq_sender.py):
 
 ```python
 import os
@@ -278,7 +278,7 @@ def get_rabbitmq_connection():
 
 ### Entrypoint Script Pattern
 
-Create [entrypoint.sh](entrypoint.sh) in project root:
+Create [entrypoint.sh](../docker/odoo-entrypoint.sh) in project root:
 
 ```bash
 #!/bin/bash
@@ -304,7 +304,7 @@ echo "  - Odoo Domain: $ODOO_DOMAIN"
 exec "$@"
 ```
 
-Update [Dockerfile](Dockerfile):
+Update [Dockerfile](../Dockerfile):
 
 ```dockerfile
 FROM odoo:latest

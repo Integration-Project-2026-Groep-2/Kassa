@@ -42,7 +42,7 @@ PosOrderBatch Record Created [Audit Trail]
     ├─ Monitor status (draft → sent → confirmed)
     └─ Enable retry logic
     ↓
-Facturatie System (Integration Partner)
+Invoicing System (Integration Partner)
 ```
 
 ## Data Structures

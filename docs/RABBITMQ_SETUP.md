@@ -8,7 +8,7 @@ The Kassa system uses RabbitMQ for message publishing and consuming between diff
 
 | Exchange Name      | Type   | Purpose                                       |
 | ------------------ | ------ | --------------------------------------------- |
-| `kassa.topic`      | topic  | Batch closing messages from POS to Facturatie |
+| `kassa.topic`      | topic  | Batch closing messages from POS to Invoicing |
 | `user.direct`      | direct | User CRUD events                              |
 | `user.dlx`         | direct | User dead letter exchange (errors)            |
 | `user.retry`       | direct | User message retry queue                      |
@@ -80,8 +80,8 @@ You should see all exchanges listed with their types.
 
 1. **POS System** → publishes `BatchClosed` messages
 2. **kassa.topic Exchange** → routes messages based on routing keys
-3. **Facturatie System** → binds queue to exchange with routing key `kassa.closed`
-4. **Facturatie Consumer** → processes batch and sends back confirmation
+3. **Invoicing System** → binds queue to exchange with routing key `kassa.closed`
+4. **Invoicing Consumer** → processes batch and sends back confirmation
 
 ### Routing Keys
 

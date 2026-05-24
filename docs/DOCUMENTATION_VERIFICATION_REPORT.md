@@ -62,9 +62,9 @@ All three schema files exist and match documentation:
 **K-02 (BatchClosed)** — Documented in XSD but NOT in KASSA_CONTRACTS_SPECIFICATION.md
 
 - **Implementation Status**: ✅ **FULLY IMPLEMENTED**
-  - Schema: [src/schema/kassa_batch_contract.xsd](src/schema/kassa_batch_contract.xsd)
-  - Implementation: [kassa_pos/services/pos_batch_service.py](kassa_pos/services/pos_batch_service.py)
-  - Publishing: [kassa_pos/utils/rabbitmq_sender.py](kassa_pos/utils/rabbitmq_sender.py)
+  - Schema: [src/schema/kassa_batch_contract.xsd](../src/schema/kassa_batch_contract.xsd)
+  - Implementation: [kassa_pos/services/pos_batch_service.py](../kassa_pos/services/pos_batch_service.py)
+  - Publishing: [kassa_pos/utils/rabbitmq_sender.py](../kassa_pos/utils/rabbitmq_sender.py)
   - Exchange: `kassa.topic`
   - Routing key: `kassa.closed`
   - Queue: `facturatie.kassa.batch.closed`
@@ -82,9 +82,9 @@ All three schema files exist and match documentation:
 #### C36 — KassaUserCreated (Kassa → CRM)
 
 - **Implementation Status**: ✅ **FULLY IMPLEMENTED**
-  - Schema: [src/schema/contracts/kassa-user.xsd](src/schema/contracts/kassa-user.xsd#L1-L50)
-  - Implementation: [kassa_pos/models/user_registration.py](kassa_pos/models/user_registration.py#L236)
-  - Publishing: [kassa_pos/utils/rabbitmq_sender.py](kassa_pos/utils/rabbitmq_sender.py#L512-L550)
+  - Schema: [src/schema/contracts/kassa-user.xsd](../src/schema/contracts/kassa-user.xsd#L1-L50)
+  - Implementation: [kassa_pos/models/user_registration.py](../kassa_pos/models/user_registration.py#L236)
+  - Publishing: [kassa_pos/utils/rabbitmq_sender.py](../kassa_pos/utils/rabbitmq_sender.py#L512-L550)
   - Exchange: `user.topic`
   - Routing key: `kassa.user.created`
   - Queue: `crm.kassa.user.created`
@@ -94,9 +94,9 @@ All three schema files exist and match documentation:
 #### C37 — KassaUserUpdated (Kassa → CRM)
 
 - **Implementation Status**: ✅ **FULLY IMPLEMENTED**
-  - Schema: [src/schema/contracts/kassa-user.xsd](src/schema/contracts/kassa-user.xsd#L51-L70)
-  - Implementation: [kassa_pos/models/res_partner.py](kassa_pos/models/res_partner.py#L193)
-  - Publishing: [kassa_pos/utils/rabbitmq_sender.py](kassa_pos/utils/rabbitmq_sender.py#L230-L280)
+  - Schema: [src/schema/contracts/kassa-user.xsd](../src/schema/contracts/kassa-user.xsd#L51-L70)
+  - Implementation: [kassa_pos/models/res_partner.py](../kassa_pos/models/res_partner.py#L193)
+  - Publishing: [kassa_pos/utils/rabbitmq_sender.py](../kassa_pos/utils/rabbitmq_sender.py#L230-L280)
   - Exchange: `user.topic`
   - Routing key: `kassa.user.updated`
   - Queue: `crm.kassa.user.updated`
@@ -106,8 +106,8 @@ All three schema files exist and match documentation:
 #### C38 — UserDeactivated (Kassa → CRM)
 
 - **Implementation Status**: ✅ **IMPLEMENTED** (Contract reception)
-  - Schema: [src/schema/contracts/kassa-user.xsd](src/schema/contracts/kassa-user.xsd#L71-L85)
-  - Consumer: [src/main_receiver.py](src/main_receiver.py#L100-L105)
+  - Schema: [src/schema/contracts/kassa-user.xsd](../src/schema/contracts/kassa-user.xsd#L71-L85)
+  - Consumer: [src/main_receiver.py](../src/main_receiver.py#L100-L105)
   - Exchange: `user.topic`
   - Routing key: `kassa.user.deactivated`
   - Queue: `crm.kassa.user.deactivated`
@@ -139,7 +139,7 @@ The XML data file contains the old name "Kassa Top Up" while the programmatic cr
 - XML data file says: "Kassa Top Up" ❌
 
 **Recommendation:**
-Update [kassa_pos/data/account_journal_data.xml](kassa_pos/data/account_journal_data.xml#L20) to use consistent naming:
+Update [kassa_pos/data/account_journal_data.xml](../kassa_pos/data/account_journal_data.xml#L20) to use consistent naming:
 ```xml
 <field name="name">Kassa Saldo</field>
 ```
@@ -167,7 +167,7 @@ Update [kassa_pos/data/account_journal_data.xml](kassa_pos/data/account_journal_
 - But queue naming constants are misleading and violate contract specification
 
 **Recommendation:**
-Update [src/config.py](src/config.py#L75-L85) to use `crm.*` prefix matching the documented contracts
+Update [src/config.py](../src/settings.py#L75-L85) to use `crm.*` prefix matching the documented contracts
 
 ---
 
@@ -261,19 +261,19 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 ### What's Well Documented ✅
 
-- [XSD_SCHEMA_DOCUMENTATION.md](docs/XSD_SCHEMA_DOCUMENTATION.md) — Complete and accurate
-- Basic contract specifications in [KASSA_CONTRACTS_SPECIFICATION.md](docs/KASSA_CONTRACTS_SPECIFICATION.md) — Good for R1/R2/R3 consumer contracts
+- [XSD_SCHEMA_DOCUMENTATION.md](XSD_SCHEMA_DOCUMENTATION.md) — Complete and accurate
+- Basic contract specifications in [KASSA_CONTRACTS_SPECIFICATION.md](KASSA_CONTRACTS_SPECIFICATION.md) — Good for R1/R2/R3 consumer contracts
 - Architecture and deployment guides — Generally accurate
 
 ### What's Missing or Outdated ⚠️
 
 | Document | Issue | Severity |
 |---|---|---|
-| [KASSA_CONTRACTS_SPECIFICATION.md](docs/KASSA_CONTRACTS_SPECIFICATION.md) | Missing K-02 specification | 🔴 Critical |
-| [KASSA_CONTRACTS_SPECIFICATION.md](docs/KASSA_CONTRACTS_SPECIFICATION.md) | Missing C36-C38 specifications | 🔴 Critical |
-| [DOCKER_KASSA_TEAM.md](docs/DOCKER_KASSA_TEAM.md) | Outdated Dockerfile example | 🔴 Critical |
-| [src/config.py](src/config.py) | Queue name constants use `kassa.*` instead of `crm.*` | ⚠️ Medium |
-| [kassa_pos/data/account_journal_data.xml](kassa_pos/data/account_journal_data.xml) | Uses "Kassa Top Up" instead of "Kassa Saldo" | ⚠️ Medium |
+| [KASSA_CONTRACTS_SPECIFICATION.md](KASSA_CONTRACTS_SPECIFICATION.md) | Missing K-02 specification | 🔴 Critical |
+| [KASSA_CONTRACTS_SPECIFICATION.md](KASSA_CONTRACTS_SPECIFICATION.md) | Missing C36-C38 specifications | 🔴 Critical |
+| [DOCKER_KASSA_TEAM.md](DOCKER_KASSA_TEAM.md) | Outdated Dockerfile example | 🔴 Critical |
+| [src/config.py](../src/settings.py) | Queue name constants use `kassa.*` instead of `crm.*` | ⚠️ Medium |
+| [kassa_pos/data/account_journal_data.xml](../kassa_pos/data/account_journal_data.xml) | Uses "Kassa Top Up" instead of "Kassa Saldo" | ⚠️ Medium |
 
 ---
 
@@ -285,13 +285,13 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
    - Include full BatchClosed message structure
    - Document exchange/routing key/queue configuration
    - Add example payload
-   - Reference: [kassa_batch_contract.xsd](src/schema/kassa_batch_contract.xsd) lines 65-90
+   - Reference: [kassa_batch_contract.xsd](../src/schema/kassa_batch_contract.xsd) lines 65-90
 
 2. **Add C36-C38 User CRUD Specifications to KASSA_CONTRACTS_SPECIFICATION.md**
    - Document KassaUserCreated (C36) with user.topic exchange details
    - Document KassaUserUpdated (C37) with update semantics
    - Document UserDeactivated (C38) — note that Kassa consumes, not publishes
-   - Reference: [kassa-user.xsd](src/schema/contracts/kassa-user.xsd) for exact schema
+   - Reference: [kassa-user.xsd](../src/schema/contracts/kassa-user.xsd) for exact schema
 
 3. **Update DOCKER_KASSA_TEAM.md with Current Dockerfile**
    - Replace Python 3.13-slim example with actual `odoo:17` base
@@ -312,7 +312,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
    - Reason: Matches contract specification and improves clarity
 
 6. **Align account_journal_data.xml with post_init Hook**
-   - Update [account_journal_data.xml](kassa_pos/data/account_journal_data.xml#L20)
+   - Update [account_journal_data.xml](../kassa_pos/data/account_journal_data.xml#L20)
    - Change: `<field name="name">Kassa Top Up</field>`
    - To: `<field name="name">Kassa Saldo</field>`
    - Reason: Consistency with POS display and post_init value

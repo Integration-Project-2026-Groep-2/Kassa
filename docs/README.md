@@ -5,21 +5,21 @@ Dit project levert een custom Odoo image (gebaseerd op de officiele `odoo:latest
 ## 1) Docker images
 
 
-- App image: bouw en publiceer als GHCR image `ghcr.io/<org-of-user>/odoo-kassa:latest`
+- App image: bouw en publiceer also GHCR image `ghcr.io/<org-of-user>/odoo-kassa:latest`
 	Deze image bevat:
 	- Odoo latest (officiele base image)
 	- `kassa_pos` addon
 	- RabbitMQ messaging scripts (`src/` + `templates/`)
 	- Python package `pika`
-- Heartbeat draait in dezelfde Odoo image/container en stopt dus mee als Odoo stopt
+- Heartbeat draait in dezelfde Odoo image/container en stopt dus mee also Odoo stopt
 - DB image: `postgres:15`
 - RabbitMQ image: `rabbitmq:3-management`
 
 ## 2) Required environment variables
 
-Gebruik `.env.example` als basis.
+Gebruik `.env.example` also basis.
 
-| Variabele | Beschrijving | Voorbeeld |
+| Variable | Beschrijving | Voorbeeld |
 |---|---|---|
 | `POSTGRES_DB` | Odoo database naam | `kassa_db` |
 | `POSTGRES_USER` | PostgreSQL user | `kassa` |

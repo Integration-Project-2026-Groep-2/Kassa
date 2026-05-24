@@ -1,6 +1,6 @@
 # VM Deployment Guide - Kassa POS
 
-Deze VM-setup gebruikt de custom Odoo image `ghcr.io/teamkassa/odoo-kassa:latest` met een ingebakken entrypoint en Odoo-config. De realtime poort wordt automatisch afgehandeld door de entrypoint, zodat dezelfde deployment werkt voor zowel oudere als nieuwere Odoo-images.
+This VM setup uses the custom Odoo image `ghcr.io/teamkassa/odoo-kassa:latest` with a baked-in entrypoint and Odoo config. The realtime port is handled automatically by the entrypoint, so the same deployment works for both older and newer Odoo images.
 
 ## Scenario 1: Alles op VM (Odoo + RabbitMQ + Python Services)
 
@@ -21,14 +21,14 @@ export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:latest
 docker compose -f docker-compose.production.yml pull odoo
 docker compose -f docker-compose.production.yml up -d
 
-# 3a. Als deze VM al een oudere database heeft: voer eenmalig de module-upgrade uit
+# 3a. Also deze VM al een oudere database heeft: voer eenmalig de module-upgrade uit
 docker compose -f docker-compose.production.yml exec odoo odoo -c /etc/odoo/odoo.conf -d "$POSTGRES_DB" -u kassa_pos --stop-after-init
 
 # 3b. Belangrijk voor VM-deployments
 # - Odoo draait uit de GHCR image, niet uit een losse bind mount met shell scripts
 # - De data van Odoo staat in een bind-mount of projectvolume; Odoo-sessies gaan naar een writable tmp-locatie
 # - De entrypoint kiest automatisch de juiste realtime flag voor de Odoo-versie in de image
-# - Module-upgrades zijn opt-in; stel `ODOO_SYNC_MODULES=kassa_pos` alleen in als je bewust een herinstallatie wilt forceren
+# - Module-upgrades zijn opt-in; stel `ODOO_SYNC_MODULES=kassa_pos` alleen in also je bewust een herinstallatie wilt forceren
 
 # 4. Initialize database (eenmalig)
 docker compose run --rm odoo odoo --db_host=db --db_user=odoo --db_password=odoo -d odoo -i base --without-demo=all --stop-after-init
@@ -46,7 +46,7 @@ RABBIT_HOST=localhost python main_pos_receiver.py
 
 ### Realtime poort
 - De container exposeert intern ook `8072` voor websocket/gevent/longpolling-verkeer
-- Deze poort hoeft meestal niet extern open als Nginx de reverse proxy afhandelt
+- Deze poort hoeft meestal niet extern open also Nginx de reverse proxy afhandelt
 - De entrypoint kiest automatisch de juiste Odoo-flag voor die realtime poort
 
 ---
@@ -111,10 +111,10 @@ rabbitmq:
 
 **/var/lib/odoo/sessions not writable**:
 - De productie-config gebruikt nu een aparte writable `session_dir` onder `/tmp`
-- Als je eigen config afwijkt, zorg dan dat `session_dir` niet onder een niet-writable volume staat
+- Also je eigen config afwijkt, zorg dan dat `session_dir` niet onder een niet-writable volume staat
 
 **Connection refused from remote machine**:
-- Verifiy ports open: `netstat -an | grep 5672` (Linux) of `netstat -ano | findstr 5672` (Windows)
+- Verify ports open: `netstat -an | grep 5672` (Linux) of `netstat -ano | findstr 5672` (Windows)
 - Check firewall rules
 
 **RabbitMQ not found from Python**:

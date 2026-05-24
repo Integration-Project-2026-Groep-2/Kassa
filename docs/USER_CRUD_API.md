@@ -412,9 +412,9 @@ class TestUserOperations(unittest.TestCase):
 ## Related Documentation
 
 - [README.md](README.md) — Full project documentation
-- [src/models/user.py](src/models/user.py) — Implementation
-- [src/messaging/user_consumer.py](src/messaging/user_consumer.py) — Message handling
-- [src/schema/kassa-schema-v1.xsd](src/schema/kassa-schema-v1.xsd) — XML schema
+- [src/models/user.py](../src/models/user.py) — Implementation
+- [src/messaging/user_consumer.py](../src/messaging/user_consumer.py) — Message handling
+- [src/schema/kassa-schema-v1.xsd](../src/schema/kassa-schema-v1.xsd) — XML schema
 
 ---
 

@@ -1,20 +1,20 @@
-# Testhandleiding — C36, C37, C38: CRUD XML Doorsturen naar CRM
+# Test Guide — C36, C37, C38: Forward CRUD XML to CRM
 
 **Branch:** `crud-xml-to-crm`  
 **Team:** Team Kassa  
-**Wat wordt getest:** Automatisch doorsturen van user aanmaken / bijwerken / deactiveren naar CRM via RabbitMQ
+**What is tested:** Automatic forwarding of user create / update / deactivate events to CRM via RabbitMQ
 
 ---
 
 ## Requirements
 
-- Docker Desktop geïnstalleerd en draaiend
-- Git geïnstalleerd
-- Poorten 8069, 15672 en 5672 vrij op je machine
+-- Docker Desktop installed and running
+-- Git installed
+-- Ports 8069, 15672 and 5672 open on your machine
 
 ---
 
-## Stap 1 — Project ophalen en starten
+## Step 1 — Clone project and start
 
 ```bash
 git clone <repo-url>
@@ -22,7 +22,7 @@ cd Kassa
 git checkout crud-xml-to-crm
 ```
 
-Maak een `odoo.conf` aan op basis van het voorbeeld:
+Create an `odoo.conf` based on the example:
 
 ```bash
 cp odoo.conf.example odoo.conf
@@ -40,11 +40,11 @@ Wacht 3-5 minuten totdat Odoo volledig opgestart is. Controleer met:
 docker compose logs odoo --tail=10
 ```
 
-Je moet `[INFO] Heartbeat verzonden` zien als Odoo klaar is.
+Je moet `[INFO] Heartbeat verzonden` zien also Odoo klaar is.
 
 ---
 
-## Stap 2 — RabbitMQ testqueue aanmaken
+## Step 2 — Create RabbitMQ test queue
 
 1. Ga naar [http://localhost:15672](http://localhost:15672)
 2. Login:
@@ -65,7 +65,7 @@ Je moet `[INFO] Heartbeat verzonden` zien als Odoo klaar is.
 
 ---
 
-## Stap 3 — C36 testen (gebruiker aanmaken)
+## Step 3 — Test C36 (create user)
 
 Voer dit commando uit in de terminal:
 
@@ -92,17 +92,17 @@ print('C36 resultaat:', result)
 "
 ```
 
-**Verwacht resultaat in terminal:**
+**Expected result in terminal:**
 ```
 C36 resultaat: True
 ```
 
-**Controleer in RabbitMQ:**
+**Check in RabbitMQ:**
 1. Ga naar `test.crm.kassa` queue
 2. Scroll naar **Get messages** → Ack Mode: `Nack message requeue true` → klik **Get Message(s)**
 3. Je ziet:
 
-| Veld | Verwachte waarde |
+| Field | Expected value |
 |------|-----------------|
 | Exchange | `user.topic` |
 | Routing Key | `kassa.user.created` |
@@ -111,7 +111,7 @@ C36 resultaat: True
 
 ---
 
-## Stap 4 — C37 testen (gebruiker bijwerken)
+## Step 4 — Test C37 (update user)
 
 ```bash
 docker compose exec odoo python3 -c "
@@ -141,7 +141,7 @@ print('C37 resultaat:', result)
 C37 resultaat: True
 ```
 
-**Controleer in RabbitMQ** (zelfde stappen als stap 3):
+**Controleer in RabbitMQ** (zelfde stappen also stap 3):
 
 | Veld | Verwachte waarde |
 |------|-----------------|
@@ -150,7 +150,7 @@ C37 resultaat: True
 
 ---
 
-## Stap 5 — C38 testen (gebruiker deactiveren)
+## Step 5 — Test C38 (deactivate user)
 
 ```bash
 docker compose exec odoo python3 -c "
@@ -172,18 +172,18 @@ print('C38 resultaat:', result)
 C38 resultaat: True
 ```
 
-**Controleer in RabbitMQ** (zelfde stappen als stap 3):
+**Controleer in RabbitMQ** (zelfde stappen also stap 3):
 
 | Veld | Verwachte waarde |
 |------|-----------------|
 | Routing Key | `kassa.user.deactivated` |
 | Payload | `<UserDeactivated><id>test-crm-uuid-001</id>...` |
 
-> Let op: C38 gebruikt `<id>` (niet `<userId>`), conform het contract met CRM.
+> Note: C38 uses `<id>` (not `<userId>`), per the contract with CRM.
 
 ---
 
-## Stap 6 — Automatische trigger via Odoo testen
+## Step 6 — Test automatic trigger via Odoo
 
 Dit test of de berichten ook automatisch verstuurd worden wanneer een contact aangemaakt wordt in Odoo (zonder handmatig commando).
 
@@ -208,28 +208,29 @@ with registry.cursor() as cr:
 "
 ```
 
-Controleer daarna in RabbitMQ of er een `<KassaUserCreated>` bericht verschijnt.
+Then check in RabbitMQ whether a `<KassaUserCreated>` message appears.
 
 ---
 
-## Overzicht verwachte berichten
 
-Na alle tests zie je 4 berichten in de queue:
+## Overview of expected messages
+
+After all tests you should see 4 messages in the queue:
 
 | # | Routing Key | XML Element |
 |---|-------------|-------------|
 | 1 | `kassa.user.created` | `<KassaUserCreated>` |
 | 2 | `kassa.user.updated` | `<KassaUserUpdated>` |
 | 3 | `kassa.user.deactivated` | `<UserDeactivated>` |
-| 4 | `kassa.user.created` | `<KassaUserCreated>` (automatische trigger) |
+| 4 | `kassa.user.created` | `<KassaUserCreated>` (automatic trigger) |
 
 ---
 
-## Problemen?
+## Problems?
 
-| Probleem | Oplossing |
+| Problem | Solution |
 |----------|-----------|
-| `C36 resultaat: False` | Controleer of RabbitMQ draait: `docker compose ps` |
-| `user.topic` exchange niet zichtbaar | Voer `docker compose restart odoo` uit en probeer opnieuw |
-| Odoo niet bereikbaar op poort 8069 | Wacht nog 2 minuten en refresh — fresh install duurt 3-5 min |
-| Queue leeg na test | Controleer of de binding correct is: `user.topic` → `kassa.user.*` |
+| `C36 result: False` | Check RabbitMQ is running: `docker compose ps` |
+| `user.topic` exchange not visible | Run `docker compose restart odoo` and try again |
+| Odoo not reachable on port 8069 | Wait 2 more minutes and refresh — fresh install can take 3-5 min |
+| Queue empty after test | Check binding is correct: `user.topic` → `kassa.user.*` |

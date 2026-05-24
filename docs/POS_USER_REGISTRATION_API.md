@@ -726,4 +726,4 @@ def on_startup():
 
 ---
 
-**For questions or issues, contact the development team or check the main [README.md](../README.md)**
+**For questions or issues, contact the development team or check the main [README.md](README.md)**

@@ -12,20 +12,20 @@ I've created a **complete, production-ready environment configuration package** 
 
 ### 7 Files Created:
 
-1. **[DOCUMENTATION_MAP.md](./DOCUMENTATION_MAP.md)** - Navigation guide (START HERE FOR INDEX)
-2. **[ENVIRONMENT_SETUP_SUMMARY.md](./ENVIRONMENT_SETUP_SUMMARY.md)** - Executive overview + quick start
-3. **[ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)** - Complete reference table of 32+ variables
-4. **[AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md)** - Step-by-step deployment on Azure VM
-5. **[docker-compose.production.yml](./docker-compose.production.yml)** - Production Docker configuration
-6. **[.env.example](./.env.example)** - Configuration template with Azure defaults
-7. **[CODE_EXAMPLES_ENV_VARIABLES.md](./CODE_EXAMPLES_ENV_VARIABLES.md)** - Python code examples
+1. **[DOCUMENTATION_MAP.md](DOCUMENTATION_MAP.md)** - Navigation guide (START HERE FOR INDEX)
+2. **[ENVIRONMENT_SETUP_SUMMARY.md](ENVIRONMENT_SETUP_SUMMARY.md)** - Executive overview + quick start
+3. **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)** - Complete reference table of 32+ variables
+4. **[AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md)** - Step-by-step deployment on Azure VM
+5. **[docker-compose.production.yml](../docker-compose.production.yml)** - Production Docker configuration
+6. **[.env.example](../.env.example)** - Configuration template with Azure defaults
+7. **[CODE_EXAMPLES_ENV_VARIABLES.md](CODE_EXAMPLES_ENV_VARIABLES.md)** - Python code examples
 
 ---
 
 ## 🎯 All Your Requirements Met
 
 ### ✅ Environment Variables Table
-**Delivered in**: [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md#environment-variables-table)
+**Delivered in**: [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md#environment-variables-table)
 
 | Details | Value |
 |---------|-------|
@@ -51,7 +51,7 @@ Odoo:
 ```
 
 ### ✅ docker-compose.yml Snippet
-**Delivered in**: [docker-compose.production.yml](./docker-compose.production.yml)
+**Delivered in**: [docker-compose.production.yml](../docker-compose.production.yml)
 
 Features:
 - ✅ All runtime services configured (Odoo, PostgreSQL, RabbitMQ, POS Receiver)
@@ -84,7 +84,7 @@ odoo:
 ```
 
 ### ✅ Odoo Configuration Documentation
-**Delivered in**: [CODE_EXAMPLES_ENV_VARIABLES.md](./CODE_EXAMPLES_ENV_VARIABLES.md)
+**Delivered in**: [CODE_EXAMPLES_ENV_VARIABLES.md](CODE_EXAMPLES_ENV_VARIABLES.md)
 
 Shows how custom code reads environment variables:
 
@@ -116,7 +116,7 @@ def get_rabbitmq_credentials(self):
 **Via Entrypoint Script:**
 - Validates critical environment variables before service starts
 - Fails fast with clear error messages
-- Provided in [CODE_EXAMPLES_ENV_VARIABLES.md](./CODE_EXAMPLES_ENV_VARIABLES.md#docker-entrypoint-script)
+- Provided in [CODE_EXAMPLES_ENV_VARIABLES.md](CODE_EXAMPLES_ENV_VARIABLES.md#docker-entrypoint-script)
 
 ---
 
@@ -228,10 +228,10 @@ Docker Network (kassa-network)
 ## 🚀 Next Steps (30 minutes)
 
 1. **Read Overview** (5 min)
-   - Open: [ENVIRONMENT_SETUP_SUMMARY.md](./ENVIRONMENT_SETUP_SUMMARY.md)
+   - Open: [ENVIRONMENT_SETUP_SUMMARY.md](ENVIRONMENT_SETUP_SUMMARY.md)
 
 2. **Review Index** (2 min)
-   - Open: [DOCUMENTATION_MAP.md](./DOCUMENTATION_MAP.md)
+   - Open: [DOCUMENTATION_MAP.md](DOCUMENTATION_MAP.md)
 
 3. **Prepare Configuration** (5 min)
    - Copy: `cp .env.example .env`
@@ -245,7 +245,7 @@ Docker Network (kassa-network)
    ```
 
 5. **Deploy** (10-15 min)
-   - Follow: [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md#quick-start---azure-vm-deployment)
+   - Follow: [AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md#quick-start---azure-vm-deployment)
    - Command: `docker compose -f docker-compose.production.yml up -d --build`
 
 ---
@@ -302,13 +302,13 @@ Your Kassa Project/
 
 | Need | Link |
 |------|------|
-| Quick Overview | [ENVIRONMENT_SETUP_SUMMARY.md](./ENVIRONMENT_SETUP_SUMMARY.md) |
-| Variable Names | [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) |
-| How to Deploy | [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md) |
-| Docker Setup | [docker-compose.production.yml](./docker-compose.production.yml) |
-| Create .env File | [.env.example](./.env.example) |
-| Code Examples | [CODE_EXAMPLES_ENV_VARIABLES.md](./CODE_EXAMPLES_ENV_VARIABLES.md) |
-| Find Anything | [DOCUMENTATION_MAP.md](./DOCUMENTATION_MAP.md) |
+| Quick Overview | [ENVIRONMENT_SETUP_SUMMARY.md](ENVIRONMENT_SETUP_SUMMARY.md) |
+| Variable Names | [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) |
+| How to Deploy | [AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md) |
+| Docker Setup | [docker-compose.production.yml](../docker-compose.production.yml) |
+| Create .env File | [.env.example](../.env.example) |
+| Code Examples | [CODE_EXAMPLES_ENV_VARIABLES.md](CODE_EXAMPLES_ENV_VARIABLES.md) |
+| Find Anything | [DOCUMENTATION_MAP.md](DOCUMENTATION_MAP.md) |
 
 ---
 
@@ -316,7 +316,7 @@ Your Kassa Project/
 
 Before you start, verify you have:
 
-- [ ] Read [ENVIRONMENT_SETUP_SUMMARY.md](./ENVIRONMENT_SETUP_SUMMARY.md)
+- [ ] Read [ENVIRONMENT_SETUP_SUMMARY.md](ENVIRONMENT_SETUP_SUMMARY.md)
 - [ ] Access to Azure VM with Docker/Docker Compose
 - [ ] Nginx installed and ready to configure
 - [ ] SSL certificate (Let's Encrypt or Azure)
@@ -345,9 +345,9 @@ Before you start, verify you have:
 
 **Everything you requested has been delivered in 7 well-organized, cross-referenced documents.**
 
-**Start here**: [DOCUMENTATION_MAP.md](./DOCUMENTATION_MAP.md)
+**Start here**: [DOCUMENTATION_MAP.md](DOCUMENTATION_MAP.md)
 
-**Quick deployment**: [AZURE_DEPLOYMENT_GUIDE.md](./AZURE_DEPLOYMENT_GUIDE.md#quick-start---azure-vm-deployment)
+**Quick deployment**: [AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md#quick-start---azure-vm-deployment)
 
 ---
 

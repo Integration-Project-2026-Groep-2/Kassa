@@ -1,48 +1,48 @@
-# Facturatie Team - XML en RabbitMQ Documentatie
+# Invoicing Team - XML and RabbitMQ Documentation
 
-## Doel
+## Purpose
 
-Deze pagina beschrijft welke XML-berichten Kassa verstuurt richting facturatie en gerelateerde systemen, via welke RabbitMQ exchange/queue/routing key dat gebeurt, en hoe de payloads zijn opgebouwd.
+This page describes which XML messages Kassa sends to the Invoicing and related systems, which RabbitMQ exchange/queue/routing key is used, and how the payloads are structured.
 
-In RabbitMQ-termen: een `channel` is de technische sessie binnen de verbinding. Voor facturatie zijn vooral de `exchange`, `queue` en `routing key` relevant, omdat die bepalen waar berichten terechtkomen.
+In RabbitMQ terms: a `channel` is the technical session inside the connection. For Invoicing the `exchange`, `queue` and `routing key` are most relevant, as they determine where messages end up.
 
 ## Samenvatting
 
-| Bericht | Doel | RabbitMQ route | XML root |
+| Message | Purpose | RabbitMQ route | XML root |
 |---|---|---|---|
-| `PaymentConfirmed` | Betaling bevestigen richting CRM | Default exchange `''` -> queue `kassa.payment.confirmed` | `<PaymentConfirmed>` |
-| `InvoiceRequested` | Factuurverzoek voor zakelijke order | Default exchange `''` -> queue `kassa.invoice.requested` | `<InvoiceRequested>` |
-| `BatchClosed` | Dagafsluiting met alle invoice-orders | Exchange `kassa.topic` -> routing key `kassa.closed` | `<BatchClosed>` |
+| `PaymentConfirmed` | Confirm payment towards CRM | Default exchange `''` -> queue `kassa.payment.confirmed` | `<PaymentConfirmed>` |
+| `InvoiceRequested` | Invoice request for business order | Default exchange `''` -> queue `kassa.invoice.requested` | `<InvoiceRequested>` |
+| `BatchClosed` | End-of-day batch with invoice orders | Exchange `kassa.topic` -> routing key `kassa.closed` | `<BatchClosed>` |
 
 ## 1. PaymentConfirmed
 
-### Wanneer wordt dit verstuurd?
+### When is this sent?
 
-Wanneer een POS-order als betaald wordt verwerkt. In de huidige implementatie wordt dit altijd geprobeerd voor betaalde orders, zolang er een e-mailadres aanwezig is.
+When a POS order is processed as paid. In the current implementation the system will attempt to send this for paid orders as long as an email address is available.
 
 ### RabbitMQ route
 
-- Exchange: standaard exchange `''`
+- Exchange: default exchange `''`
 - Routing key: `kassa.payment.confirmed`
 - Queue: `kassa.payment.confirmed`
 - Type: durable queue
 
-### XML-structuur
+### XML structure
 
 Root element: `<PaymentConfirmed>`
 
-#### Velden
+#### Fields
 
-| Veld | Verplicht | Omschrijving |
+| Field | Required | Description |
 |---|---|---|
-| `userId` | Nee | Interne UUID van de gebruiker |
-| `email` | Ja | E-mailadres van de klant |
-| `registrationId` | Nee | Registratie-id indien beschikbaar |
-| `amount` | Ja | Betaald bedrag |
-| `currency` | Ja | Altijd `EUR` |
-| `paidAt` | Ja | ISO 8601 timestamp |
+| `userId` | No | Internal UUID of the user |
+| `email` | Yes | Customer email address |
+| `registrationId` | No | Registration id if available |
+| `amount` | Yes | Paid amount |
+| `currency` | Yes | Always `EUR` |
+| `paidAt` | Yes | ISO 8601 timestamp |
 
-### Voorbeeld
+### Example
 
 ```xml
 <PaymentConfirmed>
@@ -57,9 +57,9 @@ Root element: `<PaymentConfirmed>`
 
 ### Implementatie
 
-- Builder: [src/messaging/message_builders.py](src/messaging/message_builders.py)
-- Sender: [kassa_pos/utils/rabbitmq_sender.py](kassa_pos/utils/rabbitmq_sender.py)
-- Trigger: [kassa_pos/models/pos_order.py](kassa_pos/models/pos_order.py)
+- Builder: [src/messaging/message_builders.py](../src/messaging/message_builders.py)
+- Sender: [kassa_pos/utils/rabbitmq_sender.py](../kassa_pos/utils/rabbitmq_sender.py)
+- Trigger: [kassa_pos/models/pos_order.py](../kassa_pos/models/pos_order.py)
 
 ## 2. InvoiceRequested
 
@@ -98,17 +98,17 @@ Root element: `<InvoiceRequested>`
 | `eventId` | Nee | Event- of context-id indien gebruikt |
 | `paymentReference` | Nee | Betaalreferentie indien beschikbaar |
 
-### XML voor items
+### XML for items
 
-Elke orderregel bevat:
+Each order line contains:
 
-| Veld | Verplicht | Omschrijving |
+| Field | Required | Description |
 |---|---|---|
-| `productName` | Ja | Naam van het product |
-| `quantity` | Ja | Aantal |
-| `unitPrice` | Ja | Prijs per stuk |
+| `productName` | Yes | Product name |
+| `quantity` | Yes | Quantity |
+| `unitPrice` | Yes | Price per unit |
 
-### Voorbeeld
+### Example
 
 ```xml
 <InvoiceRequested>
@@ -120,83 +120,83 @@ Elke orderregel bevat:
     <orderedAt>2026-04-18T10:00:00Z</orderedAt>
     <items>
         <item>
-            <productName>Bier</productName>
+            <productName>Beer</productName>
             <quantity>2</quantity>
             <unitPrice>3.50</unitPrice>
         </item>
         <item>
-            <productName>Frisdrank</productName>
+            <productName>SoftDrink</productName>
             <quantity>3</quantity>
             <unitPrice>2.25</unitPrice>
         </item>
     </items>
-    <email>facturatie@example.com</email>
-    <companyName>Bedrijf NV</companyName>
+    <email>invoicing@example.com</email>
+    <companyName>Company Ltd</companyName>
 </InvoiceRequested>
 ```
 
-### Implementatie
+### Implementation
 
-- Builder: [src/messaging/message_builders.py](src/messaging/message_builders.py)
-- Sender: [kassa_pos/utils/rabbitmq_sender.py](kassa_pos/utils/rabbitmq_sender.py)
-- Trigger: [kassa_pos/models/pos_order.py](kassa_pos/models/pos_order.py)
+- Builder: [src/messaging/message_builders.py](../src/messaging/message_builders.py)
+- Sender: [kassa_pos/utils/rabbitmq_sender.py](../kassa_pos/utils/rabbitmq_sender.py)
+- Trigger: [kassa_pos/models/pos_order.py](../kassa_pos/models/pos_order.py)
 
 ## 3. BatchClosed
 
-### Wanneer wordt dit verstuurd?
+### When is this sent?
 
-Bij het afsluiten van de POS-sessie via de afsluitknop.
+When closing the POS session via the closing button.
 
-De batch bevat alleen orders die voldoen aan:
+The batch contains only orders that meet:
 
 - `paymentType = Invoice`
-- geïdentificeerde klant met een UUID
+- identified customer with a UUID
 
 ### RabbitMQ route
 
 - Exchange: `kassa.topic`
 - Routing key: `kassa.closed`
-- Queue: consumer-side queue die bindt op `kassa.closed`
+- Queue: consumer-side queue that binds to `kassa.closed`
 - Type: durable queue
 
-Belangrijk: de publisher stuurt naar de exchange `kassa.topic`. Facturatie moet daarom een queue binden op deze exchange met routing key `kassa.closed`.
+Important: the publisher sends to the exchange `kassa.topic`. The Invoicing consumer must therefore bind a queue on this exchange with routing key `kassa.closed`.
 
-### XML-structuur
+### XML structure
 
 Root element: `<BatchClosed>`
 
-#### Hoofdelementen
+#### Main elements
 
-| Veld | Verplicht | Omschrijving |
+| Field | Required | Description |
 |---|---|---|
-| `batchId` | Ja | UUID van de batch |
-| `closedAt` | Ja | ISO 8601 timestamp |
-| `currency` | Ja | Altijd `EUR` |
-| `users` | Nee | Gegroepeerde orders per gebruiker |
-| `summary` | Ja | Samenvatting van de batch |
+| `batchId` | Yes | UUID of the batch |
+| `closedAt` | Yes | ISO 8601 timestamp |
+| `currency` | Yes | Always `EUR` |
+| `users` | No | Grouped orders per user |
+| `summary` | Yes | Summary of the batch |
 
-#### `users` structuur
+#### `users` structure
 
-Elke user bevat:
+Each user contains:
 
-| Veld | Verplicht | Omschrijving |
+| Field | Required | Description |
 |---|---|---|
-| `userId` | Ja | UUID van de gebruiker |
-| `items` | Ja | Alle orderregels voor die gebruiker |
-| `totalAmount` | Ja | Totaal per gebruiker |
+| `userId` | Yes | UUID of the user |
+| `items` | Yes | All order lines for that user |
+| `totalAmount` | Yes | Total per user |
 
-Elke item bevat:
+Each item contains:
 
-| Veld | Verplicht | Omschrijving |
+| Field | Required | Description |
 |---|---|---|
-| `productName` | Ja | Productnaam |
-| `quantity` | Ja | Aantal |
-| `unitPrice` | Ja | Stukprijs, 2 decimalen |
-| `totalPrice` | Ja | Regelbedrag, 2 decimalen |
+| `productName` | Yes | Product name |
+| `quantity` | Yes | Quantity |
+| `unitPrice` | Yes | Unit price, 2 decimals |
+| `totalPrice` | Yes | Line total, 2 decimals |
 
-#### `summary` structuur
+#### `summary` structure
 
-| Veld | Verplicht | Omschrijving |
+| Field | Required | Description |
 |---|---|---|
 | `totalOrders` | Ja | Aantal orders in de batch |
 | `totalAmount` | Ja | Totaalbedrag van de batch |
@@ -235,12 +235,12 @@ Elke item bevat:
 
 ### Implementatie
 
-- Builder: [src/messaging/message_builders.py](src/messaging/message_builders.py)
-- Service: [kassa_pos/services/pos_batch_service.py](kassa_pos/services/pos_batch_service.py)
-- Trigger: [kassa_pos/models/pos_order.py](kassa_pos/models/pos_order.py)
-- Schema: [src/schema/kassa-closed-batch.xsd](src/schema/kassa-closed-batch.xsd)
+- Builder: [src/messaging/message_builders.py](../src/messaging/message_builders.py)
+- Service: [kassa_pos/services/pos_batch_service.py](../kassa_pos/services/pos_batch_service.py)
+- Trigger: [kassa_pos/models/pos_order.py](../kassa_pos/models/pos_order.py)
+- Schema: [src/schema/kassa-closed-batch.xsd](../src/schema/kassa_batch_contract.xsd)
 
-## RabbitMQ topologie
+## RabbitMQ topology
 
 ### Exchanges
 
@@ -270,7 +270,7 @@ Elke item bevat:
 
 ## Wat facturatie moet consumeren
 
-Als team facturatie hoef je in principe deze stromen te consumeren:
+Also team facturatie hoef je in principe deze stromen te consumeren:
 
 1. `kassa.invoice.requested`
 2. `kassa.closed` via binding op `kassa.topic` met routing key `kassa.closed`
@@ -300,23 +300,23 @@ channel.basic_consume(queue='kassa.invoice.requested', on_message_callback=callb
 
 De XML-berichten worden ook gevalideerd tegen schema’s en tests:
 
-- [src/schema/kassa-schema-v1.xsd](src/schema/kassa-schema-v1.xsd)
-- [src/schema/kassa-closed-batch.xsd](src/schema/kassa-closed-batch.xsd)
-- [src/tests/test_xml_validator.py](src/tests/test_xml_validator.py)
+- [src/schema/kassa-schema-v1.xsd](../src/schema/kassa-schema-v1.xsd)
+- [src/schema/kassa-closed-batch.xsd](../src/schema/kassa_batch_contract.xsd)
+- [src/tests/test_xml_validator.py](../src/tests/test_xml_validator.py)
 
 ## Praktische afspraken
 
 - XML is UTF-8
 - Velden met datums/tijden gebruiken ISO 8601: `YYYY-MM-DDTHH:MM:SSZ`
-- Bedragen worden als numerieke waarden verstuurd, in euro (`EUR`)
+- Bedragen worden also numerieke waarden verstuurd, in euro (`EUR`)
 - RabbitMQ queues zijn durable tenzij anders vermeld
 - Facturatie moet idempotent verwerken op basis van `orderId` of `batchId`
 
-## Relevante bronbestanden
+## Relevant bronbestanden
 
-- [kassa_pos/utils/rabbitmq_sender.py](kassa_pos/utils/rabbitmq_sender.py)
-- [kassa_pos/models/pos_order.py](kassa_pos/models/pos_order.py)
-- [kassa_pos/services/pos_batch_service.py](kassa_pos/services/pos_batch_service.py)
-- [src/messaging/message_builders.py](src/messaging/message_builders.py)
-- [src/config.py](src/config.py)
+- [kassa_pos/utils/rabbitmq_sender.py](../kassa_pos/utils/rabbitmq_sender.py)
+- [kassa_pos/models/pos_order.py](../kassa_pos/models/pos_order.py)
+- [kassa_pos/services/pos_batch_service.py](../kassa_pos/services/pos_batch_service.py)
+- [src/messaging/message_builders.py](../src/messaging/message_builders.py)
+- [src/config.py](../src/settings.py)
 - [RABBITMQ_SETUP.md](RABBITMQ_SETUP.md)
