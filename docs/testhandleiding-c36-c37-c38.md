@@ -61,7 +61,7 @@ You should see `[INFO] Heartbeat verzonden` indicating Odoo is ready.
 7. Scroll to **Bindings** → **Add binding from exchange**
    - From exchange: `user.topic`
    - Routing key: `kassa.user.*`
-8. Klik op **Bind**
+8. Click **Bind**
 
 ---
 
@@ -98,8 +98,8 @@ C36 result: True
 ```
 
 **Check in RabbitMQ:**
-1. Ga naar `test.crm.kassa` queue
-2. Scroll naar **Get messages** → Ack Mode: `Nack message requeue true` → klik **Get Message(s)**
+1. Go to the `test.crm.kassa` queue
+2. Scroll to **Get messages** → Ack Mode: `Nack message requeue true` → click **Get Message(s)**
 3. Je ziet:
 
 | Field | Expected value |
@@ -141,7 +141,7 @@ print('C37 resultaat:', result)
 C37 result: True
 ```
 
-**Controleer in RabbitMQ** (zelfde stappen also stap 3):
+**Check in RabbitMQ** (same steps as step 3):
 
 | Veld | Verwachte waarde |
 |------|-----------------|
@@ -172,7 +172,7 @@ print('C38 resultaat:', result)
 C38 result: True
 ```
 
-**Controleer in RabbitMQ** (zelfde stappen also stap 3):
+**Check in RabbitMQ** (same steps as step 3):
 
 | Veld | Verwachte waarde |
 |------|-----------------|

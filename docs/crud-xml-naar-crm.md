@@ -379,8 +379,8 @@ Odoo (res.partner) → rabbitmq_sender.py → RabbitMQ user.topic exchange → C
 |-------------|-------|---------|-----------------------------------|
 | `user.topic` | topic | yes     | Shared with CRM, Invoicing, Mailing, Scheduling |
 
-Kassa **publiceert alleen** naar de exchange met een routing key.  
-CRM **declareert zelf** hun consumer-queues en bindt die aan de exchange.
+Kassa **publishes only** to the exchange with a routing key.  
+CRM **declares its own** consumer queues and binds them to the exchange.
 
 ### Why topic exchange?
 
@@ -390,22 +390,22 @@ A `topic` exchange allows multiple teams to listen to the same messages using wi
 
 Messages are sent via Odoo ORM hooks in [kassa_pos/models/res_partner.py](../kassa_pos/models/res_partner.py):
 
-- `create()` → roept `_publish_user_change('created')` aan → C36
-- `write()` → roept `_publish_user_change('updated')` aan → C37 (alleen also relevant velden gewijzigd zijn)
-- `unlink()` → roept `_publish_user_deleted()` aan → C38
+-- `create()` → calls `_publish_user_change('created')` → C36
+-- `write()` → calls `_publish_user_change('updated')` → C37 (only if relevant fields have changed)
+-- `unlink()` → calls `_publish_user_deleted()` → C38
 
 **Prerequisite:** the contact must have a `user_id_custom` (User ID) set. Contacts without a User ID are not forwarded.
 
-### Watched fields for C37
+-### Watched fields for C37
 
-Een update-bericht wordt alleen verstuurd also één van deze velden gewijzigd wordt:
+An update message is only sent when one of these fields changes:
 - `name`, `email`, `phone`, `badge_code`, `role`, `company_id_custom`, `user_id_custom`
 
 ---
 
 ## 4. Changed and new files
 
-### Nieuw bestand
+### New file
 
 #### `src/schema/contracts/kassa-user.xsd`
 Standalone XSD schema version 1.10.1 for C36/C37/C38.
@@ -418,45 +418,45 @@ Defines:
 - `UserDeactivated` (C38)
 - `NonEmptyStringType` — prevents empty `<badgeCode>` (minLength=1)
 
-### Gewijzigde bestanden
+### Changed files
 
 #### `kassa_pos/utils/rabbitmq_sender.py`
 
-Toegevoegd:
+Added:
 - `USER_TOPIC_EXCHANGE = 'user.topic'`
-- Routing key constanten: `ROUTING_KEY_KASSA_USER_CREATED`, `ROUTING_KEY_KASSA_USER_UPDATED`, `ROUTING_KEY_KASSA_USER_DEACTIVATED`
-- `_build_kassa_user_created_xml()` — bouwt `<KassaUserCreated>` XML
-- `_build_kassa_user_updated_xml()` — bouwt `<KassaUserUpdated>` XML
-- `_build_kassa_user_deactivated_xml()` — bouwt `<UserDeactivated>` XML met `<id>` veld
-- `_publish_to_topic_exchange()` — publiceert naar `user.topic` zonder consumer-queues te declareren
-- `send_kassa_user_created()` — publieke functie voor C36
-- `send_kassa_user_updated()` — publieke functie voor C37
-- `send_kassa_user_deactivated()` — publieke functie voor C38
+- Routing key constants: `ROUTING_KEY_KASSA_USER_CREATED`, `ROUTING_KEY_KASSA_USER_UPDATED`, `ROUTING_KEY_KASSA_USER_DEACTIVATED`
+- `_build_kassa_user_created_xml()` — builds `<KassaUserCreated>` XML
+- `_build_kassa_user_updated_xml()` — builds `<KassaUserUpdated>` XML
+- `_build_kassa_user_deactivated_xml()` — builds `<UserDeactivated>` XML with `<id>` field
+- `_publish_to_topic_exchange()` — publishes to `user.topic` without declaring consumer queues
+- `send_kassa_user_created()` — public function for C36
+- `send_kassa_user_updated()` — public function for C37
+- `send_kassa_user_deactivated()` — public function for C38
 
 #### `kassa_pos/models/res_partner.py`
 
-Toegevoegd:
-- `_publish_to_crm()` — roept de CRM sender functies aan
-- `unlink()` — vangt email op vóór verwijdering (nodig voor C38)
-- `_publish_user_deleted()` — accepteert email parameter en verstuurt C38
+Added:
+- `_publish_to_crm()` — calls the CRM sender functions
+- `unlink()` — captures email before deletion (needed for C38)
+- `_publish_user_deleted()` — accepts an email parameter and sends C38
 
-Aangepast:
-- `_publish_user_change()` — roept nu naast de interne queue ook `_publish_to_crm()` aan
-- `_build_user_created_payload_xml()` — produceert `<UserCreated>` (was `<User>`)
-- `_build_user_updated_payload_xml()` — produceert `<UserUpdatedIntegration>` (was `<User>`)
+Changed:
+- `_publish_user_change()` — now also calls `_publish_to_crm()` in addition to the internal queue
+- `_build_user_created_payload_xml()` — produces `<UserCreated>` (was `<User>`)
+- `_build_user_updated_payload_xml()` — produces `<UserUpdatedIntegration>` (was `<User>`)
 
 #### `src/xml_validator.py`
 
-Toegevoegd:
-- `KASSA_USER_SCHEMA_PATH` — pad naar `kassa-user.xsd`
-- `_kassa_schema` — geladen standalone schema
-- `validate_kassa(xml_string)` — valideert C36/C37/C38 berichten, geeft `(bool, str|None)` terug
+Added:
+- `KASSA_USER_SCHEMA_PATH` — path to `kassa-user.xsd`
+- `_kassa_schema` — loaded standalone schema
+- `validate_kassa(xml_string)` — validates C36/C37/C38 messages, returns `(bool, str|None)`
 
 #### `setup_rabbitmq.py`
 
-Toegevoegd:
-- `user.topic` exchange in de lijst van te declareren exchanges
-- Gebruik van omgevingsvariabelen voor verbindingsinstellingen (was hardcoded)
+Added:
+- `user.topic` exchange in the list of exchanges to declare
+- Use of environment variables for connection settings (was hardcoded)
 
 ---
 
@@ -517,19 +517,19 @@ Toegevoegd:
 
 ### Exchange declareren
 
-De `user.topic` exchange wordt gedeclareerd door `setup_rabbitmq.py`. Dit script kun je handmatig uitvoeren:
+The `user.topic` exchange is declared by `setup_rabbitmq.py`. You can run this script manually:
 
 ```bash
 docker compose exec odoo python3 /app/setup_rabbitmq.py
 ```
 
-Of voeg hem manueel toe via de RabbitMQ Management UI:
-1. Ga naar [http://localhost:15672](http://localhost:15672)
+Or add it manually via the RabbitMQ Management UI:
+1. Go to [http://localhost:15672](http://localhost:15672)
 2. Login: `team_kassa` / `kassa_local_dev`
 3. Exchanges → Add a new exchange
-   - Name: `user.topic`
-   - Type: `topic`
-   - Durability: Durable
+  - Name: `user.topic`
+  - Type: `topic`
+  - Durability: Durable
 
 ### Verbindingsinstellingen (uit .env)
 
@@ -581,7 +581,7 @@ result = mod.send_kassa_user_created({
     'role': 'CASHIER',
     'createdAt': '2026-04-29T10:00:00Z',
 })
-print('C36 resultaat:', result)
+print('C36 result:', result)
 "
 ```
 
@@ -599,19 +599,19 @@ spec = importlib.util.spec_from_file_location('rabbitmq_sender', '/mnt/extra-add
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 result = mod.send_kassa_user_deactivated('test-crm-uuid-001', 'test@test.com')
-print('C38 resultaat:', result)
+print('C38 result:', result)
 "
 ```
 
 ### Berichten controleren in RabbitMQ
 
-1. Ga naar [http://localhost:15672](http://localhost:15672) → login also `team_kassa`
-2. Maak een testqueue aan: **Queues → Add a new queue** → naam `test.crm.kassa`
-3. Bind de queue: klik op de queue → **Bindings → Add binding from exchange**
+1. Go to [http://localhost:15672](http://localhost:15672) → login as `team_kassa`
+2. Create a test queue: **Queues → Add a new queue** → name `test.crm.kassa`
+3. Bind the queue: click the queue → **Bindings → Add binding from exchange**
    - From exchange: `user.topic`
    - Routing key: `kassa.user.*`
 4. Stuur een testbericht via het commando hierboven
-5. Klik op **Get Message(s)** om het bericht te zien
+5. Click **Get Message(s)** to view the message
 
 ### Verwachte uitkomst bij succesvolle test
 
@@ -641,7 +641,7 @@ with registry.cursor() as cr:
         'role': 'Cashier',
     })
     cr.commit()
-    print('Aangemaakt:', partner.id, partner.name)
+    print('Created:', partner.id, partner.name)
 "
 ```
 
@@ -651,18 +651,18 @@ with registry.cursor() as cr:
 docker compose exec odoo python3 -m pytest src/tests/test_xml_validator.py -v
 ```
 
-Alle 48 tests moeten slagen, inclusief 12 nieuwe tests voor C36/C37/C38.
+All 48 tests must pass, including 12 new tests for C36/C37/C38.
 
 ---
 
-## 9. Opgeloste bugs
+## 9. Resolved bugs
 
-Tijdens de implementatie werden ook de volgende bestaande bugs opgelost:
+During the implementation the following existing bugs were also resolved:
 
-| Bug | Problem | Oplossing |
+| Bug | Problem | Solution |
 |-----|----------|-----------|
-| Verkeerde XML elementen | `<User>` werd gebruikt voor zowel create also update | Gesplitst in `<UserCreated>` en `<UserUpdatedIntegration>` |
-| Dubbele queue handler | `crm.user.confirmed` stond twee keer in `QUEUE_HANDLERS` waardoor ~50% van de berichten verloren ging | Duplicate verwijderd en handlers samengevoegd |
-| Update/delete events niet verwerkt | `on_user_updated` en `on_user_deactivated` logden alleen, maar updaten UserStore niet | `_user_consumer.process_user_message()` toegevoegd |
-| `setup_rabbitmq.py` hardcoded credentials | Verbindingsinstellingen stonden hardcoded in het script | Omgevingsvariabelen gebruikt |
-| `user.topic` exchange ontbrak | Exchange werd niet automatisch aangemaakt bij opstarten | Toegevoegd aan `setup_rabbitmq.py` |
+| Incorrect XML elements | `<User>` was used for both create and update | Split into `<UserCreated>` and `<UserUpdatedIntegration>` |
+| Duplicate queue handler | `crm.user.confirmed` appeared twice in `QUEUE_HANDLERS` causing ~50% message loss | Removed duplicate and consolidated handlers |
+| Update/delete events not processed | `on_user_updated` and `on_user_deactivated` only logged, but did not update the UserStore | Added `_user_consumer.process_user_message()` |
+| `setup_rabbitmq.py` hardcoded credentials | Connection settings were hardcoded in the script | Use environment variables |
+| `user.topic` exchange missing | Exchange was not automatically created at startup | Added to `setup_rabbitmq.py` |

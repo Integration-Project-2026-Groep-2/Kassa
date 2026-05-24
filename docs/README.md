@@ -42,7 +42,7 @@ Use `.env.example` as a base.
 
 Na de eerste `docker compose -f docker-compose.production.yml up -d` moet de Odoo database geinitialiseerd worden.
 
-Gebruik:
+Use:
 
 ```bash
 export ODOO_IMAGE=ghcr.io/<org-of-user>/odoo-kassa:latest

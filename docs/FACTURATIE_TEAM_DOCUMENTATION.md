@@ -55,7 +55,7 @@ Root element: `<PaymentConfirmed>`
 </PaymentConfirmed>
 ```
 
-### Implementatie
+### Implementation
 
 - Builder: [src/messaging/message_builders.py](../src/messaging/message_builders.py)
 - Sender: [kassa_pos/utils/rabbitmq_sender.py](../kassa_pos/utils/rabbitmq_sender.py)
@@ -63,40 +63,40 @@ Root element: `<PaymentConfirmed>`
 
 ## 2. InvoiceRequested
 
-### Wanneer wordt dit verstuurd?
+### When is this sent?
 
-Alleen voor orders met `paymentType = Invoice` en wanneer de klant aan een bedrijf gekoppeld is.
+Only for orders with `paymentType = Invoice` and when the customer is linked to a company.
 
-Dit bericht is bedoeld voor het facturatieproces.
+This message is intended for the invoicing process.
 
 ### RabbitMQ route
 
-- Exchange: standaard exchange `''`
+- Exchange: default exchange `''`
 - Routing key: `kassa.invoice.requested`
 - Queue: `kassa.invoice.requested`
 - Type: durable queue
 
-Technisch gezien publiceert Kassa direct naar de queue via de default exchange. De queue-naam en routing key zijn dus gelijk.
+Technically, Kassa publishes directly to the queue via the default exchange. The queue name and routing key are therefore the same.
 
 ### XML-structuur
 
 Root element: `<InvoiceRequested>`
 
-#### Velden
+#### Fields
 
-| Veld | Verplicht | Omschrijving |
+| Field | Required | Description |
 |---|---|---|
-| `orderId` | Ja | UUID van de POS-order |
-| `userId` | Ja | UUID van de gebruiker |
-| `companyId` | Ja | UUID van het bedrijf |
-| `amount` | Ja | Totaalbedrag van de order |
-| `currency` | Ja | Altijd `EUR` |
-| `orderedAt` | Ja | ISO 8601 timestamp |
-| `items` | Ja | Lijst met orderregels |
-| `email` | Nee | E-mailadres van de klant |
-| `companyName` | Nee | Naam van het bedrijf |
-| `eventId` | Nee | Event- of context-id indien gebruikt |
-| `paymentReference` | Nee | Betaalreferentie indien beschikbaar |
+| `orderId` | Yes | UUID of the POS order |
+| `userId` | Yes | UUID of the user |
+| `companyId` | Yes | UUID of the company |
+| `amount` | Yes | Total amount of the order |
+| `currency` | Yes | Always `EUR` |
+| `orderedAt` | Yes | ISO 8601 timestamp |
+| `items` | Yes | List of order lines |
+| `email` | No | Customer email address |
+| `companyName` | No | Company name |
+| `eventId` | No | Event or context id if used |
+| `paymentReference` | No | Payment reference if available |
 
 ### XML for items
 
@@ -233,7 +233,7 @@ Each item contains:
 </BatchClosed>
 ```
 
-### Implementatie
+### Implementation
 
 - Builder: [src/messaging/message_builders.py](../src/messaging/message_builders.py)
 - Service: [kassa_pos/services/pos_batch_service.py](../kassa_pos/services/pos_batch_service.py)
@@ -244,40 +244,40 @@ Each item contains:
 
 ### Exchanges
 
-| Exchange | Type | Doel |
+| Exchange | Type | Purpose |
 |---|---|---|
-| `kassa.topic` | topic | Dagafsluiting / batch closing |
+| `kassa.topic` | topic | Day-closing / batch closing |
 | `user.direct` | direct | User CRUD events |
-| `user.dlx` | direct | Dead-letter exchange voor user events |
-| `user.retry` | direct | Retry flow voor user events |
+| `user.dlx` | direct | Dead-letter exchange for user events |
+| `user.retry` | direct | Retry flow for user events |
 | `heartbeat.direct` | direct | Heartbeat messages |
 
-### Queues voor facturatie
+### Queues for invoicing
 
-| Queue | Type | Omschrijving |
+| Queue | Type | Description |
 |---|---|---|
-| `kassa.payment.confirmed` | durable | Betalingsbevestigingen richting CRM |
-| `kassa.invoice.requested` | durable | Factuurverzoeken voor facturatie |
-| `kassa.closed` | durable | Batch closure berichten via `kassa.topic` |
+| `kassa.payment.confirmed` | durable | Payment confirmations towards CRM |
+| `kassa.invoice.requested` | durable | Invoice requests for invoicing |
+| `kassa.closed` | durable | Batch closure messages via `kassa.topic` |
 
 ### Routing keys
 
-| Routing key | Exchange | Omschrijving |
+| Routing key | Exchange | Description |
 |---|---|---|
-| `kassa.payment.confirmed` | default exchange `''` | Betaling bevestigd |
-| `kassa.invoice.requested` | default exchange `''` | Factuurverzoek |
-| `kassa.closed` | `kassa.topic` | Dagafsluitbatch |
+| `kassa.payment.confirmed` | default exchange `''` | Payment confirmed |
+| `kassa.invoice.requested` | default exchange `''` | Invoice request |
+| `kassa.closed` | `kassa.topic` | Day-closing batch |
 
-## Wat facturatie moet consumeren
+## What invoicing should consume
 
-Also team facturatie hoef je in principe deze stromen te consumeren:
+The invoicing team should, in principle, consume the following streams:
 
 1. `kassa.invoice.requested`
-2. `kassa.closed` via binding op `kassa.topic` met routing key `kassa.closed`
+2. `kassa.closed` via binding on `kassa.topic` with routing key `kassa.closed`
 
-`kassa.payment.confirmed` is vooral CRM-gerelateerd, maar staat hier vermeld omdat het in dezelfde XML- en RabbitMQ-implementatie zit.
+`kassa.payment.confirmed` is mainly CRM-related, but is listed here because it uses the same XML and RabbitMQ implementation.
 
-## Voorbeeld consumer binding
+## Example consumer binding
 
 ```python
 channel.exchange_declare(exchange='kassa.topic', exchange_type='topic', durable=True)
@@ -296,21 +296,22 @@ channel.queue_declare(queue='kassa.invoice.requested', durable=True)
 channel.basic_consume(queue='kassa.invoice.requested', on_message_callback=callback, auto_ack=True)
 ```
 
-## Validatie
 
-De XML-berichten worden ook gevalideerd tegen schema’s en tests:
+## Validation
+
+The XML messages are also validated against schemas and tests:
 
 - [src/schema/kassa-schema-v1.xsd](../src/schema/kassa-schema-v1.xsd)
 - [src/schema/kassa-closed-batch.xsd](../src/schema/kassa_batch_contract.xsd)
 - [src/tests/test_xml_validator.py](../src/tests/test_xml_validator.py)
 
-## Praktische afspraken
+## Practical agreements
 
 - XML is UTF-8
-- Velden met datums/tijden gebruiken ISO 8601: `YYYY-MM-DDTHH:MM:SSZ`
-- Bedragen worden also numerieke waarden verstuurd, in euro (`EUR`)
-- RabbitMQ queues zijn durable tenzij anders vermeld
-- Facturatie moet idempotent verwerken op basis van `orderId` of `batchId`
+- Date/time fields use ISO 8601: `YYYY-MM-DDTHH:MM:SSZ`
+- Amounts are sent as numeric values, in euros (`EUR`)
+- RabbitMQ queues are durable unless noted otherwise
+- Invoicing must process idempotently based on `orderId` or `batchId`
 
 ## Relevant bronbestanden
 
