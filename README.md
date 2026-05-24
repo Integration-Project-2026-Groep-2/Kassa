@@ -196,10 +196,7 @@ See the docs in `docs/` for per-topic instructions.
 
 Follow repository conventions and use `docs/` for process and release guidance.
 
-## Contact / support
+## Contact
 
-For technical questions, review requests or help with frontend changes (e.g. adapting to the VSC JSON format), open an issue or ask here and I can assist with implementation and tests.
+For questions, support or review requests, please open an issue on GitHub.
 
----
-
-Would you like me to commit this English README and push it to `origin/main`? 
