@@ -59,7 +59,7 @@ All three schema files exist and match documentation:
 
 ### 2.2 Missing from Contract Documentation: ⚠️ CRITICAL
 
-**K-02 (BatchClosed)** — Documented in XSD but NOT in KASSA_CONTRACTEN_SPECIFICATIE_NL.md
+**K-02 (BatchClosed)** — Documented in XSD but NOT in KASSA_CONTRACTS_SPECIFICATION.md
 
 - **Implementation Status**: ✅ **FULLY IMPLEMENTED**
   - Schema: [src/schema/kassa_batch_contract.xsd](src/schema/kassa_batch_contract.xsd)
@@ -71,13 +71,13 @@ All three schema files exist and match documentation:
   - Durable: true
   - Trigger: POS session closure / daily batch closing
   
-- **Action Required**: Add K-02 contract specification to KASSA_CONTRACTEN_SPECIFICATIE_NL.md
+- **Action Required**: Add K-02 contract specification to KASSA_CONTRACTS_SPECIFICATION.md
 
 ---
 
 ### 2.3 User CRUD Contracts (C36-C38): ⚠️ CRITICAL DOCUMENTATION GAP
 
-**Missing from KASSA_CONTRACTEN_SPECIFICATIE_NL.md entirely**
+**Missing from KASSA_CONTRACTS_SPECIFICATION.md entirely**
 
 #### C36 — KassaUserCreated (Kassa → CRM)
 
@@ -113,7 +113,7 @@ All three schema files exist and match documentation:
   - Queue: `crm.kassa.user.deactivated`
   - Note: Kassa receives this from CRM, does not publish it
 
-- **Action Required**: Add C36, C37, C38 contract specifications to KASSA_CONTRACTEN_SPECIFICATIE_NL.md
+- **Action Required**: Add C36, C37, C38 contract specifications to KASSA_CONTRACTS_SPECIFICATION.md
 
 ---
 
@@ -175,7 +175,7 @@ Update [src/config.py](src/config.py#L75-L85) to use `crm.*` prefix matching the
 
 ### Issue: 🔴 DOCKERFILE DOCUMENTATION IS SEVERELY OUTDATED
 
-**Documented in DOCKER_KASSA_TEAM_NL.md (lines 73-104):**
+**Documented in DOCKER_KASSA_TEAM.md (lines 73-104):**
 ```dockerfile
 FROM python:3.13-slim
 WORKDIR /app
@@ -261,17 +261,17 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 ### What's Well Documented ✅
 
-- [XSD_SCHEMA_DOCUMENTATIE_NL.md](docs/XSD_SCHEMA_DOCUMENTATIE_NL.md) — Complete and accurate
-- Basic contract specifications in [KASSA_CONTRACTEN_SPECIFICATIE_NL.md](docs/KASSA_CONTRACTEN_SPECIFICATIE_NL.md) — Good for R1/R2/R3 consumer contracts
+- [XSD_SCHEMA_DOCUMENTATION.md](docs/XSD_SCHEMA_DOCUMENTATION.md) — Complete and accurate
+- Basic contract specifications in [KASSA_CONTRACTS_SPECIFICATION.md](docs/KASSA_CONTRACTS_SPECIFICATION.md) — Good for R1/R2/R3 consumer contracts
 - Architecture and deployment guides — Generally accurate
 
 ### What's Missing or Outdated ⚠️
 
 | Document | Issue | Severity |
 |---|---|---|
-| [KASSA_CONTRACTEN_SPECIFICATIE_NL.md](docs/KASSA_CONTRACTEN_SPECIFICATIE_NL.md) | Missing K-02 specification | 🔴 Critical |
-| [KASSA_CONTRACTEN_SPECIFICATIE_NL.md](docs/KASSA_CONTRACTEN_SPECIFICATIE_NL.md) | Missing C36-C38 specifications | 🔴 Critical |
-| [DOCKER_KASSA_TEAM_NL.md](docs/DOCKER_KASSA_TEAM_NL.md) | Outdated Dockerfile example | 🔴 Critical |
+| [KASSA_CONTRACTS_SPECIFICATION.md](docs/KASSA_CONTRACTS_SPECIFICATION.md) | Missing K-02 specification | 🔴 Critical |
+| [KASSA_CONTRACTS_SPECIFICATION.md](docs/KASSA_CONTRACTS_SPECIFICATION.md) | Missing C36-C38 specifications | 🔴 Critical |
+| [DOCKER_KASSA_TEAM.md](docs/DOCKER_KASSA_TEAM.md) | Outdated Dockerfile example | 🔴 Critical |
 | [src/config.py](src/config.py) | Queue name constants use `kassa.*` instead of `crm.*` | ⚠️ Medium |
 | [kassa_pos/data/account_journal_data.xml](kassa_pos/data/account_journal_data.xml) | Uses "Kassa Top Up" instead of "Kassa Saldo" | ⚠️ Medium |
 
@@ -281,19 +281,19 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 ### 🔴 Critical Issues (Must Fix)
 
-1. **Add K-02 Contract Specification to KASSA_CONTRACTEN_SPECIFICATIE_NL.md**
+1. **Add K-02 Contract Specification to KASSA_CONTRACTS_SPECIFICATION.md**
    - Include full BatchClosed message structure
    - Document exchange/routing key/queue configuration
    - Add example payload
    - Reference: [kassa_batch_contract.xsd](src/schema/kassa_batch_contract.xsd) lines 65-90
 
-2. **Add C36-C38 User CRUD Specifications to KASSA_CONTRACTEN_SPECIFICATIE_NL.md**
+2. **Add C36-C38 User CRUD Specifications to KASSA_CONTRACTS_SPECIFICATION.md**
    - Document KassaUserCreated (C36) with user.topic exchange details
    - Document KassaUserUpdated (C37) with update semantics
    - Document UserDeactivated (C38) — note that Kassa consumes, not publishes
    - Reference: [kassa-user.xsd](src/schema/contracts/kassa-user.xsd) for exact schema
 
-3. **Update DOCKER_KASSA_TEAM_NL.md with Current Dockerfile**
+3. **Update DOCKER_KASSA_TEAM.md with Current Dockerfile**
    - Replace Python 3.13-slim example with actual `odoo:17` base
    - Document odoo-entrypoint.sh wrapper and its responsibilities
    - Explain sys.path manipulation for /app/src
@@ -320,7 +320,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 ### 📝 Nice to Have (Documentation Only)
 
 7. **Add Note in README about Contract Versions**
-   - Reference XSD_SCHEMA_DOCUMENTATIE_NL.md as source of truth for contracts
+   - Reference XSD_SCHEMA_DOCUMENTATION.md as source of truth for contracts
    - Explain that C36-C38 are producer contracts (Kassa → CRM)
    - Explain that K-02 is published on session closure
 

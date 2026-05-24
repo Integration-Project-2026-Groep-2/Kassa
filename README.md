@@ -185,7 +185,7 @@ See the docs in `docs/` for per-topic instructions.
 - Overview and deployment guides: [docs/README.md](docs/README.md)
 - Developer quickstart: [docs/DEVELOPER_QUICKSTART.md](docs/DEVELOPER_QUICKSTART.md)
 - POS Top Up & VSC changes: [docs/KASSA_POS_TOPUP_AND_VSC_CHANGES.md](docs/KASSA_POS_TOPUP_AND_VSC_CHANGES.md)
-- Docker and environment tips: [docs/DOCKER_KASSA_TEAM_NL.md](docs/DOCKER_KASSA_TEAM_NL.md)
+- Docker and environment tips: [docs/DOCKER_KASSA_TEAM.md](docs/DOCKER_KASSA_TEAM.md)
 
 ## Contributing
 

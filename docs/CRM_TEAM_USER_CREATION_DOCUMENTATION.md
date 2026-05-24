@@ -1,43 +1,43 @@
-# CRM Team - User Creation Integratie met Kassa
+# CRM Team — User Creation Integration with Kassa
 
-## Doel
+## Purpose
 
-Deze documentatie beschrijft hoe CRM en Kassa samen een gebruiker aanmaken op basis van de huidige implementatie en XML-contracten.
+This document describes how CRM and Kassa cooperate to create and synchronize users, based on the current implementation and XML contracts.
 
-De inhoud is afgestemd op de contracten in AsyncAPI/XML v1.8.0 en op de bestaande code in deze repository.
+The content follows the AsyncAPI/XML contract definitions and the code in this repository.
 
-## Korte samenvatting
+## Summary
 
-Voor een correcte samenwerking gebruik je dit patroon:
+The recommended flow is:
 
-1. Kassa publiceert een nieuw user-profiel op queue kassa.user.created als XML User.
-2. CRM consumeert dit bericht en maakt of verrijkt de gebruiker in CRM.
-3. CRM publiceert daarna een bevestiging op queue crm.user.confirmed als XML UserConfirmed.
-4. Kassa verwerkt UserConfirmed en houdt de lokale user-store synchroon.
+1. Kassa publishes a new user profile to the `kassa.user.created` queue as an XML `User`.
+2. CRM consumes the message and creates or enriches the user in CRM.
+3. CRM publishes a confirmation as XML `UserConfirmed` to the `crm.user.confirmed` queue.
+4. Kassa processes `UserConfirmed` and keeps its local user store synchronized.
 
 ## RabbitMQ routes
 
-| Richting | Doel | Exchange | Routing key | Queue | Durable |
+| Direction | Purpose | Exchange | Routing key | Queue | Durable |
 |---|---|---|---|---|---|
-| Kassa -> CRM | User create event | default exchange '' | kassa.user.created | kassa.user.created | true |
-| CRM -> Kassa | User bevestigd | default exchange '' | crm.user.confirmed | crm.user.confirmed | true |
-| CRM -> Kassa | User update | default exchange '' | crm.user.updated | crm.user.updated | true |
-| CRM -> Kassa | User deactivated | default exchange '' | crm.user.deactivated | crm.user.deactivated | true |
+| Kassa → CRM | User create event | default exchange '' | `kassa.user.created` | `kassa.user.created` | true |
+| CRM → Kassa | User confirmation | default exchange '' | `crm.user.confirmed` | `crm.user.confirmed` | true |
+| CRM → Kassa | User update | default exchange '' | `crm.user.updated` | `crm.user.updated` | true |
+| CRM → Kassa | User deactivated | default exchange '' | `crm.user.deactivated` | `crm.user.deactivated` | true |
 
-Opmerking:
-In deze flow worden berichten direct op queues gepubliceerd via de default exchange. Routing key en queue-naam zijn dus gelijk.
+Note: messages are published directly to queues using the default exchange; the routing key equals the queue name.
 
-## Stap 1 - Wat CRM ontvangt bij user-aanmaak
 
-### Berichttype
+## Step 1 — What CRM receives on user creation
 
-Root: User
+### Message type
+
+Root: `User`
 
 ### Queue
 
-kassa.user.created
+`kassa.user.created`
 
-### XML formaat (voorbeeld)
+### XML example
 
 ```xml
 <User>
@@ -53,31 +53,32 @@ kassa.user.created
 </User>
 ```
 
-### Velden
+### Fields
 
-| Veld | Verplicht | Beschrijving |
+| Field | Required | Description |
 |---|---|---|
-| userId | Ja | UUID v4 |
-| firstName | Ja | Voornaam |
-| lastName | Ja | Achternaam |
-| email | Ja | E-mail |
-| companyId | Nee | UUID van bedrijf |
-| badgeCode | Ja | Badge/QR code |
-| role | Ja | Rol (bijv. VISITOR, CASHIER, ADMIN) |
-| createdAt | Nee | ISO 8601 |
-| updatedAt | Nee | ISO 8601 |
+| `userId` | Yes | UUID v4 unique identifier |
+| `firstName` | Yes | First name |
+| `lastName` | Yes | Last name |
+| `email` | Yes | Email address |
+| `companyId` | No | UUID of associated company |
+| `badgeCode` | Yes | Badge or QR code identifier |
+| `role` | Yes | Role (e.g., VISITOR, CASHIER, ADMIN) |
+| `createdAt` | No | ISO 8601 timestamp (UTC) |
+| `updatedAt` | No | ISO 8601 timestamp (UTC) |
 
-## Stap 2 - Wat CRM moet terugsturen als bevestiging
 
-### Berichttype
+## Step 2 — What CRM must send back as confirmation
 
-Root: UserConfirmed (Contract 13)
+### Message type
+
+Root: `UserConfirmed` (Contract 13)
 
 ### Queue
 
-crm.user.confirmed
+`crm.user.confirmed`
 
-### XML formaat (voorbeeld)
+### XML example
 
 ```xml
 <UserConfirmed>
@@ -92,113 +93,116 @@ crm.user.confirmed
 </UserConfirmed>
 ```
 
-### Contractregels
+### Contract rules
 
-| Veld | Verplicht |
+| Field | Required |
 |---|---|
-| id | Ja |
-| email | Ja |
-| firstName | Ja |
-| lastName | Ja |
-| role | Ja |
-| isActive | Ja |
-| gdprConsent | Ja |
-| confirmedAt | Ja |
-| phone | Nee |
-| companyId | Nee |
-| badgeCode | Nee |
+| `id` | Yes |
+| `email` | Yes |
+| `firstName` | Yes |
+| `lastName` | Yes |
+| `role` | Yes |
+| `isActive` | Yes |
+| `gdprConsent` | Yes |
+| `confirmedAt` | Yes |
+| `phone` | No |
+| `companyId` | No |
+| `badgeCode` | No |
 
-Belangrijk:
-- id moet dezelfde UUID zijn als userId uit het User-bericht.
-- role moet een geldige contractwaarde zijn.
-- confirmedAt moet ISO 8601 UTC zijn, bijvoorbeeld 2026-04-22T10:00:02Z.
+Important:
 
-## Mapping tussen Kassa User en CRM UserConfirmed
+- `id` must match the `userId` from the `User` message.
+- `role` must be a valid enum defined by the contract.
+- `confirmedAt` must be an ISO 8601 UTC timestamp (for example: 2026-04-22T10:00:02Z).
 
-| Kassa User | CRM UserConfirmed | Opmerking |
+
+## Field mapping: Kassa `User` → CRM `UserConfirmed`
+
+| Kassa `User` | CRM `UserConfirmed` | Notes |
 |---|---|---|
-| userId | id | Moet identiek blijven |
-| firstName | firstName | 1-op-1 |
-| lastName | lastName | 1-op-1 |
-| email | email | 1-op-1 |
-| role | role | Moet contract-compatibel zijn |
-| companyId | companyId | Optioneel |
-| badgeCode | badgeCode | Optioneel in UserConfirmed, maar aanbevolen |
-| createdAt | confirmedAt | confirmedAt is CRM-confirmatiemoment |
+| `userId` | `id` | Must remain identical across lifecycle |
+| `firstName` | `firstName` | 1:1 mapping |
+| `lastName` | `lastName` | 1:1 mapping |
+| `email` | `email` | 1:1 mapping |
+| `role` | `role` | Must be contract-compatible |
+| `companyId` | `companyId` | Optional |
+| `badgeCode` | `badgeCode` | Optional in `UserConfirmed` but recommended for POS sync |
+| `createdAt` | `confirmedAt` | `confirmedAt` reflects CRM confirmation time |
 
-## Aanbevolen end-to-end flow
 
-1. Consumeer kassa.user.created.
-2. Valideer XML en verplichte velden.
-3. Maak user in CRM (of update als user al bestaat).
-4. Publiceer UserConfirmed naar crm.user.confirmed.
-5. Voor latere wijzigingen publiceer UserUpdated naar crm.user.updated.
-6. Voor GDPR/non-actief publiceer UserDeactivated naar crm.user.deactivated.
+## Recommended end-to-end flow
 
-## Idempotentie en retries
+1. Consume `kassa.user.created`.
+2. Validate XML and required fields.
+3. Create or update the user in CRM.
+4. Publish `UserConfirmed` to `crm.user.confirmed`.
+5. For updates, publish `UserUpdated` to `crm.user.updated`.
+6. For deactivations or GDPR actions, publish `UserDeactivated` to `crm.user.deactivated`.
 
-### Idempotentie
+## Idempotency and retries
 
-Gebruik id/userId als idempotency key in CRM, zodat dubbele delivery geen dubbele users maakt.
+### Idempotency
 
-### Retrygedrag
+Use `id`/`userId` as the idempotency key in CRM to ensure duplicate deliveries do not create duplicate users.
 
-Als Kassa tijdelijk niet kan publiceren, wordt een lokale fallback queue gebruikt in Odoo. Daardoor kunnen create-events later alsnog binnenkomen.
+### Retry behaviour
 
-## Minimale consumer/publisher voorbeelden
+If Kassa temporarily cannot publish, Kassa stores messages in a local fallback queue in Odoo. When CRM recovers, pending messages can be re-sent. Idempotency prevents duplicate creation.
 
-### Consume kassa.user.created
+## Minimal consumer/publisher examples
+
+### Consume `kassa.user.created`
 
 ```python
 channel.queue_declare(queue='kassa.user.created', durable=True)
 channel.basic_consume(queue='kassa.user.created', on_message_callback=on_user, auto_ack=True)
 ```
 
-### Publish UserConfirmed
+### Publish `UserConfirmed`
 
 ```python
 channel.queue_declare(queue='crm.user.confirmed', durable=True)
 channel.basic_publish(
-    exchange='',
-    routing_key='crm.user.confirmed',
-    body=user_confirmed_xml.encode('utf-8')
+  exchange='',
+  routing_key='crm.user.confirmed',
+  body=user_confirmed_xml.encode('utf-8')
 )
 ```
 
-## Validatiebronnen
+## Validation sources
 
-Gebruik deze bestanden als bron van waarheid:
+Use these files as sources of truth:
 
-- src/schema/kassa-schema-v1.xsd
-- src/tests/test_xml_validator.py
-- src/messaging/user_consumer.py
-- kassa_pos/models/user_registration.py
+- `src/schema/kassa-schema-v1.xsd`
+- `src/tests/test_xml_validator.py`
+- `src/messaging/user_consumer.py`
+- `kassa_pos/models/user_registration.py`
 
 ## Interoperability checklist
 
-- Queue kassa.user.created bestaat en is durable.
-- Queue crm.user.confirmed bestaat en is durable.
-- CRM antwoordt met UserConfirmed (niet met vrij formaat XML).
-- id in UserConfirmed equals userId uit User.
-- XML timestamps zijn ISO 8601 UTC met Z suffix.
-- CRM verwerkt duplicate deliveries idempotent.
+- Queue `kassa.user.created` exists and is durable.
+- Queue `crm.user.confirmed` exists and is durable.
+- CRM replies with a valid `UserConfirmed` XML (not free-form XML).
+- `id` in `UserConfirmed` equals `userId` from `User`.
+- XML timestamps are ISO 8601 UTC with `Z` suffix.
+- CRM processes duplicate deliveries idempotently.
 
 ## Troubleshooting
 
-### User komt niet aan in Kassa na create
+### User does not appear in Kassa after creation
 
-Controleer:
+Check:
 
-1. Werd UserConfirmed gepubliceerd op crm.user.confirmed.
-2. Is XML geldig tegen kassa-schema-v1.xsd.
-3. Is id een geldige UUID v4.
-4. Is role een geldige enumwaarde.
+1. Was `UserConfirmed` published to `crm.user.confirmed`?
+2. Is the XML valid against `kassa-schema-v1.xsd`?
+3. Is `id` a valid UUID v4?
+4. Is `role` a valid enum value?
 
-### UserCreated komt niet aan in CRM
+### `User` did not reach CRM
 
-Controleer:
+Check:
 
-1. Queue kassa.user.created bestaat.
-2. CRM-consumer is verbonden met juiste vhost/credentials.
-3. RabbitMQ durable queue-instellingen zijn correct.
-4. Odoo fallback queue heeft pending berichten (bij tijdelijke outage).
+1. Queue `kassa.user.created` exists.
+2. CRM consumer is connected with correct vhost/credentials.
+3. RabbitMQ queue durability is configured correctly.
+4. Odoo fallback queue contains pending messages (in case of temporary outage).
