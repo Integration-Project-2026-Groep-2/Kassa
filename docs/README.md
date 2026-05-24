@@ -38,9 +38,9 @@ Use `.env.example` as a base.
 | `HEARTBEAT_ROUTING_KEY` | Routing key for heartbeat | `routing.heartbeat` |
 | `HEARTBEAT_QUEUE` | Queue for heartbeat | `heartbeat_queue` |
 
-## 3) Eerste opstart (manuele stap)
+## 3) First startup (manual step)
 
-Na de eerste `docker compose -f docker-compose.production.yml up -d` moet de Odoo database geinitialiseerd worden.
+After the initial `docker compose -f docker-compose.production.yml up -d` the Odoo database must be initialized.
 
 Use:
 
@@ -87,7 +87,7 @@ print(f"User created in Odoo: {partner_id}")
 
 ## 4) Recent POS changes (Top Up & VSC)
 
--- The POS now supports a `Top Up` payment flow where a user's stored balance can be used to pay part of an order. When a Top Up payment is used, the exported/printed paymentline will include the used amount, e.g. `Top Up (used €5.00)`.
+- The POS now supports a `Top Up` payment flow where a user's stored balance can be used to pay part of an order. When a Top Up payment is used, the exported/printed paymentline will include the used amount, e.g. `Top Up (used €5.00)`.
 - The receipt generator requests a VSC code from the backend via JSON RPC at `/kassa_pos/get_vsc_code`. Responses follow the standardized format `{'ok': True, 'vsc_code': '...'}` or `{'ok': False, 'error': '...'}`. The endpoint requires an authenticated POS user (`auth='user'`).
 
 See [KASSA_POS_TOPUP_AND_VSC_CHANGES.md](KASSA_POS_TOPUP_AND_VSC_CHANGES.md) for details and testing steps.
