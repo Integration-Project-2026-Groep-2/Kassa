@@ -6,7 +6,7 @@ This page describes which XML messages Kassa sends to the Invoicing and related 
 
 In RabbitMQ terms: a `channel` is the technical session inside the connection. For Invoicing the `exchange`, `queue` and `routing key` are most relevant, as they determine where messages end up.
 
-## Samenvatting
+## Summary
 
 | Message | Purpose | RabbitMQ route | XML root |
 |---|---|---|---|
@@ -198,11 +198,11 @@ Each item contains:
 
 | Field | Required | Description |
 |---|---|---|
-| `totalOrders` | Ja | Aantal orders in de batch |
-| `totalAmount` | Ja | Totaalbedrag van de batch |
-| `orderIds` | Nee | Lijst van order UUIDs |
+| `totalOrders` | Yes | Number of orders in the batch |
+| `totalAmount` | Yes | Total amount of the batch |
+| `orderIds` | No | List of order UUIDs |
 
-### Voorbeeld
+### Example
 
 ```xml
 <BatchClosed>
@@ -214,7 +214,7 @@ Each item contains:
             <userId>550e8400-e29b-41d4-a716-446655440000</userId>
             <items>
                 <item>
-                    <productName>Bier</productName>
+                    <productName>Beer</productName>
                     <quantity>2</quantity>
                     <unitPrice>3.50</unitPrice>
                     <totalPrice>7.00</totalPrice>

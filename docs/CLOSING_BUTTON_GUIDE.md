@@ -131,7 +131,7 @@ Tracks all batch closings for audit and retry.
 - `sent`: Successfully sent to RabbitMQ
 - `failed`: Send failed, awaiting retry
 - `retry`: Scheduled for retry
-- `confirmed`: Facturatie system confirmed receipt
+- `confirmed`: Invoicing system confirmed receipt
 
 ## Code Components
 

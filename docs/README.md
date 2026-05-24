@@ -1,42 +1,42 @@
 # Team Kassa Docker Deliverables
 
-Dit project levert een custom Odoo image (gebaseerd op de officiele `odoo:latest` image) met Team Kassa code ingebakken.
+This project provides a custom Odoo image (based on the official `odoo:latest` image) with Team Kassa code baked in.
 
 ## 1) Docker images
 
 
-- App image: bouw en publiceer also GHCR image `ghcr.io/<org-of-user>/odoo-kassa:latest`
-	Deze image bevat:
-	- Odoo latest (officiele base image)
-	- `kassa_pos` addon
-	- RabbitMQ messaging scripts (`src/` + `templates/`)
-	- Python package `pika`
-- Heartbeat draait in dezelfde Odoo image/container en stopt dus mee also Odoo stopt
+- App image: build and publish GHCR image `ghcr.io/<org-of-user>/odoo-kassa:latest`
+    This image contains:
+    - Odoo latest (official base image)
+    - `kassa_pos` addon
+    - RabbitMQ messaging scripts (`src/` + `templates/`)
+    - Python package `pika`
+ - Heartbeat runs in the same Odoo image/container and stops when Odoo stops
 - DB image: `postgres:15`
 - RabbitMQ image: `rabbitmq:3-management`
 
 ## 2) Required environment variables
 
-Gebruik `.env.example` also basis.
+Use `.env.example` as a base.
 
-| Variable | Beschrijving | Voorbeeld |
+| Variable | Description | Example |
 |---|---|---|
-| `POSTGRES_DB` | Odoo database naam | `kassa_db` |
+| `POSTGRES_DB` | Odoo database name | `kassa_db` |
 | `POSTGRES_USER` | PostgreSQL user | `kassa` |
-| `POSTGRES_PASSWORD` | PostgreSQL wachtwoord | `change_me_db_password` |
-| `DB_HOST` | PostgreSQL host voor Odoo | `db` |
-| `DB_PORT` | PostgreSQL poort | `5432` |
-| `ODOO_PORT` | Exposed Odoo HTTP poort | `8069` |
+| `POSTGRES_PASSWORD` | PostgreSQL password | `change_me_db_password` |
+| `DB_HOST` | PostgreSQL host for Odoo | `db` |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `ODOO_PORT` | Exposed Odoo HTTP port | `8069` |
 | `RABBIT_HOST` | RabbitMQ host | `rabbitmq` |
-| `RABBIT_PORT` | RabbitMQ AMQP poort | `5672` |
-| `RABBIT_MANAGEMENT_PORT` | RabbitMQ management UI poort | `15672` |
+| `RABBIT_PORT` | RabbitMQ AMQP port | `5672` |
+| `RABBIT_MANAGEMENT_PORT` | RabbitMQ management UI port | `15672` |
 | `RABBIT_USER` | RabbitMQ user | `team_kassa` |
-| `RABBIT_PASSWORD` | RabbitMQ wachtwoord | `change_me_secure` |
+| `RABBIT_PASSWORD` | RabbitMQ password | `change_me_secure` |
 | `RABBIT_VHOST` | RabbitMQ vhost | `/` |
-| `HEARTBEAT_INTERVAL_SECONDS` | Heartbeat interval in seconden | `1` |
-| `HEARTBEAT_EXCHANGE` | Exchange voor heartbeat | `heartbeat.direct` |
-| `HEARTBEAT_ROUTING_KEY` | Routing key voor heartbeat | `routing.heartbeat` |
-| `HEARTBEAT_QUEUE` | Queue voor heartbeat | `heartbeat_queue` |
+| `HEARTBEAT_INTERVAL_SECONDS` | Heartbeat interval in seconds | `1` |
+| `HEARTBEAT_EXCHANGE` | Exchange for heartbeat | `heartbeat.direct` |
+| `HEARTBEAT_ROUTING_KEY` | Routing key for heartbeat | `routing.heartbeat` |
+| `HEARTBEAT_QUEUE` | Queue for heartbeat | `heartbeat_queue` |
 
 ## 3) Eerste opstart (manuele stap)
 
@@ -87,7 +87,7 @@ print(f"User created in Odoo: {partner_id}")
 
 ## 4) Recent POS changes (Top Up & VSC)
 
-- The POS now supports a `Top Up` payment flow where a user's stored balance can be used to pay part of an order. When a Top Up payment is used, the exported/printed paymentline will include the used amount, e.g. `Top Up (gebruik €5.00)`.
+-- The POS now supports a `Top Up` payment flow where a user's stored balance can be used to pay part of an order. When a Top Up payment is used, the exported/printed paymentline will include the used amount, e.g. `Top Up (used €5.00)`.
 - The receipt generator requests a VSC code from the backend via JSON RPC at `/kassa_pos/get_vsc_code`. Responses follow the standardized format `{'ok': True, 'vsc_code': '...'}` or `{'ok': False, 'error': '...'}`. The endpoint requires an authenticated POS user (`auth='user'`).
 
 See [KASSA_POS_TOPUP_AND_VSC_CHANGES.md](KASSA_POS_TOPUP_AND_VSC_CHANGES.md) for details and testing steps.

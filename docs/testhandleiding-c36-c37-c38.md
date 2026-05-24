@@ -28,37 +28,37 @@ Create an `odoo.conf` based on the example:
 cp odoo.conf.example odoo.conf
 ```
 
-Start de containers:
+Start the containers:
 
 ```bash
 docker compose up -d --build
 ```
 
-Wacht 3-5 minuten totdat Odoo volledig opgestart is. Controleer met:
+Wait 3-5 minutes for Odoo to fully start. Check with:
 
 ```bash
 docker compose logs odoo --tail=10
 ```
 
-Je moet `[INFO] Heartbeat verzonden` zien also Odoo klaar is.
+You should see `[INFO] Heartbeat verzonden` indicating Odoo is ready.
 
 ---
 
 ## Step 2 — Create RabbitMQ test queue
 
-1. Ga naar [http://localhost:15672](http://localhost:15672)
+1. Go to [http://localhost:15672](http://localhost:15672)
 2. Login:
    - Username: `team_kassa`
    - Password: `kassa_local_dev`
-3. Klik bovenaan op **Queues and Streams**
-4. Scroll naar beneden → **Add a new queue**
+3. Click **Queues and Streams**
+4. Scroll down → **Add a new queue**
    - Type: `Classic`
    - Virtual host: `/`
    - Name: `test.crm.kassa`
    - Durability: `Durable`
-5. Klik op **Add queue**
-6. Klik op de nieuwe queue `test.crm.kassa`
-7. Scroll naar **Bindings** → **Add binding from exchange**
+5. Click **Add queue**
+6. Click the new queue `test.crm.kassa`
+7. Scroll to **Bindings** → **Add binding from exchange**
    - From exchange: `user.topic`
    - Routing key: `kassa.user.*`
 8. Klik op **Bind**
@@ -67,7 +67,7 @@ Je moet `[INFO] Heartbeat verzonden` zien also Odoo klaar is.
 
 ## Step 3 — Test C36 (create user)
 
-Voer dit commando uit in de terminal:
+Run this command in the terminal:
 
 ```bash
 docker compose exec odoo python3 -c "
@@ -94,7 +94,7 @@ print('C36 resultaat:', result)
 
 **Expected result in terminal:**
 ```
-C36 resultaat: True
+C36 result: True
 ```
 
 **Check in RabbitMQ:**
@@ -136,9 +136,9 @@ print('C37 resultaat:', result)
 "
 ```
 
-**Verwacht resultaat in terminal:**
+**Expected result in terminal:**
 ```
-C37 resultaat: True
+C37 result: True
 ```
 
 **Controleer in RabbitMQ** (zelfde stappen also stap 3):
@@ -167,9 +167,9 @@ print('C38 resultaat:', result)
 "
 ```
 
-**Verwacht resultaat in terminal:**
+**Expected result in terminal:**
 ```
-C38 resultaat: True
+C38 result: True
 ```
 
 **Controleer in RabbitMQ** (zelfde stappen also stap 3):
@@ -185,7 +185,7 @@ C38 resultaat: True
 
 ## Step 6 — Test automatic trigger via Odoo
 
-Dit test of de berichten ook automatisch verstuurd worden wanneer een contact aangemaakt wordt in Odoo (zonder handmatig commando).
+This tests whether messages are also automatically sent when a contact is created in Odoo (without manual commands).
 
 ```bash
 docker compose exec odoo python3 -c "
@@ -204,7 +204,7 @@ with registry.cursor() as cr:
         'role': 'Cashier',
     })
     cr.commit()
-    print('Contact aangemaakt:', partner.id, partner.name)
+    print('Contact created:', partner.id, partner.name)
 "
 ```
 
