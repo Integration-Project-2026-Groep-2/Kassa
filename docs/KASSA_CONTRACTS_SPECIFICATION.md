@@ -8,12 +8,12 @@ Author: Team Kassa | Version: 1.0 | May 2026
 ## Quick Reference — Contract overview
 
 ### Release 1 (R1)
-| Contract | Direction | Queue | Durable | Essential? |
+| Contract | Direction | Exchange / Routing Key | Durable | Essential? |
 |---|---|---|---|---|
-| **C7** | Kassa → Controlroom | `kassa.heartbeat` | false | ✅ |
-| **C8** | Kassa → Controlroom | `kassa.status.checked` | false | ✅ |
-| **C10a** | Kassa → CRM | `kassa.person.lookup.requested` | true | ✅ |
-| **K-01** | Kassa → Invoicing | `kassa.invoice.requested` | true | ✅ |
+| **C7** | Kassa → Controlroom | `heartbeat.direct` / routing key (env: `HEARTBEAT_ROUTING_KEY`) | exchange: true | ✅ |
+| **C8** | Kassa → Controlroom | `statuscheck.direct` / routing key (see config) | exchange: true | ✅ |
+| **C10a** | Kassa → CRM | `user.topic` / `kassa.person.lookup.requested` (topic) | exchange: true | ✅ |
+| **K-01** | Kassa → Invoicing | `kassa.topic` / `kassa.invoice.requested` (topic) | exchange: true | ✅ |
 
 ---
 
@@ -21,10 +21,13 @@ Author: Team Kassa | Version: 1.0 | May 2026
 
 ### Contract C7 — Heartbeat (Kassa → Controlroom)
 
-**Queue:** `kassa.heartbeat` | **Durable:** false  
-**Frequency:** Every second
+**Exchange:** `heartbeat.direct` (publisher) — consumers bind a queue to this exchange with a routing key. The default routing key and queue names are configurable via environment variables (`HEARTBEAT_ROUTING_KEY`, `HEARTBEAT_QUEUE`).
 
-Kassa publishes a lightweight heartbeat so Controlroom can detect whether the Kassa service is running.
+**Exchange durability:** `heartbeat.direct` is declared durable in setup scripts (see `setup_rabbitmq.py`). Queue durability is consumer-side and therefore not enforced here; configure consumer queues as durable if you need persisted heartbeats.
+
+**Default frequency:** controlled by `HEARTBEAT_INTERVAL_SECONDS` (default `1` in `.env`). The interval is configurable and a higher value (e.g., 5–30s) is recommended for production to reduce load.
+
+Kassa publishes a lightweight heartbeat so Controlroom can detect whether the Kassa service is running. The message schema and validations are enforced by the XSDs and unit tests in `src/tests/`.
 
 ---
 
@@ -111,4 +114,8 @@ These contracts are defined in `src/schema/contracts/kassa-user.xsd` and are use
 - Schema: `src/schema/contracts/kassa-user.xsd`
 - Kassa publisher: `kassa_pos/models/user_registration.py` and `kassa_pos/utils/rabbitmq_sender.py`
 - Kassa consumer handling deactivations: `src/main_receiver.py`
+
+**Retry / Dead-letter topology:**
+- The system declares `user.retry` and `user.dlx` exchanges and related retry TTLs for user event processing (see `setup_rabbitmq.py`).
+- Environment variables `USER_EVENTS_RETRY_EXCHANGE` and `USER_EVENTS_RETRY_TTL_MS` control retry exchange name and TTL (default 15000 ms). Consumers/publishers should respect this retry topology for resilient processing.
 
