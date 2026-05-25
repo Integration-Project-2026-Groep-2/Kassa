@@ -10,7 +10,7 @@ class UserRegistrationModal extends Component {
     static components = { Dialog };
 
     static template = xml`
-        <Dialog title="'Register New User'" class="user-registration-modal-dialog">
+        <Dialog title="'Register New User'" contentClass="user-registration-modal-dialog" bodyClass="user-registration-modal-body">
             <div class="modal-body">
                 <div t-if="uiState.hasError" class="alert alert-danger">
                     <div class="alert-message">

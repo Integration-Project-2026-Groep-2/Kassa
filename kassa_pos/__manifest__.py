@@ -27,6 +27,7 @@
         'data/product_product_data.xml',
         'views/kassa_pos_user_registration_view.xml',
         'views/pos_order_batch_views.xml',
+        'views/kassa_backend_theme.xml'
     ],
     'assets': {
         'point_of_sale._assets_pos': [

@@ -1,0 +1,96 @@
+/* ============================================================
+   Kassa POS — Odoo Backend Dark Theme
+   ============================================================ */
+
+/* ── DESIGN TOKENS ──────────────────────────────────────── */
+body {
+    background: red !important;
+}
+:root {
+    --k-bg:       #0f1117;
+    --k-s1:       #181c26;
+    --k-s2:       #1e2333;
+    --k-s3:       #252b3d;
+    --k-s4:       #2d3347;
+    --k-accent:   #4f7cff;
+    --k-border:   rgba(255,255,255,0.08);
+    --k-text:     #e8eaf2;
+    --k-text2:    #9aa0b5;
+}
+
+/* ── BODY ────────────────────────────────────────── */
+body,
+.o_web_client,
+.o_action_manager {
+    background: var(--k-bg) !important;
+    color: var(--k-text) !important;
+}
+
+/* ── NAVBAR ───────────────────────────────────────── */
+.o_main_navbar {
+    background: var(--k-s1) !important;
+    border-bottom: 1px solid var(--k-border) !important;
+}
+
+.o_main_navbar * {
+    color: var(--k-text2) !important;
+}
+
+.o_main_navbar a:hover {
+    color: var(--k-text) !important;
+}
+
+/* ── CONTENT AREA ───────────────────────────────── */
+.o_content {
+    background: var(--k-bg) !important;
+}
+
+/* ── CARDS / VIEWS ──────────────────────────────── */
+.o_form_view,
+.o_list_view,
+.o_kanban_view {
+    background: var(--k-s1) !important;
+    border: 1px solid var(--k-border) !important;
+    border-radius: 10px;
+}
+
+/* ── INPUTS ─────────────────────────────────────── */
+input,
+textarea,
+select {
+    background: var(--k-s2) !important;
+    color: var(--k-text) !important;
+    border: 1px solid var(--k-border) !important;
+}
+
+/* ── BUTTONS ───────────────────────────────────── */
+.btn-primary {
+    background: var(--k-accent) !important;
+    border: none !important;
+}
+
+.btn-primary:hover {
+    filter: brightness(1.1);
+}
+
+/* ── TABLES ───────────────────────────────────── */
+.table {
+    background: var(--k-s1) !important;
+    color: var(--k-text) !important;
+}
+
+.table thead {
+    background: var(--k-s2) !important;
+}
+
+/* ── DROPDOWNS ─────────────────────────────────── */
+.dropdown-menu {
+    background: var(--k-s2) !important;
+    border: 1px solid var(--k-border) !important;
+}
+
+/* ── MODALS ───────────────────────────────────── */
+.modal-content {
+    background: var(--k-s1) !important;
+    color: var(--k-text) !important;
+}

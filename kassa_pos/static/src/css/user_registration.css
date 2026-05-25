@@ -1,294 +1,1114 @@
-/* User Registration Modal Styles */
-
-.user-registration-modal {
-    min-width: 500px;
-    max-width: 600px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
+.pos {
+    background: #0b1220 !important;
+    color: #e5e7eb !important;
 }
 
-.user-registration-modal.o_dialog {
-    background: white;
-    border-radius: 4px;
+.bg-100, .bg-200, .bg-300, .pos .bg-100, .pos .bg-200, .pos .bg-300, .pos .bg-400, .pos .bg-700, .pos .bg-light, .pos .bg-view, .pos .bg-white, .pos .controls, .pos .pane-border {
+    background-color: #111827 !important;
 }
 
-.user-registration-modal .modal-header {
-    border-bottom: 1px solid #dee2e6;
-    padding: 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.pos .pos-topheader {
+    background: #0f172a !important;
+    border-bottom: 1px solid #1f2937 !important;
 }
 
-.user-registration-modal .modal-header h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
+.pos .leftpane, .pos .rightpane {
+    background: #111827 !important;
+    border-color: #1f2937 !important;
+    background-color: #111827 !important;
 }
 
-.user-registration-modal .btn-close {
-    background: transparent;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0;
-    width: auto;
+.pos .order-container {
+    background: #1b2433 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
 }
 
-.user-registration-modal .modal-body {
-    padding: 1.5rem;
-    max-height: 70vh;
-    overflow-y: auto;
-    flex: 1;
+.pos .orderline {
+    background: transparent !important;
+    border-bottom: 1px solid #243244 !important;
+    color: #e5e7eb !important;
+    border-radius: 10px !important;
+    transition: all .2s ease;
 }
 
-.user-registration-modal .modal-footer {
-    border-top: 1px solid #dee2e6;
-    padding: 1rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    background-color: #f8f9fa;
+.pos .orderline:hover {
+    background: #1f2a3a !important;
 }
 
-.user-registration-modal .form-group {
-    margin-bottom: 1.25rem;
+.pos .orderline.selected {
+    background: #1d4ed8 !important;
+    color: #fff !important;
 }
 
-.user-registration-modal .form-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    font-size: 0.95rem;
-    color: #333;
+.pos .product {
+    background: #1b2433 !important;
+    border: 1px solid #243244 !important;
+    border-radius: 16px !important;
+    color: #e5e7eb !important;
+    transition: all .2s ease;
 }
 
-.user-registration-modal .form-label.required::after {
-    content: " *";
-    color: #dc3545;
-    font-weight: bold;
+.pos .product:hover {
+    transform: translateY(-3px);
+    background: #243244 !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-.user-registration-modal .form-control,
-.user-registration-modal .form-check-input {
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.95rem;
-    width: 100%;
-    box-sizing: border-box;
-    font-family: inherit;
+.pos .btn, .pos .button, .pos button {
+    border-radius: 14px !important;
+    border: 1px solid #243244 !important;
+    background: #1b2433 !important;
+    color: #e5e7eb !important;
+    transition: all .2s ease;
 }
 
-.user-registration-modal .form-control:focus,
-.user-registration-modal .form-check-input:focus {
-    border-color: #80bdff;
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.pos .btn-light, .pos .button.btn-light, .pos .popup .btn-light, .pos .popup .button.btn-light, .pos .popup button.btn-light, .pos button.btn-light {
+    background: #1b2433 !important;
+    color: #e5e7eb !important;
+    border-color: #243244 !important;
 }
 
-.user-registration-modal .form-check-input {
-    width: auto;
-    margin-right: 0.5rem;
+.pos .btn:hover {
+    background: #243244 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
 }
 
-.user-registration-modal .form-check-label {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0;
+.pos .button:hover, .pos .next.validation:hover, .pos .pay-order-button:hover, .pos button:hover {
+    background: #243244 !important;
+    transform: translateY(-2px);
 }
 
-.user-registration-modal .alert {
-    padding: 0.75rem 1rem;
-    margin-bottom: 1rem;
-    border-radius: 0.25rem;
-    border: 1px solid transparent;
+.pos .numpad .btn, .pos .numpad button {
+    background: #1b2433 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #e5e7eb !important;
+    border-radius: 14px !important;
+    font-weight: 700;
+    transition: all .15s ease;
 }
 
-.user-registration-modal .alert-danger {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
+.pos .numpad .btn:hover, .pos .numpad button:hover {
+    background: #243244 !important;
+    border-color: #3b82f6 !important;
+    transform: scale(1.04);
 }
 
-.user-registration-modal .btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.95rem;
-    border-radius: 0.25rem;
-    border: 1px solid transparent;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
+.pos .numpad button.active {
+    background: #1d4ed8 !important;
+    color: white !important;
 }
 
-.user-registration-modal .btn:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
+.pos .payment-screen, .pos .pos-content {
+    background: #0b1220 !important;
+    background-color: #111827 !important;
 }
 
-.user-registration-modal .btn-primary {
-    background-color: #007bff;
-    color: white;
+.pos .paymentmethods-container {
+    background: #111827 !important;
+    border-radius: 16px !important;
 }
 
-.user-registration-modal .btn-primary:hover:not(:disabled) {
-    background-color: #0056b3;
+.pos .paymentlines-container {
+    background: #f8fafc !important;
+    border-radius: 16px !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
 }
 
-.user-registration-modal .btn-secondary {
-    background-color: #6c757d;
-    color: white;
+.pos .paymentmethod {
+    background: #1b2433 !important;
+    border-bottom: 1px solid #243244 !important;
+    color: #e5e7eb !important;
 }
 
-.user-registration-modal .btn-secondary:hover:not(:disabled) {
-    background-color: #545b62;
+.pos .paymentmethod.btn-light:hover, .pos .paymentmethod:hover, .pos .top-content .btn-secondary:hover {
+    background: #243244 !important;
 }
 
-.user-registration-modal .spinner-border {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    vertical-align: text-bottom;
-    border: 0.25em solid currentColor;
-    border-right-color: transparent;
-    border-radius: 50%;
-    animation: spinner-border 0.75s linear infinite;
+.pos .paymentlines-container .total {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-radius: 14px !important;
+    padding: 1rem !important;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08) !important;
 }
 
-.user-registration-modal .spinner-border-sm {
-    width: 0.8rem;
-    height: 0.8rem;
-    border-width: 0.2em;
+.pos .paymentlines-container .paymentlines {
+    background: #ffffff !important;
+    color: #0f172a !important;
 }
 
-.user-registration-modal .mr-2 {
-    margin-right: 0.5rem;
+.pos .paymentlines-empty {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #e2e8f0 !important;
 }
 
-@keyframes spinner-border {
-    to {
-        transform: rotate(360deg);
-    }
+.pos .paymentlines-empty .total {
+    background: #ffffff !important;
+    color: #22c55e !important;
 }
 
-/* ── POS control buttons ───────────────────────────────────────────────── */
-.pos .control-buttons,
-.pos .control-buttons-container,
-.product-screen .control-buttons,
-.product-screen .control-buttons-container {
+.pos .customer-note, .pos .info, .pos .internal-note {
+    background: #1b2433 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #243244 !important;
+}
+
+.pos .control-buttons .control-button {
+    background: #1b2433 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #243244 !important;
+    border-radius: 12px !important;
+    flex: 1 1 auto !important;
+    padding: 0.75rem 1rem !important;
+    margin: 0.25rem !important;
+    min-height: 44px !important;
+    font-size: 0.95rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.pos .control-buttons {
     display: flex !important;
     flex-wrap: wrap !important;
-    gap: 0 !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-    align-items: stretch !important;
-    justify-content: flex-start !important;
-    width: 100%;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
 }
 
-.pos .control-buttons > *,
-.pos .control-buttons-container > *,
-.product-screen .control-buttons > *,
-.product-screen .control-buttons-container > * {
+.pos .control-buttons .control-button i, .pos .customer-note i, .pos .internal-note i {
+    color: #2563eb !important;
+}
+
+.pos .control-buttons .control-button:hover, .pos .customer-note:hover, .pos .internal-note:hover, .pos .refund-button:hover {
+    background: #243244 !important;
+    color: #e5e7eb !important;
+    border-color: #1f2937 !important;
+}
+
+.pos .kassa-add-user-btn:hover {
+    background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+    color: #e5e7eb !important;
+    border-color: #1f2937 !important;
+}
+
+.pos .kassa-add-user-btn {
+    background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+    border: none !important;
+    color: white !important;
     flex: 1 1 auto !important;
+    padding: 0.75rem 1rem !important;
+    min-height: 44px !important;
+    font-size: 0.95rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-.kassa-pos-control-btn {
-    margin: 0;
-    width: auto;
-    min-width: 0;
-    min-height: 40px;
-    padding: 0.28rem 0.48rem;
-    border-radius: 0;
-    border: 1px solid #d0d0d0;
-    display: inline-flex;
+.pos .control-button, body.light-theme .pos .control-button {
+    border-radius: 12px !important;
+}
+
+.pos .kassa-closing-btn, body.light-theme .pos .kassa-closing-btn {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    border: none !important;
+    color: white !important;
+    flex: 1 1 auto !important;
+    padding: 0.75rem 1rem !important;
+    min-height: 44px !important;
+    font-size: 0.95rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.pos .kassa-closing-btn:hover, body.light-theme .pos .kassa-closing-btn:hover {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+}
+
+.pos .input-container {
+    background: #111827 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #e5e7eb !important;
+    border-radius: 12px !important;
+    background-color: #0f172a !important;
+}
+
+.pos .form-control {
+    background: #111827 !important;
+    border: 1px solid #243244 !important;
+    color: #e5e7eb !important;
+    border-radius: 12px !important;
+    background-color: #0f172a !important;
+}
+
+.pos .products-widget-control .form-control, .pos .products-widget-control .input-container {
+    background: #1b2433 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #e5e7eb !important;
+    border-radius: 12px !important;
+}
+
+.o_notification_manager {
+    z-index: 9999;
+}
+
+.o_notification {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #243244 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5) !important;
+}
+
+.o_notification.border-success {
+    border-left: 4px solid #22c55e !important;
+}
+
+.o_notification_title {
+    color: #22c55e !important;
+}
+
+.o_notification_close {
+    filter: invert(1);
+    opacity: 0.8;
+}
+
+.o_notification_close:hover, body.light-theme .o_notification_close:hover {
+    opacity: 1;
+}
+
+.modal-content {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border-radius: 18px !important;
+    border: 1px solid #243244 !important;
+    background-color: #111827 !important;
+}
+
+.modal-header {
+    background: #0f172a !important;
+    border-color: #243244 !important;
+    color: #f1f5f9 !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
+.modal-footer {
+    background: #0f172a !important;
+    border-color: #243244 !important;
+}
+
+.form-control, select {
+    background: #1b2433 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #e5e7eb !important;
+    border-radius: 10px !important;
+}
+
+.pads {
+    border-top: 1px solid #243244 !important;
+}
+
+.control-buttons {
+    border-bottom: 1px solid #243244 !important;
+}
+
+.actionpad {
+    border-right: 1px solid #243244 !important;
+}
+
+.pos .next.validation, .pos .pay-order-button {
+    background: #1b2433 !important;
+    border: 1px solid #2b3a50 !important;
+    color: #93c5fd !important;
+    border-radius: 14px !important;
+}
+
+.pos .next.validation.disabled {
+    background: #111827 !important;
+    color: #64748b !important;
+    opacity: 0.6 !important;
+}
+
+::-webkit-scrollbar, body.light-theme ::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #334155 !important;
+    border-radius: 10px;
+}
+
+.pos *::-webkit-scrollbar-track, .pos .main-content, ::-webkit-scrollbar-track {
+    background: #0b1220 !important;
+}
+
+.pos .top-content {
+    background: #111827 !important;
+    border-bottom: 1px solid #243244 !important;
+    color: #e5e7eb !important;
+}
+
+.pos .modal-body table, .pos .section-financials *, .pos .section-inventory *, .pos .section-order *, .pos .section-product-info-title *, .pos .text-bg-view *, .pos .text-muted h1, .pos .text-muted h2, .pos .text-muted h3, .pos .text-muted h4, .pos .text-muted:hover, .pos .top-content *, .pos .top-content .back_text, .pos .top-content .button, .pos .top-content h2 {
+    color: #e5e7eb !important;
+}
+
+.pos .center-content, .pos .left-content, .pos .payment-screen .bg-300, .pos .payment-screen .bg-400, .pos .payment-screen .bg-view, .pos .payment-screen .main-content, .pos .right-content {
+    background: #111827 !important;
+}
+
+.pos .title-category {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
+.pos .button.next.validation {
+    background: #1d4ed8 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 16px !important;
+    opacity: 1 !important;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25) !important;
+}
+
+.pos .button.next.validation:hover {
+    background: #2563eb !important;
+    transform: translateY(-2px);
+}
+
+.pos .button.next.validation.disabled {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    opacity: 0.9 !important;
+}
+
+.pos .products-widget-control input {
+    background: transparent !important;
+    color: #e5e7eb !important;
+}
+
+.pos .paymentlines-empty .message {
+    color: #9ca3af !important;
+}
+
+.pos *, .pos .border, .pos .border-bottom, .pos .border-end, .pos .border-start, .pos .border-top, .pos .modal-body td {
+    border-color: #243244 !important;
+}
+
+.pos .top-content .btn-secondary {
+    color: #e5e7eb !important;
+    background: #1f2937 !important;
+    border: 1px solid #2b3a50 !important;
+    border-radius: 12px !important;
+}
+
+.pos .paymentmethod.btn-light {
+    background: #1b2433 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #243244 !important;
+    border-radius: 12px !important;
+}
+
+.pos input {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #243244 !important;
+    border-radius: 12px !important;
+    background-color: #0f172a !important;
+}
+
+:root {
+    --o-cc5-bg: #0b1220 !important;
+    --o-cc4-bg: #0b1220 !important;
+}
+
+.pos *::-webkit-scrollbar-thumb {
+    background: #334155 !important;
+}
+
+.pos .navbar-button.menu-button {
+    background: #1b2433 !important;
+    border: 1px solid #243244 !important;
+    border-radius: 12px !important;
+    color: #cbd5e1 !important;
+    transition: all .2s ease;
+}
+
+.pos .modal-header {
+    background: #0f172a !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
+.pos .modal-header .modal-title {
+    color: #e5e7eb !important;
+    font-weight: 600 !important;
+}
+
+.pos .modal-header .btn {
+    background: transparent !important;
+    border: none !important;
+    color: #cbd5e1 !important;
+}
+
+.pos .modal-header .btn i, .pos .navbar-button.menu-button *, .pos .navbar-button.menu-button i {
+    color: #cbd5e1 !important;
+}
+
+.pos .modal-header .btn:hover i, .pos .navbar-button.menu-button:hover *, .pos .product-information-tag:hover .product-information-tag-logo {
+    color: #ffffff !important;
+}
+
+.pos .navbar-button.menu-button.btn {
+    background: #1b2433 !important;
+    border: 1px solid #243244 !important;
+    border-radius: 12px !important;
+    transition: all .2s ease;
+    color: #cbd5e1 !important;
+}
+
+.pos .navbar-button.menu-button:hover {
+    background: #243244 !important;
+    transform: scale(1.03);
+    color: #ffffff !important;
+}
+
+.pos .text-muted {
+    color: #cbd5e1 !important;
+    opacity: 0.95 !important;
+}
+
+.pos .text-muted i {
+    color: #94a3b8 !important;
+}
+
+.pos .modal-body {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+    border-top: 1px solid #243244 !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
+.pos .orders {
+    background-color: #111827 !important;
+    background: #111827 !important;
+}
+
+.pos .order-row {
+    background-color: #111827 !important;
+    border-bottom: 1px solid #243244 !important;
+    padding: 6px 0;
+}
+
+.pos .header-row {
+    background-color: #0f172a !important;
+    border-bottom: 2px solid #334155 !important;
+    color: #e5e7eb !important;
+}
+
+.modal, .pos .section-product-info-title.bg-info, .pos .section-product-info-title.text-info {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+}
+
+.modal-body {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+    padding: 1.25rem !important;
+}
+
+.modal-title {
+    color: #f1f5f9 !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
+.pos .order-row:hover {
+    background-color: #1b2433 !important;
+}
+
+.pos .order-row:nth-child(even) {
+    background-color: #0f172a !important;
+}
+
+.pos .order-row > div {
+    border-right: 1px solid #1f2937 !important;
+}
+
+.pos .order-row > div:last-child {
+    border-right: none !important;
+}
+
+.pos .text-bg-view {
+    background-color: #0f172a !important;
+    color: #e5e7eb !important;
+    border-bottom: 1px solid #243244 !important;
+}
+
+.pos .leftpane .text-bg-view {
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.pos .section-financials, .pos .section-inventory, .pos .section-order, .pos .section-product-info-title {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+    border-color: #243244 !important;
+}
+
+.pos .section-title {
+    color: #f1f5f9 !important;
+    font-weight: 700;
+}
+
+body.light-theme .popup .section-title, body.light-theme .pos .section-title, body.light-theme .section-title {
+    color: #1f2937 !important;
+}
+
+.pos .product-info-price-with-tax {
+    color: #60a5fa !important;
+    font-weight: 700;
+}
+
+.pos .bg-opacity-25 {
+    opacity: 1 !important;
+    background-color: #111827 !important;
+}
+
+.pos .product-information-tag {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.2rem;
-    flex: 1 1 auto !important;
-    font-size: 0.78rem;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    border-radius: 10px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: all .2s ease;
+    cursor: pointer;
+}
+
+.pos .product-information-tag-logo {
+    font-size: 12px;
+    color: #93c5fd !important;
+}
+
+.pos .product-information-tag:hover {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: #3b82f6;
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+
+.pos .product-information-tag:active, .theme-toggle-btn:active, body.light-theme .pos .product-information-tag:active {
+    transform: scale(0.95);
+}
+
+body.light-theme .orders, body.light-theme .pos, body.light-theme .pos .orders {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .bg-100, body.light-theme .bg-200, body.light-theme .bg-300, body.light-theme .pos .bg-400, body.light-theme .pos .bg-700, body.light-theme .pos .bg-light, body.light-theme .pos .bg-view, body.light-theme .pos .bg-white {
+    background-color: #ffffff !important;
+}
+
+body.light-theme .pos .bg-100 {
+    background-color: #f1f5f9 !important;
+}
+
+body.light-theme .pos .bg-200 {
+    background-color: #e2e8f0 !important;
+}
+
+body.light-theme .pos .bg-300 {
+    background-color: #cbd5e1 !important;
+}
+
+body.light-theme .pos .pos-topheader, body.light-theme .pos .top-content {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .leftpane, body.light-theme .pos .rightpane {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+
+body.light-theme .pos .order-container {
+    background: #f8fafc !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+body.light-theme .pos .orderline {
+    background: transparent !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+    border-radius: 10px !important;
+    transition: all .2s ease;
+}
+
+body.light-theme .pos *::-webkit-scrollbar-track, body.light-theme .pos .orderline:hover, body.light-theme .pos .paymentmethod:hover {
+    background: #f1f5f9 !important;
+}
+
+body.light-theme .pos .orderline.selected {
+    background: #3b82f6 !important;
+    color: #fff !important;
+}
+
+body.light-theme .pos .product {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    color: #1e293b !important;
+    transition: all .2s ease;
+}
+
+body.light-theme .pos .product:hover {
+    transform: translateY(-3px);
+    background: #f8fafc !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+body.light-theme .pos .btn, body.light-theme .pos .button, body.light-theme .pos button {
+    border-radius: 14px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    color: #1e293b !important;
+    transition: all .2s ease;
+}
+
+body.light-theme .pos .btn:hover, body.light-theme .pos .button:hover, body.light-theme .pos button:hover {
+    background: #f1f5f9 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+}
+
+body.light-theme .pos .numpad .btn, body.light-theme .pos .numpad button {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    border-radius: 14px !important;
     font-weight: 700;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), inset 0 -1px 0 rgba(255, 255, 255, 0.08);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    transition: all .15s ease;
 }
 
-.kassa-pos-control-btn:hover {
-    filter: saturate(1.03);
+body.light-theme .pos .numpad .btn:hover, body.light-theme .pos .numpad button:hover {
+    background: #f1f5f9 !important;
+    border-color: #3b82f6 !important;
+    transform: scale(1.04);
 }
 
-.kassa-pos-control-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+body.light-theme .pos .numpad button.active {
+    background: #3b82f6 !important;
+    color: white !important;
 }
 
-.kassa-row-break {
-    width: 100% !important;
-    height: 0;
-    margin: 0;
-    padding: 0;
-    border: none;
-    flex: 0 0 100%;
+body.light-theme .pos .payment-screen {
+    background: #f8fafc !important;
 }
 
-/* Divider between Refund and Customer Note */
-.pos .control-buttons > *:nth-child(2) {
-    border-left: 1px solid #d0d0d0 !important;
+body.light-theme .pos .paymentlines-container, body.light-theme .pos .paymentmethods-container {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    border: 1px solid #ffffff !important;
 }
 
-.kassa-pos-control-btn i {
-    width: 0.85rem;
-    text-align: center;
-    margin-right: 0;
-    font-size: 0.76rem;
+body.light-theme .pos .paymentmethod {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .paymentlines-container .total {
+    color: #10b981 !important;
+    font-size: 2.5rem !important;
+}
+
+body.light-theme .pos .customer-note {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #e2e8f0 !important;
+    border-color: #243244 !important;
+}
+
+body.light-theme .popup, body.light-theme .popup .modal-body, body.light-theme .pos .control-buttons .control-button, body.light-theme .pos .info, body.light-theme .pos .internal-note, body.light-theme .pos .modal-content, body.light-theme .pos .popup, body.light-theme .pos .popup .body, body.light-theme .pos .popup .modal-body, body.light-theme .pos .popup .modal-footer {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .popup .modal-header, body.light-theme .pos .popup .modal-header {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .modal-content {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 18px !important;
+}
+
+body.light-theme .orders .header-row .col, body.light-theme .orders .order-row .col, body.light-theme .popup .modal-header .btn, body.light-theme .popup .modal-header .btn i, body.light-theme .popup .modal-header .modal-title, body.light-theme .popup .section-financials *, body.light-theme .popup .section-inventory *, body.light-theme .popup .section-order *, body.light-theme .popup .section-product-info-title *, body.light-theme .popup .section-product-info-title.bg-info *, body.light-theme .popup .section-product-info-title.text-info *, body.light-theme .popup .table td, body.light-theme .popup .table th, body.light-theme .popup .text-danger, body.light-theme .popup .text-dark, body.light-theme .popup .text-info, body.light-theme .popup .text-primary, body.light-theme .popup .text-success, body.light-theme .popup .text-warning, body.light-theme .popup .text-white, body.light-theme .pos .modal-header .btn:hover i, body.light-theme .pos .navbar-button.menu-button:hover *, body.light-theme .pos .orders .header-row .col, body.light-theme .pos .orders .order-row .col, body.light-theme .pos .popup .modal-header .btn, body.light-theme .pos .popup .modal-header .btn i, body.light-theme .pos .popup .modal-header .modal-title, body.light-theme .pos .popup .section-financials *, body.light-theme .pos .popup .section-inventory *, body.light-theme .pos .popup .section-order *, body.light-theme .pos .popup .section-product-info-title *, body.light-theme .pos .popup .section-product-info-title.bg-info *, body.light-theme .pos .popup .section-product-info-title.text-info *, body.light-theme .pos .popup .table td, body.light-theme .pos .popup .table th, body.light-theme .pos .popup .text-danger, body.light-theme .pos .popup .text-dark, body.light-theme .pos .popup .text-info, body.light-theme .pos .popup .text-primary, body.light-theme .pos .popup .text-success, body.light-theme .pos .popup .text-warning, body.light-theme .pos .popup .text-white, body.light-theme .pos .text-bg-view *, body.light-theme .pos .text-muted h1, body.light-theme .pos .text-muted h2, body.light-theme .pos .text-muted h3, body.light-theme .pos .text-muted h4, body.light-theme .pos .text-muted:hover, body.light-theme .pos .top-content .back_text, body.light-theme .pos .top-content .button, body.light-theme .pos .top-content h2, body.light-theme .text-bg-view * {
+    color: #1e293b !important;
+}
+
+body.light-theme .modal-body, body.light-theme .popup .section-financials, body.light-theme .popup .section-inventory, body.light-theme .popup .section-order, body.light-theme .popup .section-product-info-title, body.light-theme .pos .popup .section-financials, body.light-theme .pos .popup .section-inventory, body.light-theme .pos .popup .section-order, body.light-theme .pos .popup .section-product-info-title {
+    background: #ffffff !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .popup .table, body.light-theme .pos .popup .table {
+    background: transparent !important;
+}
+
+body.light-theme .pos .modal-body {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border-top: 1px solid #e2e8f0 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .modal-body .form-control, body.light-theme .modal-body textarea, body.light-theme .popup .modal-body .form-control, body.light-theme .popup .modal-body textarea, body.light-theme .pos .modal-body .form-control, body.light-theme .pos .modal-body textarea {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+body.light-theme .modal-body .form-control::placeholder, body.light-theme .modal-body textarea::placeholder, body.light-theme .popup .modal-body .form-control::placeholder, body.light-theme .popup .modal-body textarea::placeholder, body.light-theme .pos .product-information-tag .product-information-tag-logo, body.light-theme .pos .text-muted i {
+    color: #64748b !important;
+}
+
+body.light-theme .popup .btn, body.light-theme .popup .button, body.light-theme .popup button, body.light-theme .pos .popup .btn, body.light-theme .pos .popup .button, body.light-theme .pos .popup button {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+}
+
+body.light-theme .popup .btn-primary, body.light-theme .pos .popup .btn-primary {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+}
+
+body.light-theme .popup .section-product-info-title.bg-info, body.light-theme .popup .section-product-info-title.text-info, body.light-theme .pos .popup .section-product-info-title.bg-info, body.light-theme .pos .popup .section-product-info-title.text-info {
+    background-color: rgba(59, 130, 246, 0.16) !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .popup .btn-secondary, body.light-theme .pos .popup .btn-secondary {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
+    border-color: #d1d5db !important;
+}
+
+body.light-theme .popup .btn-outline-light, body.light-theme .pos .popup .btn-outline-light {
+    background: transparent !important;
+    color: #1e293b !important;
+    border-color: #e2e8f0 !important;
+}
+
+body.light-theme .popup .btn-close, body.light-theme .popup .close, body.light-theme .pos .popup .btn-close, body.light-theme .pos .popup .close {
+    background: transparent !important;
+    border: none !important;
+    color: #1e293b !important;
+    box-shadow: none !important;
+}
+
+body.light-theme .popup .btn-outline-light:hover, body.light-theme .popup .btn-secondary:hover, body.light-theme .popup .btn:hover, body.light-theme .popup .button:hover, body.light-theme .popup button:hover, body.light-theme .pos .popup .btn-outline-light:hover, body.light-theme .pos .popup .btn-secondary:hover, body.light-theme .pos .popup .btn:hover, body.light-theme .pos .popup .button:hover, body.light-theme .pos .popup button:hover {
+    background: #f1f5f9 !important;
+    transform: none !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+}
+
+body.light-theme .popup .btn-primary:hover, body.light-theme .pos .popup .btn-primary:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
+
+body.light-theme .popup input[type="checkbox"], body.light-theme .popup input[type="radio"], body.light-theme .pos .popup input[type="checkbox"], body.light-theme .pos .popup input[type="radio"], body.light-theme input[type="checkbox"], body.light-theme input[type="radio"] {
+    accent-color: #2563eb !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .popup .bg-200, body.light-theme .popup .bg-300, body.light-theme .popup .bg-danger, body.light-theme .popup .bg-info, body.light-theme .popup .bg-light, body.light-theme .popup .bg-primary, body.light-theme .popup .bg-secondary, body.light-theme .popup .bg-success, body.light-theme .popup .bg-view, body.light-theme .popup .bg-warning, body.light-theme .popup .bg-white, body.light-theme .pos .popup .bg-200, body.light-theme .pos .popup .bg-300, body.light-theme .pos .popup .bg-danger, body.light-theme .pos .popup .bg-info, body.light-theme .pos .popup .bg-light, body.light-theme .pos .popup .bg-primary, body.light-theme .pos .popup .bg-secondary, body.light-theme .pos .popup .bg-success, body.light-theme .pos .popup .bg-view, body.light-theme .pos .popup .bg-warning, body.light-theme .pos .popup .bg-white {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+}
+
+body.light-theme .paymentlines-empty, body.light-theme .pos .paymentlines-empty {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .o_notification_title, body.light-theme .paymentlines-empty .total, body.light-theme .pos .paymentlines-empty .total {
+    color: #10b981 !important;
+}
+
+body.light-theme .orders .header-row, body.light-theme .pos .orders .header-row {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .orders .order-row, body.light-theme .pos .orders .order-row, body.light-theme .pos .title-category {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .orders .order-row.highlight.bg-primary, body.light-theme .pos .orders .order-row.highlight.bg-primary {
+    background: linear-gradient(135deg, #93c5fd, #3b82f6) !important;
+    color: #ffffff !important;
+}
+
+body.light-theme .pos .kassa-add-user-btn {
+    background: #111827 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #e5e7eb !important;
+    border-color: #243244 !important;
+}
+
+body.light-theme .pos .customer-note:hover, body.light-theme .pos .kassa-add-user-btn:hover, body.light-theme .pos .refund-button, body.light-theme .pos .refund-button:hover {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border-color: #243244 !important;
+}
+
+body.light-theme .pos .form-control, body.light-theme .pos .input-container {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    border-radius: 12px !important;
+}
+
+body.light-theme .o_notification {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+}
+
+body.light-theme .o_notification.border-success {
+    border-left: 4px solid #10b981 !important;
+}
+
+body.light-theme .o_notification_close {
+    filter: none;
+    opacity: 0.8;
+}
+
+body.light-theme .modal-footer, body.light-theme .modal-header {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+body.light-theme .form-control, body.light-theme select {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    border-radius: 10px !important;
+}
+
+body.light-theme .pads {
+    border-top: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .control-buttons {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .actionpad {
+    border-right: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .pos .next.validation, body.light-theme .pos .pay-order-button {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #3b82f6 !important;
+    border-radius: 14px !important;
+}
+
+body.light-theme .pos .next.validation:hover, body.light-theme .pos .pay-order-button:hover {
+    background: #f1f5f9 !important;
+    transform: translateY(-2px);
+}
+
+body.light-theme .pos .next.validation.disabled {
+    background: #f8fafc !important;
+    color: #94a3b8 !important;
+    opacity: 0.6 !important;
+}
+
+body.light-theme ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+body.light-theme ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+body.light-theme .pos .center-content, body.light-theme .pos .left-content, body.light-theme .pos .payment-screen .main-content, body.light-theme .pos .right-content {
+    background: #ffffff !important;
+}
+
+body.light-theme .pos .button.next.validation {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25) !important;
+}
+
+body.light-theme .pos .button.next.validation.disabled {
+    background: #3b82f6 !important;
+    opacity: 0.55 !important;
+}
+
+body.light-theme .pos input {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+}
+
+body.light-theme .pos *::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+}
+
+body.light-theme .pos .navbar-button.menu-button {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    color: #475569 !important;
+    transition: all .2s ease;
+}
+
+body.light-theme .pos .modal-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .pos .modal-header .modal-title {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+}
+
+body.light-theme .pos .modal-header .btn {
+    background: transparent !important;
+    border: none !important;
+    color: #475569 !important;
+}
+
+body.light-theme .pos .modal-header .btn i, body.light-theme .pos .navbar-button.menu-button *, body.light-theme .pos .navbar-button.menu-button i {
+    color: #475569 !important;
+}
+
+body.light-theme .pos .navbar-button.menu-button.btn {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    transition: all .2s ease;
+    color: #475569 !important;
+}
+
+body.light-theme .pos .navbar-button.menu-button:hover {
+    background: #f1f5f9 !important;
+    transform: scale(1.03);
+    color: #1e293b !important;
+}
+
+body.light-theme .pos .text-muted {
+    color: #64748b !important;
+    opacity: 0.95 !important;
+}
+
+body.light-theme .pos .text-bg-view, body.light-theme .text-bg-view {
+    background-color: #f8fafc !important;
+    color: #1e293b !important;
+    border-color: #e2e8f0 !important;
+}
+
+body.light-theme .pos * {
+    border-color: #e2e8f0 !important;
+}
+
+body.light-theme .pos .product-information-tag {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-size: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+
+body.light-theme .pos .product-information-tag:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+body.light-theme .pos .product-information-tag:hover .product-information-tag-logo {
+    color: #3b82f6 !important;
+}
+
+.theme-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10001;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    color: #1e293b;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     opacity: 0.95;
 }
 
-.kassa-pos-control-btn span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1;
+.theme-toggle-btn:hover {
+    transform: scale(1.05);
+    background: #f1f5f9;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    opacity: 1;
 }
 
-.kassa-pos-control-btn--indigo {
-    background: linear-gradient(135deg, #6f5fb8 0%, #5d4ea6 100%);
-    color: #fff;
+body.light-theme .theme-toggle-btn {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
 }
 
-.kassa-pos-control-btn--indigo:hover {
-    background: linear-gradient(135deg, #7a68c4 0%, #6757b0 100%);
-}
-
-.kassa-pos-control-btn--slate {
-    background: linear-gradient(135deg, #56606d 0%, #414a56 100%);
-    color: #fff;
-}
-
-.kassa-pos-control-btn--slate:hover {
-    background: linear-gradient(135deg, #65707d 0%, #4a5562 100%);
-}
-
-.kassa-pos-control-btn--green,
-.kassa-balance-btn {
-    background: linear-gradient(135deg, #2f9e44 0%, #22863a 100%);
-    color: #fff;
-}
-
-.kassa-pos-control-btn--green:hover,
-.kassa-balance-btn:hover {
-    background: linear-gradient(135deg, #36a64f 0%, #24913d 100%);
-}
-
-/* Add User Button Styling */
-.kassa-add-user-btn {
-    margin: 0;
-}
-
-.kassa-add-user-btn i {
-    margin-right: 4px;
+body.light-theme .theme-toggle-btn:hover {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
 }
 
 .kassa-closing-btn {
